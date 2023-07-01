@@ -37,31 +37,34 @@ files <- file.path(dir, samples)
 #files <- list.files(dir)
 
 
-all(file.exists(files))
-length(files)
+#all(file.exists(files))
+#length(files)
 
 
-files
+#files
 
 
 time_points <- sapply(files, function(files) c(strsplit(files, ".", fixed = T)[[1]][4]), USE.NAMES=FALSE)
-time_points
+#time_points
 
 file_type <- sapply(files, function(files) c(strsplit(files, ".", fixed = T)[[1]][9]), USE.NAMES=FALSE)
-file_type
+#file_type
 
 patient_ids <- sapply(files, function(files) c(strsplit(files, ".", fixed = T)[[1]][3]), USE.NAMES=FALSE)
-patient_ids
+#patient_ids
 
 phases <- sapply(files, function(files) c(strsplit(files, "-", fixed = T)[[1]][2]), USE.NAMES=FALSE)
-phases
+#phases
 
 
 
 # now we just wanna link the patient number to the cohort for the sake of a plot
 cohorts = meta$Cohort[match(patient_ids, meta$`Patient Number`)]
 
+files_transcript = files[file_type == "transcripts"]
 
+# remove NA
+files_transcript = files_transcript[!is.na(files_transcript)]
 
 
 
@@ -70,34 +73,6 @@ cohorts = meta$Cohort[match(patient_ids, meta$`Patient Number`)]
 # it returns a dataset where each line correspon to a patient, and each column
 # correspond to a gene
 # values correspond to the TPM values.
-
-
-#files_to_dataframe <- function(files){
-#  n = length(files)
-#  #print(paste("length :", n))
-#  i = 0
-#  # initiate dataframe
-#  ds = NULL
-#  # for each file 
-#  for(file in files){
-#    i = i + 1
-#    #print(paste("current file :",i ,"/",n))
-#    # pick one file and load it
-#    patient_data = read.delim(file, header = TRUE)[,4] # we only keep TPM
-#    # to avoid artifacts
-#    if(length(patient_data)==95309){
-#      ds <- rbind(ds, patient_data)
-#    }
-#  }
-#  return (ds)
-#} 
-
-### This approach has a huge problem,
-### Repetitively using rbind is extremely slow and we might seek alternatives 
-### to this method
-### it gets exponentially slower 
-
-
 
 
 # this function needs the meta file as part of the environement
@@ -156,7 +131,7 @@ file_to_vec <- function(file, add_metadata = FALSE){
 
 files_to_dataframe_fast <- function(files, keep_file_names = F){
   n = length(files)
-  ds  = map(as.matrix(files, ncol = 1 ), file_to_row_matrix, keep_file_names)
+  ds  = map(as.matrix(files, ncol = 1 ), file_to_row_matrix, keep_file_names, .progress = T)
   ds_ = t(as.data.frame(ds, col.names = 1:n))
   return (ds_)
 } 
@@ -170,11 +145,11 @@ fasterrrr <- function(files, keep_file_names = F){
 }
 
 system.time(
-  ds_transcript_test_slowwwww  <- files_to_dataframe_fast(files_transcript[1:10], T)
+  ds_transcript_test_slowwwww  <- files_to_dataframe_fast(files_transcript[1:100], T)
 )
 
 system.time(
-  ds_transcript_testerrrr  <- fasterrrr(files_transcript[1:10], T)
+  ds_transcript_testerrrr  <- fasterrrr(files_transcript, T)
 )
 
 
@@ -185,10 +160,7 @@ system.time(
 # create a simple csvfile out of all the transcripts with all information
 # about cohort, timepoint etc.
 
-files_transcript = files[file_type == "transcripts"]
 
-# remove NA
-files_transcript = files_transcript[!is.na(files_transcript)]
 
 
 # into a dataframe
