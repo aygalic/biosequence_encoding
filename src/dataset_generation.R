@@ -89,45 +89,14 @@ file_to_row_matrix <- function(file, add_metadata = FALSE){
       phase <- strsplit(filename, "-", fixed = T)[[1]][2]
       patient_id <- strsplit(filename, ".", fixed = T)[[1]][2]
       cohort = meta$Cohort[match(patient_id, meta$`Patient Number`)][1]
-      
       line = c(filename,patient_id, clinical_event, phase, cohort, patient_data$TPM)
     }
     else{
-      #line = as.matrix(patient_data, nrow = 1 )
       line = patient_data
     }
   }
   return (line)
 } 
-
-
-# this function needs the meta file as part of the environement
-file_to_vec <- function(file, add_metadata = FALSE){
-  # initiate dataframe
-  line = NULL
-  # pick one file and load it
-  patient_data = fread(file, header = TRUE)[,4] # we only keep TPM
-  
-  # to avoid artifacts
-  if(dim(patient_data)[1]==95309){
-    if(add_metadata){
-      filename = strsplit(file, "/", fixed = T)[[1]][4]
-      clinical_event <- strsplit(filename, ".", fixed = T)[[1]][3]
-      phase <- strsplit(filename, "-", fixed = T)[[1]][2]
-      patient_id <- strsplit(filename, ".", fixed = T)[[1]][2]
-      cohort = meta$Cohort[match(patient_id, meta$`Patient Number`)][1]
-      
-      line = c(filename,patient_id, clinical_event, phase, cohort, patient_data$TPM)
-    }
-    else{
-      #line = as.matrix(patient_data, nrow = 1 )
-      line = patient_data
-    }
-  }
-  return (line)
-} 
-
-
 
 files_to_dataframe_fast <- function(files, keep_file_names = F){
   n = length(files)
@@ -136,21 +105,10 @@ files_to_dataframe_fast <- function(files, keep_file_names = F){
   return (ds_)
 } 
 
-
-# not actually faster
-fasterrrr <- function(files, keep_file_names = F){
-  list_of_dfs <- lapply(files, file_to_vec, add_metadata = T)
-  rows <- Reduce(rbind,list_of_dfs)
-  return (rows)
-}
-
 system.time(
-  ds_transcript_test_slowwwww  <- files_to_dataframe_fast(files_transcript[1:100], T)
+  ds_transcript_test_slowwwww  <- files_to_dataframe_fast(files_transcript[1:10], T)
 )
 
-system.time(
-  ds_transcript_testerrrr  <- fasterrrr(files_transcript, T)
-)
 
 
 
@@ -166,6 +124,7 @@ system.time(
 # into a dataframe
 ds_transcript  = files_to_dataframe_fast(files_transcript, T)
 
+
 # we trim the filename column and make it into different features of interst
 ds_transcript = as.data.frame(ds_transcript)
 colnames(ds_transcript)[1:5] = c("file_name", "patient_id", "clinical_event", "phase", "cohort")
@@ -174,9 +133,18 @@ colnames(ds_transcript)[1:5] = c("file_name", "patient_id", "clinical_event", "p
 genes = read.delim(files[10], header = TRUE)[,1]
 colnames(ds_transcript)[6:(length(ds_transcript))] = genes
 
+# ok
 
 #write.csv(ds_transcript, "./workfiles/raw_data.csv")
 fwrite(ds_transcript, "./workfiles/raw_data.csv")
+
+
+temp = ds_transcript[,6:(length(ds_transcript))]
+
+library(dplyr)
+length(temp)
+temp2 <- temp %>% mutate_at(1:95309, as.numeric)
+
 
 
 
@@ -187,13 +155,22 @@ fwrite(ds_transcript, "./workfiles/raw_data.csv")
 # we will use robust scaller but we have to find some litterature about normalization
 # choices for this kind of data
 robust_scalar<- function(x){(x- median(x)) /(quantile(x,probs = .75)-quantile(x,probs = .25))}
-
-robust_scalar_transcripts <- as.data.frame(lapply(ds_transcript, robust_scalar))
-
+robust_scalar_transcripts <- as.data.frame(lapply(temp2, robust_scalar))
 
 
+# turn it back into a proper dataframe with meta information
+robust_scalar_transcripts_whole <- cbind(ds_transcript[,1:5], robust_scalar_transcripts)
+
+colnames(robust_scalar_transcripts_whole)[1:5] = c("file_name", "patient_id", "clinical_event", "phase", "cohort")
+
+# we set the name of the features
+colnames(robust_scalar_transcripts_whole)[6:(length(robust_scalar_transcripts_whole))] = genes
+
+# ? ok ?
+fwrite(robust_scalar_transcripts_whole, "./workfiles/robust_normed_data.csv")
 
 
+##### Unecessary as of now
 
 
 
