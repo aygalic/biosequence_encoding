@@ -68,6 +68,10 @@ files_transcript = files_transcript[!is.na(files_transcript)]
 
 
 
+# subsanmple for efficiency
+files_transcript = files_transcript[1:100]
+
+
 
 # this function load all patients in a given files
 # it returns a dataset where each line correspon to a patient, and each column
@@ -133,18 +137,19 @@ colnames(ds_transcript)[1:5] = c("file_name", "patient_id", "clinical_event", "p
 genes = read.delim(files[10], header = TRUE)[,1]
 colnames(ds_transcript)[6:(length(ds_transcript))] = genes
 
-# ok
-
-#write.csv(ds_transcript, "./workfiles/raw_data.csv")
-fwrite(ds_transcript, "./workfiles/raw_data.csv")
 
 
-temp = ds_transcript[,6:(length(ds_transcript))]
+#fwrite(ds_transcript, "./workfiles/raw_data.csv")
+
+
+pre_normalization = ds_transcript[,6:(length(ds_transcript))]
 
 library(dplyr)
-length(temp)
-temp2 <- temp %>% mutate_at(1:95309, as.numeric)
-
+length(pre_normalization)
+# this is a very slow operation, would be nice to benchmark it against alternatives
+pre_normalization_numeric <- pre_normalization %>% mutate_at(1:95309, as.numeric)
+sum(is.na(pre_normalization))
+sum(is.na(pre_normalization_numeric))
 
 
 
@@ -154,24 +159,52 @@ temp2 <- temp %>% mutate_at(1:95309, as.numeric)
 #
 # we will use robust scaller but we have to find some litterature about normalization
 # choices for this kind of data
-robust_scalar<- function(x){(x- median(x)) /(quantile(x,probs = .75)-quantile(x,probs = .25))}
-robust_scalar_transcripts <- as.data.frame(lapply(temp2, robust_scalar))
 
+# we first have to deal with the 0 variance transcript
+
+issues = which(sapply(pre_normalization_numeric, var) == 0) 
+
+
+# we only scale the non 0 variance columns
+scaled_transcripts <- pre_normalization_numeric %>% mutate_at(genes[-issues], scale) # this is sloooow
+
+
+
+#curated_pre_norm = pre_normalization_numeric[,-issues]
+
+
+#scaled_transcripts <- scale(curated_pre_norm)
+sum(is.na(scaled_transcripts))
+
+
+
+###### ON HOLD : Another normalization approach
+
+#robust_scalar<- function(x){(x- median(x)) /(quantile(x,probs = .75)-quantile(x,probs = .25))}
+#robust_scalar_transcripts <- as.data.frame(lapply(pre_normalization_numeric, robust_scalar))
+#sum(is.na(robust_scalar_transcripts))
+
+#scaled_transcripts <- scale(pre_normalization_numeric)
+#sum(is.na(scaled_transcripts))
+
+######
 
 # turn it back into a proper dataframe with meta information
-robust_scalar_transcripts_whole <- cbind(ds_transcript[,1:5], robust_scalar_transcripts)
+scaled_transcripts_whole <- cbind(ds_transcript[,1:5], scaled_transcripts)
 
-colnames(robust_scalar_transcripts_whole)[1:5] = c("file_name", "patient_id", "clinical_event", "phase", "cohort")
+colnames(scaled_transcripts_whole)[1:5] = c("file_name", "patient_id", "clinical_event", "phase", "cohort")
 
 # we set the name of the features
-colnames(robust_scalar_transcripts_whole)[6:(length(robust_scalar_transcripts_whole))] = genes
-
-# ? ok ?
-fwrite(robust_scalar_transcripts_whole, "./workfiles/robust_normed_data.csv")
+colnames(scaled_transcripts_whole)[6:(length(scaled_transcripts_whole))] = genes
 
 
+fwrite(scaled_transcripts_whole, "./workfiles/scaled_data.csv")
+
+
+
+##### 
 ##### Unecessary as of now
-
+##### 
 
 
 # we first want to compare the transcript expression at diagnosis and after 6 moths
