@@ -5,17 +5,17 @@ library(MASS)
 
 library("readxl")
 
-setwd("~/Library/CloudStorage/OneDrive-Personal/polimi/Thesis")
+setwd("~/Library/CloudStorage/OneDrive-Personal/polimi/Thesis/genome_analysis_parkinson/src")
 
-df = read.csv("./workfiles/compressed_data.csv")
+df = read.csv("../workfiles/compressed_data.csv")
+df = read.csv("../workfiles/compressed_data_after_norm.csv")
 #raw_df = read.csv("./workfiles/raw_data.csv", header = T)
 
 
 #dim(raw_df)
 names = df$name
-df = df[,1:63]
+df = df[,1:65]
 #df = raw_df[, 7:95315]
-df
 
 
 
@@ -44,7 +44,7 @@ projected_data = as.matrix(df) %*% as.matrix(pc.data$loadings[,1:2])
 
 plot(projected_data) # it would be nice to know which patient correspond to what
 
-meta <- read_excel("METADATA_200123.xlsx", sheet = "Foglio1")
+meta <- read_excel("../../METADATA_200123.xlsx", sheet = "Foglio1")
 patient_ids <- sapply(names, function(names) c(strsplit(names, ".", fixed = T)[[1]][2]), USE.NAMES=FALSE)
 patient_ids
 
