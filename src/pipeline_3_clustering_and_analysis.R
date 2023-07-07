@@ -5,6 +5,10 @@ library(MASS)
 
 library("readxl")
 
+library(Rtsne)
+library(ggplot2)
+
+
 setwd("~/Library/CloudStorage/OneDrive-Personal/polimi/Thesis/genome_analysis_parkinson/src")
 
 df = read.csv("../workfiles/compressed_data.csv")
@@ -117,4 +121,54 @@ plot(projected_data, col = factor(fit$cluster), pch = 16, main ="kmeans")
 
 
 
+#################################
+################################# t-SNE
+#################################
 
+
+data_matrix <- as.matrix(df)
+tsne_out <- Rtsne(data_matrix)
+
+
+# Conversion of matrix to dataframe
+tsne_plot <- data.frame(x = tsne_out$Y[,1],
+                        y = tsne_out$Y[,2])
+
+library(wesanderson)
+
+# Plotting the plot using ggplot() function
+ggplot(tsne_plot) + 
+  geom_point( aes(x=x,
+                  y=y,
+                  col = as.factor(cohorts))
+              ) + 
+  scale_color_grey() + 
+  theme_classic()
+
+# what about non encoded data ?
+####
+# Dataset too big too handle.
+####
+
+library(data.table)
+raw_df = fread("../workfiles/raw_data.csv")
+
+
+data_matrix <- as.matrix(raw_df)
+tsne_out <- Rtsne(data_matrix)
+
+
+# Conversion of matrix to dataframe
+tsne_plot <- data.frame(x = tsne_out$Y[,1],
+                        y = tsne_out$Y[,2])
+
+library(wesanderson)
+
+# Plotting the plot using ggplot() function
+ggplot(tsne_plot) + 
+  geom_point( aes(x=x,
+                  y=y,
+                  col = as.factor(cohorts))
+  ) + 
+  scale_color_grey() + 
+  theme_classic()
