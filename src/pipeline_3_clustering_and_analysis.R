@@ -21,6 +21,7 @@ df = read.csv("../workfiles/compressed_data_vae.csv")
 #dim(raw_df)
 names = df$name
 df = df[,1:65]
+df = df[,2:65]
 #df = raw_df[, 7:95315]
 
 
