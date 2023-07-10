@@ -13,6 +13,8 @@ setwd("~/Library/CloudStorage/OneDrive-Personal/polimi/Thesis/genome_analysis_pa
 
 df = read.csv("../workfiles/compressed_data.csv")
 df = read.csv("../workfiles/compressed_data_after_norm.csv")
+df = read.csv("../workfiles/compressed_data_vae.csv")
+
 #raw_df = read.csv("./workfiles/raw_data.csv", header = T)
 
 
@@ -134,7 +136,6 @@ tsne_out <- Rtsne(data_matrix)
 tsne_plot <- data.frame(x = tsne_out$Y[,1],
                         y = tsne_out$Y[,2])
 
-library(wesanderson)
 
 # Plotting the plot using ggplot() function
 ggplot(tsne_plot) + 
