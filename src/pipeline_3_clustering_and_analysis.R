@@ -15,8 +15,15 @@ df = read.csv("../workfiles/compressed_data.csv")
 df = read.csv("../workfiles/compressed_data_after_norm.csv")
 df = read.csv("../workfiles/compressed_data_vae.csv")
 
-#raw_df = read.csv("./workfiles/raw_data.csv", header = T)
 
+#dir <- system.file("./data/quant/", package = "tximportData")
+dir <- "../../data/quant"
+list.files(dir) # up to this everything works
+
+samples <- list.files(dir)
+samples
+
+files <- file.path(dir, samples)
 
 #dim(raw_df)
 names = df$name
@@ -59,7 +66,13 @@ patient_ids
 cohorts = meta$Cohort[match(patient_ids, meta$`Patient Number`)]
 cohorts
 
+phases <- sapply(names, function(names) c(strsplit(names, "-", fixed = T)[[1]][2]), USE.NAMES=FALSE)
 
+time_points <- sapply(names, function(names) c(strsplit(names, ".", fixed = T)[[1]][4]), USE.NAMES=FALSE)
+
+
+
+plot(projected_data, col = factor(phases), pch = 16)
 plot(projected_data, col = factor(cohorts), pch = 16)
 
 legend_ = c("Parkinson's Disease", "Healthy Control", "SWEDD", "Prodromal")
@@ -143,9 +156,30 @@ ggplot(tsne_plot) +
   geom_point( aes(x=x,
                   y=y,
                   col = as.factor(cohorts))
-              ) + 
+  ) + 
   scale_color_grey() + 
   theme_classic()
+
+
+ggplot(tsne_plot) + 
+  geom_point( aes(x=x,
+                  y=y,
+                  col = as.factor(phases))
+  ) + 
+  scale_color_grey() + 
+  theme_classic()
+
+ggplot(tsne_plot) + 
+  geom_point( aes(x=x,
+                  y=y,
+                  col = as.factor(time_points))
+  ) + 
+  scale_color_grey() + 
+  theme_classic()
+
+
+
+
 
 # what about non encoded data ?
 ####
@@ -164,7 +198,6 @@ tsne_out <- Rtsne(data_matrix)
 tsne_plot <- data.frame(x = tsne_out$Y[,1],
                         y = tsne_out$Y[,2])
 
-library(wesanderson)
 
 # Plotting the plot using ggplot() function
 ggplot(tsne_plot) + 
