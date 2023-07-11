@@ -16,14 +16,6 @@ df = read.csv("../workfiles/compressed_data_after_norm.csv")
 df = read.csv("../workfiles/compressed_data_vae.csv")
 
 
-#dir <- system.file("./data/quant/", package = "tximportData")
-dir <- "../../data/quant"
-list.files(dir) # up to this everything works
-
-samples <- list.files(dir)
-samples
-
-files <- file.path(dir, samples)
 
 #dim(raw_df)
 names = df$name
@@ -68,11 +60,11 @@ cohorts
 
 phases <- sapply(names, function(names) c(strsplit(names, "-", fixed = T)[[1]][2]), USE.NAMES=FALSE)
 
-time_points <- sapply(names, function(names) c(strsplit(names, ".", fixed = T)[[1]][4]), USE.NAMES=FALSE)
+time_points <- sapply(names, function(names) c(strsplit(names, ".", fixed = T)[[1]][3]), USE.NAMES=FALSE)
+time_points
 
 
-
-plot(projected_data, col = factor(phases), pch = 16)
+plot(projected_data, col = factor(time_points), pch = 16)
 plot(projected_data, col = factor(cohorts), pch = 16)
 
 legend_ = c("Parkinson's Disease", "Healthy Control", "SWEDD", "Prodromal")
@@ -152,13 +144,19 @@ tsne_plot <- data.frame(x = tsne_out$Y[,1],
 
 
 # Plotting the plot using ggplot() function
+
+
 ggplot(tsne_plot) + 
   geom_point( aes(x=x,
                   y=y,
-                  col = as.factor(cohorts))
+                  col = as.factor(cohorts)),
+              alpha=0.5
   ) + 
-  scale_color_grey() + 
-  theme_classic()
+  theme_classic() +
+  scale_color_manual(values = c("#FFFFFF","#1b98e0","#353436","#FFFFFF", "#FFFFFF"))
+  #scale_color_manual(values = c("#FFFFFF","#1b98e0","#353436","#FFFFFF", labels=c('label1', 'label2', 'label3', 'label4')))
+
+
 
 
 ggplot(tsne_plot) + 
@@ -176,7 +174,6 @@ ggplot(tsne_plot) +
   ) + 
   scale_color_grey() + 
   theme_classic()
-
 
 
 
