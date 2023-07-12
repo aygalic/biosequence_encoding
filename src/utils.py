@@ -39,7 +39,11 @@ def load_patient_data(filename):
 
 
 # building the actual dataset
-def generate_dataset(path = absolute_path, feature_selection_threshold = None, batch_size = 64, subsample = None):
+def generate_dataset(path = absolute_path, 
+                     feature_selection_threshold = None, 
+                     batch_size = 64, 
+                     subsample = None, 
+                     return_filenames = False):
     # getting entries ready
     # each couple of entries correspond to one patient, we are only interested in the "transcript" files
     entries = os.listdir(absolute_path)
@@ -63,7 +67,9 @@ def generate_dataset(path = absolute_path, feature_selection_threshold = None, b
 
     x_train = tf.data.Dataset.from_tensor_slices(train_ds)
     dataset = x_train.batch(batch_size)
-
+    if(return_filenames):
+        filenames = [f for (f, test) in  zip(entries_transcripts, samples_to_keep) if test]
+        return dataset, filenames
     return dataset
 
 
