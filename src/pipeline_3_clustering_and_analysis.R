@@ -17,6 +17,8 @@ df = read.csv("../workfiles/compressed_data_vae.csv")
 
 
 
+
+
 #dim(raw_df)
 names = df$name
 df = df[,1:65]
@@ -52,16 +54,12 @@ plot(projected_data) # it would be nice to know which patient correspond to what
 
 meta <- read_excel("../../METADATA_200123.xlsx", sheet = "Foglio1")
 patient_ids <- sapply(names, function(names) c(strsplit(names, ".", fixed = T)[[1]][2]), USE.NAMES=FALSE)
-patient_ids
-
 
 cohorts = meta$Cohort[match(patient_ids, meta$`Patient Number`)]
-cohorts
 
 phases <- sapply(names, function(names) c(strsplit(names, "-", fixed = T)[[1]][2]), USE.NAMES=FALSE)
 
 time_points <- sapply(names, function(names) c(strsplit(names, ".", fixed = T)[[1]][3]), USE.NAMES=FALSE)
-time_points
 
 
 plot(projected_data, col = factor(time_points), pch = 16)
@@ -152,8 +150,9 @@ ggplot(tsne_plot) +
                   col = as.factor(cohorts)),
               alpha=0.5
   ) + 
-  theme_classic() +
-  scale_color_manual(values = c("#FFFFFF","#1b98e0","#353436","#FFFFFF", "#FFFFFF"))
+  theme_classic()  + scale_color_grey()
+
+  #scale_color_manual(values = c("#FFFFFF","#1b98e0","#353436","#FFFFFF", "#FFFFFF"))
   #scale_color_manual(values = c("#FFFFFF","#1b98e0","#353436","#FFFFFF", labels=c('label1', 'label2', 'label3', 'label4')))
 
 
