@@ -8,12 +8,14 @@ library("readxl")
 library(Rtsne)
 library(ggplot2)
 
+library(ggpubr)
 
 setwd("~/Library/CloudStorage/OneDrive-Personal/polimi/Thesis/genome_analysis_parkinson/src")
 
 df = read.csv("../workfiles/compressed_data.csv")
 df = read.csv("../workfiles/compressed_data_after_norm.csv")
 df = read.csv("../workfiles/compressed_data_vae.csv")
+df = read.csv("../workfiles/compressed_data_vae_phase_2.csv")
 
 
 
@@ -54,11 +56,8 @@ plot(projected_data) # it would be nice to know which patient correspond to what
 
 meta <- read_excel("../../METADATA_200123.xlsx", sheet = "Foglio1")
 patient_ids <- sapply(names, function(names) c(strsplit(names, ".", fixed = T)[[1]][2]), USE.NAMES=FALSE)
-
 cohorts = meta$Cohort[match(patient_ids, meta$`Patient Number`)]
-
 phases <- sapply(names, function(names) c(strsplit(names, "-", fixed = T)[[1]][2]), USE.NAMES=FALSE)
-
 time_points <- sapply(names, function(names) c(strsplit(names, ".", fixed = T)[[1]][3]), USE.NAMES=FALSE)
 
 
@@ -133,24 +132,33 @@ plot(projected_data, col = factor(fit$cluster), pch = 16, main ="kmeans")
 
 
 data_matrix <- as.matrix(df)
-tsne_out <- Rtsne(data_matrix)
 
 
-# Conversion of matrix to dataframe
-tsne_plot <- data.frame(x = tsne_out$Y[,1],
-                        y = tsne_out$Y[,2])
+perplexities = c(2, 5, 10, 25, 50, 75, 100, 200, 500)
+
+prepare_plot <- function(param){
+  tsne_out <- Rtsne(data_matrix,perplexity = param, pca = FALSE, max_iter = 10000)
+  tsne_plot <- data.frame(x = tsne_out$Y[,1],
+                          y = tsne_out$Y[,2])
+  plot = ggplot(tsne_plot) + 
+    geom_point( aes(x=x,
+                    y=y,
+                    col = as.factor(cohorts))) + 
+    theme_classic() + 
+    scale_color_grey()
+  
+  return(plot)
+}
+
+plots = map(perplexities, prepare_plot, .progress = TRUE)
 
 
-# Plotting the plot using ggplot() function
+ggarrange(plotlist=plots)
 
 
-ggplot(tsne_plot) + 
-  geom_point( aes(x=x,
-                  y=y,
-                  col = as.factor(cohorts)),
-              alpha=0.5
-  ) + 
-  theme_classic()  + scale_color_grey()
+
+
+
 
   #scale_color_manual(values = c("#FFFFFF","#1b98e0","#353436","#FFFFFF", "#FFFFFF"))
   #scale_color_manual(values = c("#FFFFFF","#1b98e0","#353436","#FFFFFF", labels=c('label1', 'label2', 'label3', 'label4')))
@@ -171,7 +179,7 @@ ggplot(tsne_plot) +
                   y=y,
                   col = as.factor(time_points))
   ) + 
-  scale_color_grey() + 
+  #scale_color_grey() + 
   theme_classic()
 
 
