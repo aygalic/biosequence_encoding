@@ -14,6 +14,10 @@ from tensorflow.keras import layers, losses
 from tensorflow.keras.models import Model
 from tensorflow import keras
 
+#import warnings # new twist
+
+
+
 
 # datasets
 
@@ -43,18 +47,37 @@ def generate_dataset(path = absolute_path,
                      feature_selection_threshold = None, 
                      batch_size = 64, 
                      subsample = None, 
-                     return_filenames = False):
+                     return_filenames = False,
+                     retain_phases = "Both"):
     # getting entries ready
     # each couple of entries correspond to one patient, we are only interested in the "transcript" files
     entries = os.listdir(absolute_path)
     entries_transcripts = [e for e in entries if "transcripts" in e ]
+
+    # retain only the phase(s) of interest
+    if(retain_phases == "1"):
+        entries_transcripts = [e for e in entries if "Phase1" in e ]
+        print("retained phase 1")
+    elif(retain_phases == "2"):
+        entries_transcripts = [e for e in entries if "Phase2" in e ]
+        print("retained phase 2")
+    elif(retain_phases == "Both"):
+        print("retained phases 1 & 2")
+    else:
+        print("Warning: 'retain_phases' argment wrong.") # couldn't use warning due to conflicts
+
+
+    # if we want a smaller dataset
     if(subsample is not None):
-        entries_transcripts = entries_transcripts[1:40] # for testing purpose 
-    # load the dataset into a list using the first pipeline
+        entries_transcripts = entries_transcripts[1:subsample]
+
+    # load the dataset into an array 
+    print("loading samples...")
     data = [load_patient_data(e) for e in entries_transcripts]
 
     # remove artifacts by keeping samples of correct length
     samples_to_keep = [1 if s.shape == (95309) else 0 for s in data]
+    print("loaded",len(samples_to_keep), "samples")
     train_ds = [sample for (sample, test) in  zip(data, samples_to_keep) if test]
 
     # if feature selection is applied
