@@ -12,10 +12,10 @@ library(ggpubr)
 
 setwd("~/Library/CloudStorage/OneDrive-Personal/polimi/Thesis/genome_analysis_parkinson/src")
 
-df = read.csv("../workfiles/compressed_data.csv")
-df = read.csv("../workfiles/compressed_data_after_norm.csv")
+
 df = read.csv("../workfiles/compressed_data_vae.csv")
 df = read.csv("../workfiles/compressed_data_vae_phase_2.csv")
+df = read.csv("../workfiles/compressed_data_simple_autoencoder_phase_2.csv")
 
 
 

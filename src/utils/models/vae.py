@@ -14,16 +14,8 @@ from tensorflow.keras import layers, losses
 from tensorflow.keras.models import Model
 from tensorflow import keras
 
-#import warnings # new twist
 
-
-
-
-
-
-
-# models
-
+# model
 class Sampling(layers.Layer):
     #Uses (z_mean, z_log_var) to sample z, the vector encoding a digit.
 
