@@ -9,6 +9,9 @@ library(Rtsne)
 library(ggplot2)
 
 library(ggpubr)
+library("purrr")
+
+
 
 setwd("~/Library/CloudStorage/OneDrive-Personal/polimi/Thesis/genome_analysis_parkinson/src")
 
@@ -16,6 +19,7 @@ setwd("~/Library/CloudStorage/OneDrive-Personal/polimi/Thesis/genome_analysis_pa
 df = read.csv("../workfiles/compressed_data_vae.csv")
 df = read.csv("../workfiles/compressed_data_vae_phase_2.csv")
 df = read.csv("../workfiles/compressed_data_simple_autoencoder_phase_2.csv")
+df = read.csv("../workfiles/compressed_data_cnn_autoencoder_phase_2.csv")
 
 
 
@@ -137,7 +141,7 @@ data_matrix <- as.matrix(df)
 perplexities = c(2, 5, 10, 25, 50, 75, 100, 200, 500)
 
 prepare_plot <- function(param){
-  tsne_out <- Rtsne(data_matrix,perplexity = param, pca = FALSE, max_iter = 10000)
+  tsne_out <- Rtsne(data_matrix,perplexity = param, pca = FALSE, max_iter = 5000)
   tsne_plot <- data.frame(x = tsne_out$Y[,1],
                           y = tsne_out$Y[,2])
   plot = ggplot(tsne_plot) + 
