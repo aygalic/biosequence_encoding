@@ -23,15 +23,42 @@ class Autoencoder(Model):
         self.encoder = tf.keras.Sequential([
             layers.Flatten(),
             layers.BatchNormalization(),
-            layers.Dense(latent_dim, activation='softplus'),
-            layers.Dense(latent_dim, activation='softplus'),
+            layers.Dropout(0.5),
+            layers.Dense(512),
+            layers.LeakyReLU(alpha=0.05),
+
+
+            layers.Dropout(0.5),
+            layers.Dense(256),
+            layers.LeakyReLU(alpha=0.05),
+
+            #layers.Dropout(0.5),
+            #layers.Dense(128),
+            #layers.LeakyReLU(alpha=0.05),
+
+            #layers.Dropout(0.5),
+            #layers.Dense(64),
+            #layers.LeakyReLU(alpha=0.05),
+
+            layers.Dense(latent_dim, activation='linear'),
         ])
         self.total_loss_tracker = keras.metrics.Mean(name="total_loss")
 
         
         self.decoder = tf.keras.Sequential([
-            layers.Dense(latent_dim, activation='softplus'),
-            layers.Dense(1 * shape, activation='softplus'), # softplus so we can have value in the expected range
+            layers.Dense(latent_dim),
+
+            #layers.Dropout(0.5),
+
+            #layers.Dense(64, activation='linear'),
+
+            #layers.Dense(128, activation='linear'),
+
+            layers.Dense(256),
+
+            layers.Dense(512),
+
+            layers.Dense(1 * shape, activation='linear', use_bias = True)
         ])
     
     @property

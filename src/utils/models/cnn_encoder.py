@@ -22,13 +22,15 @@ class CNN_Autoencoder(Model):
         self.latent_dim = latent_dim   
         self.encoder = tf.keras.Sequential([
             layers.Reshape((shape, 1)),
+            layers.Dropout(0.5),
+            layers.BatchNormalization(),
             layers.UnitNormalization(), # to avoid overloading float32
-            layers.Conv1D(filters=16, kernel_size=21, padding = "same", activation='ELU'),
-            layers.BatchNormalization(),
+            layers.Conv1D(filters=16, kernel_size=5, padding = "same", activation='selu', kernel_regularizer = tf.keras.regularizers.L2(0.1), bias_regularizer = tf.keras.regularizers.L2(0.1)),
             layers.MaxPooling1D(2),
-            layers.Conv1D(filters=32, kernel_size=15, padding = "same", activation='ELU'),
-            layers.BatchNormalization(),
+            layers.Dropout(0.5),
+            layers.Conv1D(filters=32, kernel_size=3, padding = "same", activation='selu', kernel_regularizer = tf.keras.regularizers.L2(0.1), bias_regularizer = tf.keras.regularizers.L2(0.1)),
             layers.AveragePooling1D(2),
+            layers.Dropout(0.5),
             layers.Flatten(),
             layers.Dense(latent_dim, activation='softplus'),
         ])
@@ -38,9 +40,9 @@ class CNN_Autoencoder(Model):
         self.decoder = tf.keras.Sequential([
             layers.Dense(latent_dim, activation='softplus'),
             layers.Reshape((latent_dim, 1)),
-            layers.Conv1DTranspose(filters=32, kernel_size=15, padding = "same", activation='ELU'),
+            layers.Conv1D(filters=32, kernel_size=3, padding = "same", activation='selu'),
             layers.UpSampling1D(2),
-            layers.Conv1DTranspose(filters=16, kernel_size=21, padding = "same", activation='ELU'),
+            layers.Conv1D(filters=16, kernel_size=5, padding = "same", activation='selu'),
             layers.UpSampling1D(2),
             layers.Flatten(),
             layers.Dense(1 * shape, activation='softplus'), # softplus so we can have value in the expected range

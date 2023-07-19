@@ -74,14 +74,33 @@ def generate_model(shape, latent_dim = 64):
 
 
     # default encoder
-    encoder_inputs = keras.Input(shape=shape)
+    encoder_inputs = keras.Input(shape=(shape,))
     x = layers.Flatten()(encoder_inputs)
+    
+    
     x = layers.UnitNormalization()(x) # to avoid overloading float32
-    x = layers.Dense(256, activation = "ELU")(x)
-    x = layers.Dense(128, activation = "ELU")(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Dense(128, activation = "ELU")(x)
-    x = layers.Dense(64, activation = "ELU")(x)
+    #x = layers.BatchNormalization()(x) # to avoid overloading float32
+
+    x = layers.Dropout(0.5)(x)
+    x = layers.Dense(512)(x)
+    x = layers.LeakyReLU(alpha=0.05)(x)
+
+    x = layers.Dropout(0.5)(x)
+    x = layers.Dense(256)(x)
+    x = layers.LeakyReLU(alpha=0.05)(x)
+
+
+
+
+    #x = layers.UnitNormalization()(x) # to avoid overloading float32
+    #x = layers.Dense(256, activation = "ELU")(x)
+    #x = layers.Dense(128, activation = "ELU")(x)
+    #x = layers.BatchNormalization()(x)
+    #x = layers.Dense(128, activation = "ELU")(x)
+    #x = layers.Dense(64, activation = "ELU")(x)
+
+
+
     z_mean = layers.Dense(latent_dim, name="z_mean")(x)
     z_log_var = layers.Dense(latent_dim, name="z_log_var")(x)
     z = Sampling()([z_mean, z_log_var])
@@ -92,12 +111,10 @@ def generate_model(shape, latent_dim = 64):
 
     # default decoder
     latent_inputs = keras.Input(shape=(latent_dim,))
-    x = layers.Dense(64, activation="ELU")(latent_inputs)
-    x = layers.Dense(128, activation="ELU")(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.Dense(128, activation="ELU")(x)
-    x = layers.Dense(256, activation="ELU")(x)
-    decoder_outputs = layers.Dense(shape, activation="ELU")(x)
+    x = layers.Dense(64)(latent_inputs)
+    x = layers.Dense(256)(x)
+    x = layers.Dense(512)(x)
+    decoder_outputs = layers.Dense(shape)(x)
     decoder = keras.Model(latent_inputs, decoder_outputs, name="decoder")
 
     vae = VAE(encoder, decoder)
