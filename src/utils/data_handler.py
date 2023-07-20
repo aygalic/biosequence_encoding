@@ -12,6 +12,7 @@ from tensorflow.keras import layers, losses
 from tensorflow.keras.models import Model
 from tensorflow import keras
 
+from utils import feature_selection
 
 # datasets
 
@@ -42,7 +43,9 @@ def generate_dataset(path = absolute_path,
                      batch_size = 64, 
                      subsample = None, 
                      return_filenames = False,
-                     retain_phases = "Both"):
+                     retain_phases = "Both",
+                     feature_selection_proceedure = None):
+
     # getting entries ready
     # each couple of entries correspond to one patient, we are only interested in the "transcript" files
     entries = os.listdir(absolute_path)
@@ -72,6 +75,7 @@ def generate_dataset(path = absolute_path,
     # remove artifacts by keeping samples of correct length
     samples_to_keep = [1 if s.shape == (95309) else 0 for s in data]
     print("loaded",len(samples_to_keep), "samples")
+    
     train_ds = [sample for (sample, test) in  zip(data, samples_to_keep) if test]
 
     # if feature selection is applied
@@ -79,9 +83,23 @@ def generate_dataset(path = absolute_path,
         data_array = np.array(train_ds)
         MAD = scipy.stats.median_abs_deviation(data_array)
         gene_selected = [True if val > feature_selection_threshold else False for val in MAD]
-        print("number of genes selected : ",sum(gene_selected))
+        #print("number of genes selected : ",sum(gene_selected))
         train_ds = data_array[:,gene_selected]
 
+    if(feature_selection_proceedure is not None):
+        data_array = np.array(train_ds)
+        Y = np.array([1 if "Phase1" in e else 0 for e in entries])
+        Y = [y for (y, test) in  zip(Y, samples_to_keep) if test]
+
+        gene_selected = draft_feature_selection.LASSO_selection(data_array, Y, 1000)
+        train_ds = data_array[:,gene_selected]
+
+        #gene_selected = [True if val > feature_selection_threshold else False for val in MAD]
+        #print("number of genes selected : ",sum(gene_selected))
+        #train_ds = data_array[:,gene_selected]
+
+
+    print("number of genes selected : ", len(train_ds[0]))
     x_train = tf.data.Dataset.from_tensor_slices(train_ds)
     dataset = x_train.batch(batch_size)
     if(return_filenames):
