@@ -57,15 +57,18 @@ def generate_dataset(path = absolute_path,
     # we load metadata, so we can have access to additional information not included in the filename
     meta_data = pd.read_excel(metadata_path, header = 1, usecols = range(1,10) )
 
-    
+    ###########################################
+    ###### pre-loading patient selection ######
+    ###########################################
+    # selecting which entires to include in our analysis
 
     # To avoid the natural tendency of the model to base its response to different phases
     # we provide the option to focus our analysis on either or both phases of the study.
     if(retain_phases == "1"):
-        entries_transcripts = [e for e in entries if "Phase1" in e ]
+        entries_transcripts = [e for e in entries_transcripts if "Phase1" in e ]
         print("retained phase 1")
     elif(retain_phases == "2"):
-        entries_transcripts = [e for e in entries if "Phase2" in e ]
+        entries_transcripts = [e for e in entries_transcripts if "Phase2" in e ]
         print("retained phase 2")
     elif(retain_phases == "Both"):
         print("retained phases 1 & 2")
@@ -75,7 +78,18 @@ def generate_dataset(path = absolute_path,
 
     # if we want a smaller dataset for testing purposes
     if(subsample is not None):
-        entries_transcripts = entries_transcripts[1:subsample]
+        entries_transcripts = entries_transcripts[0:subsample]
+
+    # sanity check : are the patient numbers actually numeric ? 
+    entries_transcripts = [e for e in entries_transcripts if e.split(".")[1].isnumeric() ]
+
+    # sanity check : don't load patient where some values are missing
+    Na_s =  meta_data[meta_data.isna().any(axis=1)]["Patient Number"]
+    entries_transcripts = [e for e in entries_transcripts if e.split(".")[1] not in str(Na_s) ]
+
+    ###########################################
+    ############ loading patients  ############
+    ###########################################
 
     # load the dataset into an array 
     print("loading samples...")
@@ -86,8 +100,6 @@ def generate_dataset(path = absolute_path,
     print("loaded",len(samples_to_keep), "samples")
     
     train_ds = [sample for (sample, test) in  zip(data, samples_to_keep) if test]
-
-
 
     patient_id = [int(p.split(".")[1]) for (p, test) in  zip(entries_transcripts, samples_to_keep) if test]
 
@@ -101,6 +113,10 @@ def generate_dataset(path = absolute_path,
     cohorts = np.array(meta_data["Cohort"])
     cohorts = [int(value) for value in cohorts]
 
+
+    ###########################################
+    ############ feature selection  ###########
+    ###########################################
 
     # if feature selection is applied
     if(feature_selection_threshold is not None):
@@ -120,5 +136,5 @@ def generate_dataset(path = absolute_path,
     dataset = x_train.batch(batch_size)
     if(return_filenames):
         filenames = [f for (f, test) in  zip(entries_transcripts, samples_to_keep) if test]
-        return dataset, filenames
-    return dataset
+        return dataset, filenames, len(train_ds[0])
+    return dataset, len(train_ds[0])

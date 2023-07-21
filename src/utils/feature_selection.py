@@ -42,7 +42,7 @@ def LASSO_selection(data_array, labels, sgdc_params = None):
             'alpha':np.linspace(0.1, 0.5, 10),
         }
 
-    sgdc_gs = GridSearchCV(sgdc, sgdc_params, cv=5, verbose=1, n_jobs=1)
+    sgdc_gs = GridSearchCV(sgdc, sgdc_params, cv=5, verbose=10, n_jobs=1)
 
     # fit the model to the dataset
     sgdc_gs.fit(scaled_data, labels)
@@ -51,11 +51,6 @@ def LASSO_selection(data_array, labels, sgdc_params = None):
     # some debugging
     print("best score:",sgdc_gs.best_score_)
     print("best estimator:",sgdc_gs.best_estimator_)
-    
-    print("best_estimator_.coef_:",sgdc_gs.best_estimator_.coef_)
-    print("SUM best_estimator_.coef_:",sum(sgdc_gs.best_estimator_.coef_[0]))
-    
-    print("best_estimator_.intercept_:",sgdc_gs.best_estimator_.intercept_)
 
     print("error rate :", sum(predictions!= labels)/len(labels) )
     print("Class 0 :", sum(predictions == 0) )
@@ -63,8 +58,6 @@ def LASSO_selection(data_array, labels, sgdc_params = None):
 
     # genes to select:
     genes_selected = [True if coef!=0 else False for coef in sgdc_gs.best_estimator_.coef_[0]]
-    print("genes_selected", genes_selected)
-    print("sum(genes_selected)", sum(genes_selected))
 
 
     return genes_selected
