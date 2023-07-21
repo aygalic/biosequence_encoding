@@ -18,6 +18,7 @@ from utils import feature_selection
 
 # default path of the folder containing the salmon files
 absolute_path = '/Users/aygalic/OneDrive/polimi/Thesis/data/quant/'  
+metadata_path = '/Users/aygalic/OneDrive/polimi/Thesis/METADATA_200123.xlsx'  
 
 
 
@@ -39,19 +40,27 @@ def load_patient_data(filename):
 
 # building the actual dataset
 def generate_dataset(path = absolute_path, 
+                     metadata_path = metadata_path,
                      feature_selection_threshold = None, 
                      batch_size = 64, 
                      subsample = None, 
                      return_filenames = False,
                      retain_phases = "Both",
-                     feature_selection_proceedure = None):
+                     feature_selection_proceedure = None,
+                     sgdc_params = None):
 
     # getting entries ready
     # each couple of entries correspond to one patient, we are only interested in the "transcript" files
-    entries = os.listdir(absolute_path)
+    entries = os.listdir(path)
     entries_transcripts = [e for e in entries if "transcripts" in e ]
+    
+    # we load metadata, so we can have access to additional information not included in the filename
+    meta_data = pd.read_excel(metadata_path, header = 1, usecols = range(1,10) )
 
-    # retain only the phase(s) of interest
+    
+
+    # To avoid the natural tendency of the model to base its response to different phases
+    # we provide the option to focus our analysis on either or both phases of the study.
     if(retain_phases == "1"):
         entries_transcripts = [e for e in entries if "Phase1" in e ]
         print("retained phase 1")
@@ -64,7 +73,7 @@ def generate_dataset(path = absolute_path,
         print("Warning: 'retain_phases' argment wrong.") # couldn't use warning due to conflicts
 
 
-    # if we want a smaller dataset
+    # if we want a smaller dataset for testing purposes
     if(subsample is not None):
         entries_transcripts = entries_transcripts[1:subsample]
 
@@ -78,26 +87,33 @@ def generate_dataset(path = absolute_path,
     
     train_ds = [sample for (sample, test) in  zip(data, samples_to_keep) if test]
 
+
+
+    patient_id = [int(p.split(".")[1]) for (p, test) in  zip(entries_transcripts, samples_to_keep) if test]
+
+    # only keep metadata for selected patients
+    meta_data = meta_data.set_index('Patient Number')
+    meta_data = meta_data.reindex(index=patient_id)
+    meta_data = meta_data.reset_index()
+
+
+    # for each patient in our dataset, we want to know to what cohort he belongs
+    cohorts = np.array(meta_data["Cohort"])
+    cohorts = [int(value) for value in cohorts]
+
+
     # if feature selection is applied
     if(feature_selection_threshold is not None):
+        print("selecting genes based on median absolute deviation threshold: ",feature_selection_threshold, "...")
         data_array = np.array(train_ds)
-        MAD = scipy.stats.median_abs_deviation(data_array)
-        gene_selected = [True if val > feature_selection_threshold else False for val in MAD]
-        #print("number of genes selected : ",sum(gene_selected))
+        gene_selected = feature_selection.MAD_selection(data_array, feature_selection_threshold)
         train_ds = data_array[:,gene_selected]
 
-    if(feature_selection_proceedure is not None):
+    if(feature_selection_proceedure == "LASSO"):
+        print("selecting genes based on LASSO-like classification...")
         data_array = np.array(train_ds)
-        Y = np.array([1 if "Phase1" in e else 0 for e in entries])
-        Y = [y for (y, test) in  zip(Y, samples_to_keep) if test]
-
-        gene_selected = draft_feature_selection.LASSO_selection(data_array, Y, 1000)
+        gene_selected = feature_selection.LASSO_selection(data_array, cohorts, sgdc_params)
         train_ds = data_array[:,gene_selected]
-
-        #gene_selected = [True if val > feature_selection_threshold else False for val in MAD]
-        #print("number of genes selected : ",sum(gene_selected))
-        #train_ds = data_array[:,gene_selected]
-
 
     print("number of genes selected : ", len(train_ds[0]))
     x_train = tf.data.Dataset.from_tensor_slices(train_ds)
