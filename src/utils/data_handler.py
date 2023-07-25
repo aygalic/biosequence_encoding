@@ -47,7 +47,8 @@ def generate_dataset(path = absolute_path,
                      return_filenames = False,
                      retain_phases = "Both",
                      feature_selection_proceedure = None,
-                     sgdc_params = None):
+                     sgdc_params = None,
+                     class_balancing = None):
 
     # getting entries ready
     # each couple of entries correspond to one patient, we are only interested in the "transcript" files
@@ -127,7 +128,7 @@ def generate_dataset(path = absolute_path,
     if(feature_selection_proceedure == "LASSO"):
         print("selecting genes based on LASSO-like classification...")
         data_array = np.array(train_ds)
-        gene_selected = feature_selection.LASSO_selection(data_array, cohorts, sgdc_params)
+        gene_selected = feature_selection.LASSO_selection(data_array, cohorts, sgdc_params, class_balancing)
         train_ds = data_array[:,gene_selected]
 
     print("number of genes selected : ", len(train_ds[0]))

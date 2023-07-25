@@ -28,7 +28,7 @@ def MAD_selection(data_array, threshold):
         gene_selected = [True if val > threshold else False for val in MAD]
         return gene_selected
 
-def LASSO_selection(data_array, labels, sgdc_params = None):
+def LASSO_selection(data_array, labels, sgdc_params = None, class_balancing = None):
 
     ###########################################
     ############## normalization ##############
@@ -53,40 +53,48 @@ def LASSO_selection(data_array, labels, sgdc_params = None):
     # this is a nice comprimise between computational complexity and class balancing.
     #
 
+    if(class_balancing == "match_smaller_sample"):
+        cts = Counter(labels)
+
+        minimum = min(cts.values())
+        print("Balancing data with:",minimum, "samples in each class")
+
+        # initialize new empty balanced dataset
+        balanced_data = np.empty((0,data_array.shape[1]), float)
+        balanced_labels = np.array([])
+
+
+        for key in cts:
+            sample = sample_without_replacement(cts[key], minimum)
+            patient_in_class = [True if label == key else False for label in labels]
+            balanced_data = np.append(balanced_data, scaled_data[patient_in_class,:][sample,:], axis = 0)
+            balanced_labels = np.append(balanced_labels, np.repeat(key, minimum))
 
 
 
-    cts = Counter(labels)
-    print("Classes : obs for a given class",cts)
-    minimum = min(cts.values())
-    print("minimum:",minimum)
 
-    # initialize new empty balanced dataset
-    balanced_data = np.empty((0,data_array.shape[1]), float)
-    balanced_labels = np.array([])
-
-
-    for key in cts:
-        print(key, '->', cts[key])
-        sample = sample_without_replacement(cts[key], minimum)
-        patient_in_class = [True if label == key else False for label in labels]
-        print(sum(patient_in_class))
-
-        balanced_data = np.append(balanced_data, scaled_data[patient_in_class,:][sample,:], axis = 0)
-        balanced_labels = np.append(balanced_labels, np.repeat(key, minimum))
-
-    print(balanced_data.shape)
-    print(balanced_labels.shape)
+    else:
+         balanced_data = scaled_data
+         balanced_labels = labels
 
     # lets redesign the entire thing another way
+    # 
+    # we could als create a dataset that always contain every minimum for each class as soon as the amount allow it
+    # but this should be designed in the data_handler "subsampling" section....
+
+
+
 
     ###########################################
     ############### grid search ###############
     ###########################################
 
+
+
     # grid search LASSO classifier
-    sgdc = SGDClassifier(loss="hinge", penalty='elasticnet')
-    #sgdc = SGDClassifier(loss="hinge", penalty='elasticnet', class_weight = "balanced") # the easy way to balance classes
+    sgdc = SGDClassifier(loss="modified_huber", penalty='elasticnet', max_iter = 20000)
+    if(class_balancing == "classic"):
+        sgdc = SGDClassifier(loss="modified_huber", penalty='elasticnet', class_weight = "balanced", max_iter = 20000) # the easy way to balance classes
 
 
 
@@ -100,7 +108,11 @@ def LASSO_selection(data_array, labels, sgdc_params = None):
     sgdc_gs = GridSearchCV(sgdc, sgdc_params, cv=5, verbose=3, n_jobs=4)
 
     # fit the model to the dataset
-    sgdc_gs.fit(balanced_data, balanced_labels)
+    if(class_balancing == "match_smaller_sample"):
+        sgdc_gs.fit(balanced_data, balanced_labels)        
+    else:
+        sgdc_gs.fit(scaled_data, labels)
+
 
     predictions = sgdc_gs.predict(scaled_data) # predict on the unbalanced dataset
     # some debugging

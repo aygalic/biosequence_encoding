@@ -20,6 +20,8 @@ df = read.csv("../workfiles/compressed_data_vae.csv")
 df = read.csv("../workfiles/compressed_data_vae_phase_2.csv")
 df = read.csv("../workfiles/compressed_data_simple_autoencoder_phase_2.csv")
 df = read.csv("../workfiles/compressed_data_cnn_autoencoder_phase_2.csv")
+df = read.csv("../workfiles/LASSO_proper.csv")
+df = read.csv("../workfiles/LASSO_wrong.csv")
 
 
 
@@ -27,8 +29,8 @@ df = read.csv("../workfiles/compressed_data_cnn_autoencoder_phase_2.csv")
 
 #dim(raw_df)
 names = df$name
-df = df[,1:65]
-df = df[,2:65]
+df = df[,1:64]
+#df = df[,2:65]
 #df = raw_df[, 7:95315]
 
 
