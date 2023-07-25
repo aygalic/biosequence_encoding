@@ -110,8 +110,7 @@ def generate_dataset(path = absolute_path,
 
 
     # for each patient in our dataset, we want to know to what cohort he belongs
-    cohorts = np.array(meta_data["Cohort"])
-    cohorts = [int(value) for value in cohorts]
+    cohorts = np.array(meta_data["Cohort"], dtype=np.int32)
 
 
     ###########################################
