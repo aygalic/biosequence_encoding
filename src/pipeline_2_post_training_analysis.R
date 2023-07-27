@@ -13,25 +13,21 @@ library("purrr")
 
 
 
-setwd("~/Library/CloudStorage/OneDrive-Personal/polimi/Thesis/genome_analysis_parkinson/src")
+setwd("~/Thesis/genome_analysis_parkinson/src")
 
 
-df = read.csv("../workfiles/compressed_data_vae.csv")
-df = read.csv("../workfiles/compressed_data_vae_phase_2.csv")
-df = read.csv("../workfiles/compressed_data_simple_autoencoder_phase_2.csv")
-df = read.csv("../workfiles/compressed_data_cnn_autoencoder_phase_2.csv")
-df = read.csv("../workfiles/LASSO_proper.csv")
-df = read.csv("../workfiles/LASSO_wrong.csv")
+# let's work with a somewhat decent dataframe first
+table = fread("../workfiles/processed_data.csv", header = T)
 
 
 
 
 
-#dim(raw_df)
-names = df$name
-df = df[,1:64]
-#df = df[,2:65]
-#df = raw_df[, 7:95315]
+names = table$name
+names
+
+
+encoded_experession = table[,1:64] 
 
 
 
@@ -44,8 +40,8 @@ df = df[,1:64]
 # autoencoder are a sort of non linear PCA
 # let's see if PCA does anything 
 
-pc.data = princomp(df, scores=T)
-#pc.data = prcomp(df, scores=T)
+pc.data = princomp(encoded_experession, scores=T)
+
 plot(pc.data) # this is a very basic classifier and the PCA is able to enhance it a lot
 
 
@@ -56,7 +52,7 @@ plot(cumsum(pc.data$sd^2)/sum(pc.data$sd^2))
 
 
 # let's visualize the data over 
-projected_data = as.matrix(df) %*% as.matrix(pc.data$loadings[,1:2])
+projected_data = as.matrix(encoded_experession) %*% as.matrix(pc.data$loadings[,1:2])
 
 plot(projected_data) # it would be nice to know which patient correspond to what
 
@@ -137,7 +133,7 @@ plot(projected_data, col = factor(fit$cluster), pch = 16, main ="kmeans")
 #################################
 
 
-data_matrix <- as.matrix(df)
+data_matrix <- as.matrix(encoded_experession)
 
 
 perplexities = c(2, 5, 10, 25, 50, 75, 100, 200, 500)
@@ -165,55 +161,3 @@ ggarrange(plotlist=plots)
 
 
 
-
-  #scale_color_manual(values = c("#FFFFFF","#1b98e0","#353436","#FFFFFF", "#FFFFFF"))
-  #scale_color_manual(values = c("#FFFFFF","#1b98e0","#353436","#FFFFFF", labels=c('label1', 'label2', 'label3', 'label4')))
-
-
-
-
-ggplot(tsne_plot) + 
-  geom_point( aes(x=x,
-                  y=y,
-                  col = as.factor(phases))
-  ) + 
-  scale_color_grey() + 
-  theme_classic()
-
-ggplot(tsne_plot) + 
-  geom_point( aes(x=x,
-                  y=y,
-                  col = as.factor(time_points))
-  ) + 
-  #scale_color_grey() + 
-  theme_classic()
-
-
-
-
-# what about non encoded data ?
-####
-# Dataset too big too handle.
-####
-
-library(data.table)
-raw_df = fread("../workfiles/raw_data.csv")
-
-
-data_matrix <- as.matrix(raw_df)
-tsne_out <- Rtsne(data_matrix)
-
-
-# Conversion of matrix to dataframe
-tsne_plot <- data.frame(x = tsne_out$Y[,1],
-                        y = tsne_out$Y[,2])
-
-
-# Plotting the plot using ggplot() function
-ggplot(tsne_plot) + 
-  geom_point( aes(x=x,
-                  y=y,
-                  col = as.factor(cohorts))
-  ) + 
-  scale_color_grey() + 
-  theme_classic()

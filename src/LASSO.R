@@ -16,7 +16,7 @@ library("data.table")
 
 
 # load metadata and prepare dirrectory 
-setwd("~/Library/CloudStorage/OneDrive-Personal/polimi/Thesis")
+setwd("~/Library/Thesis")
 
 dir <- "./data/quant"
 samples <- list.files(dir)

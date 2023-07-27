@@ -17,8 +17,8 @@ from utils import feature_selection
 # datasets
 
 # default path of the folder containing the salmon files
-absolute_path = '/Users/aygalic/OneDrive/polimi/Thesis/data/quant/'  
-metadata_path = '/Users/aygalic/OneDrive/polimi/Thesis/METADATA_200123.xlsx'  
+absolute_path = '/Users/aygalic/Thesis/data/quant/'  
+metadata_path = '/Users/aygalic/Thesis/METADATA_200123.xlsx'  
 
 
 
@@ -72,7 +72,16 @@ def generate_dataset(path = absolute_path,
         entries_transcripts = [e for e in entries_transcripts if "Phase2" in e ]
         print("retained phase 2")
     elif(retain_phases == "Both"):
-        print("retained phases 1 & 2")
+        print("Retaining patients that are included in phases 1 & 2")
+        phase_1_ids = [p.split(".")[1] for p in  entries_transcripts if "Phase1" in p]
+        phase_2_ids = [p.split(".")[1] for p in  entries_transcripts if "Phase2" in p]
+        # Find the entries that match with both Phase 1 and Phase 2
+        common_ids = set(phase_1_ids) & set(phase_2_ids)
+
+        entries_matching_both_phases = [entry for entry in entries_transcripts if any(f".{common_id}." in entry for common_id in common_ids)]
+
+        entries_transcripts = entries_matching_both_phases
+
     else:
         print("Warning: 'retain_phases' argment wrong.") # couldn't use warning due to conflicts
 

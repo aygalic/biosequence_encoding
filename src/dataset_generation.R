@@ -14,7 +14,7 @@ library("data.table")
 # without loading everything in  memory and just reading from the disk, 
 # in order to get some summary statistics about our dataset
 
-setwd("~/Library/CloudStorage/OneDrive-Personal/polimi/Thesis")
+setwd("~/Library/Thesis")
 meta <- read_excel("METADATA_200123.xlsx", sheet = "Foglio1")
 
 

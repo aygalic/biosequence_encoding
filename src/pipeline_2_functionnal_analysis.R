@@ -14,10 +14,10 @@ library(data.table)
 
 
 
-setwd("~/Library/CloudStorage/OneDrive-Personal/polimi/Thesis/genome_analysis_parkinson/src")
+setwd("~/Library/Thesis/genome_analysis_parkinson/src")
 
 # let's work with a somewhat decent dataframe first
-table = fread("../workfiles/compressed_data_simple_autoencoder_phase_2.csv", header = T)
+table = fread("../workfiles/processed_data.csv", header = T)
 
 
 
@@ -27,8 +27,7 @@ names = table$name
 names
 
 
-encoded_experession = table[,2:65]
-#encoded_experession = table[,1:64] if the thing is correctly encoded
+encoded_experession = table[,1:64] 
 
 
 
@@ -65,15 +64,9 @@ lapply(unique_ids, function(x) names[which(patient_ids %in% x)])
 files_per_id = sapply(unique_ids, function(x) names[which(patient_ids %in% x)]) 
 
 sapply(unique_ids, function(x) names[which(patient_ids %in% x)] ) 
-sapply(unique_ids, function(x) 
 
 
 
-
-
-ffffff = function(x){
-  names[which(patient_ids %in% x)]
-}
 
 ffffff = function(x){
   obs = names[which(patient_ids %in% x)]
