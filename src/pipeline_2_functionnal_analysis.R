@@ -66,7 +66,9 @@ find_files_per_id = function(x){
   # we take all the entires (primary keys) for a given patient name
   obs = names[which(patient_ids %in% x)]
   # we load the encoded data corresponding and we bind the timepoint to it
-  data = map(obs, (function(o) data.table(table[name==o,], as.list(strsplit(o, ".", fixed = T)[[1]][3])) ))
+  data = map(obs, (function(o) data.table(table[name==o,],
+                                          (strsplit(o, ".", fixed = T)[[1]][3]),      # adds timepoint
+                                          (strsplit(o, ".", fixed = T)[[1]][2]))))    # adds ID
   # assemble it into a data.table
   curr_table = rbindlist(data)
   return(curr_table)
@@ -76,13 +78,29 @@ id_wise_data = map(unique_ids, find_files_per_id)
 new_data_table = rbindlist(id_wise_data)
 
 
+# now we would want to double order it, on patient id and on 
+keycol <-c("V3","V2")
+setorderv(new_data_table, keycol)
+new_data_table 
 
-# now we would want to double order it
- 
+
+df = as.data.frame(new_data_table)
+
+colnames(df) <- paste("val", colnames(df), sep = "")
+
 # then we plot a couple of curves 
+plot = ggplot(df, aes(x=val0, y=val1, frame = valV2)) + 
+  geom_point() + 
+  theme_void() +
+  scale_color_viridis(discrete = F, option = "A")  # A for mamgma colors
+plot <- ggplotly(plot)
+
+plot
+
+
 
 # then we check if they are random noise or not...
- 
+
 
 
 
