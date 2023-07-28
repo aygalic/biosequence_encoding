@@ -11,6 +11,8 @@ library(ggplot2)
 library(ggpubr)
 library("purrr")
 
+library("viridis")   
+library(plotly)
 
 
 setwd("~/Thesis/genome_analysis_parkinson/src")
@@ -27,7 +29,7 @@ names = table$name
 names
 
 
-encoded_experession = table[,1:64] 
+encoded_experession = table[,1:256] 
 
 
 
@@ -74,88 +76,52 @@ legend("topleft",
 
 
 
-#################################
-################################# Unsupervised Clustering
-#################################
-
-
-# Let's see if clusters currectly emerges from the comrpessed data
-hc.complete <- hclust(dist(df), method="complete")
-hc.average <- hclust(dist(df), method="average")
-hc.single <- hclust(dist(df), method="single")
-
-
-plot(hc.complete) # best looking so far
-plot(hc.average)
-plot(hc.single)
-
-rect.hclust(hc.complete, k=2)
-
-
-# Fix k=4 clusters:
-cutree(hc.complete, 4)
-
-# Compare with k-means results
-table(cutree(hc.complete, 4), cohorts) # comparison with cohorts
-table(cutree(hc.average, 4), cohorts) # comparison with cohorts
-table(cutree(hc.single, 4), cohorts) # comparison with cohorts
-
-# it's very bad, but it is what we'd expect though 
-
-
-# just for the sake of knowing how it looks like
-plot(projected_data, col = factor(cutree(hc.complete, 4)), pch = 16)
-# pretty much what you expect from this kind of techniqes
-
-
-##### Let's see with kmeans
-fit <- kmeans((df),4,nstart = 20)
-table(fit$cluster, cohorts) # comparison with cohorts
-
-
-plot(projected_data, col = factor(fit$cluster), pch = 16)
-# same issue
-# it's just not better
-
-
-
-par(mfrow=c(2,2))
-plot(projected_data, col = factor(cutree(hc.complete, 4)), pch = 16, main ="complete euclidiean")
-plot(projected_data, col = factor(cutree(hc.average, 4)), pch = 16, main ="average euclidiean")
-plot(projected_data, col = factor(cutree(hc.single, 4)), pch = 16, main ="single euclidiean")
-plot(projected_data, col = factor(fit$cluster), pch = 16, main ="kmeans")
-#plot(projected_data, col = factor(cohorts), pch = 16, main ="ACTUAL")
-
 
 
 #################################
-################################# t-SNE
+################################# animated t-SNE
 #################################
 
 
 data_matrix <- as.matrix(encoded_experession)
+perplexities = c(2, 3, 4, 5, 10, 25, 50, 75, 100)
+iter = c(100, 200, 300, 400, 500, 700)
+levels = as.factor(cohorts)
+levels = as.factor(time_points)
 
 
-perplexities = c(2, 5, 10, 25, 50, 75, 100, 200, 500)
 
-prepare_plot <- function(param){
-  tsne_out <- Rtsne(data_matrix,perplexity = param, pca = FALSE, max_iter = 5000)
-  tsne_plot <- data.frame(x = tsne_out$Y[,1],
-                          y = tsne_out$Y[,2])
-  plot = ggplot(tsne_plot) + 
-    geom_point( aes(x=x,
-                    y=y,
-                    col = as.factor(cohorts))) + 
-    theme_classic() + 
-    scale_color_grey()
+
+
+make_animated_plot = function(param){
   
+  # initialize the thing
+  tsne_out <- Rtsne(data_matrix,perplexity = param, pca = FALSE, max_iter = 1)
+  tsne_plots <- data.frame(x = tsne_out$Y[,1],
+                           y = tsne_out$Y[,2],
+                           max_iter = 1,
+                           group = levels)
+  for(i in iter){
+    tsne_out <- Rtsne(data_matrix,perplexity = param, pca = FALSE, max_iter = i)
+    tsne_plot <- data.frame(x = tsne_out$Y[,1],
+                            y = tsne_out$Y[,2],
+                            max_iter = i,
+                            group = levels)
+    tsne_plots <- rbind(tsne_plots, tsne_plot)
+  }
+  plot = ggplot(tsne_plots, aes(x=x, y=y, col = group, frame = max_iter)) + 
+    geom_point() + 
+    theme_void() +
+    scale_color_viridis(discrete = TRUE, option = "A")  # A for mamgma colors
+  plot <- ggplotly(plot)
   return(plot)
 }
 
-plots = map(perplexities, prepare_plot, .progress = TRUE)
 
 
-ggarrange(plotlist=plots)
+plots <- map(perplexities, make_animated_plot, .progress = TRUE) # use map instead for efficiency ?
+subplot(plots, nrows = 3)
+
 
 
 
