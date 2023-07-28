@@ -1,34 +1,23 @@
 library(mvtnorm)
-
 library(rgl)
 library(MASS)
-
 library("readxl")
-
 library(Rtsne)
 library(ggplot2)
-
 library(ggpubr)
 library("purrr")
-
 library("viridis")   
 library(plotly)
-
+library(scales)
 
 setwd("~/Thesis/genome_analysis_parkinson/src")
 
-
-# let's work with a somewhat decent dataframe first
 table = fread("../workfiles/processed_data.csv", header = T)
 
-
-
-
-
+# these are the file names for each encoded observation
 names = table$name
-names
 
-
+# this is the corresponding encoding
 encoded_experession = table[,1:256] 
 
 
@@ -36,7 +25,7 @@ encoded_experession = table[,1:256]
 #################################
 ################################# PCA
 #################################
-
+# we start with PCA as it is the most vanilla approach to visualization
 
 
 # autoencoder are a sort of non linear PCA
@@ -97,14 +86,14 @@ make_animated_plot = function(param){
   
   # initialize the thing
   tsne_out <- Rtsne(data_matrix,perplexity = param, pca = FALSE, max_iter = 1)
-  tsne_plots <- data.frame(x = tsne_out$Y[,1],
-                           y = tsne_out$Y[,2],
+  tsne_plots <- data.frame(x = rescale(tsne_out$Y[,1]), # rescale for viz
+                           y = rescale(tsne_out$Y[,2]),
                            max_iter = 1,
                            group = levels)
   for(i in iter){
     tsne_out <- Rtsne(data_matrix,perplexity = param, pca = FALSE, max_iter = i)
-    tsne_plot <- data.frame(x = tsne_out$Y[,1],
-                            y = tsne_out$Y[,2],
+    tsne_plot <- data.frame(x = rescale(tsne_out$Y[,1]),
+                            y = rescale(tsne_out$Y[,2]),
                             max_iter = i,
                             group = levels)
     tsne_plots <- rbind(tsne_plots, tsne_plot)
@@ -119,7 +108,7 @@ make_animated_plot = function(param){
 
 
 
-plots <- map(perplexities, make_animated_plot, .progress = TRUE) # use map instead for efficiency ?
+plots <- map(perplexities, make_animated_plot, .progress = TRUE) # use map for efficiency 
 subplot(plots, nrows = 3)
 
 
