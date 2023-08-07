@@ -45,7 +45,8 @@ def generate_dataset(path = absolute_path,
                      batch_size = 64, 
                      subsample = None, 
                      return_filenames = False,
-                     retain_phases = "Both",
+                     retain_phases = None,
+                     minimum_time_point = "BL",
                      feature_selection_proceedure = None,
                      sgdc_params = None,
                      class_balancing = None):
@@ -77,13 +78,20 @@ def generate_dataset(path = absolute_path,
         phase_2_ids = [p.split(".")[1] for p in  entries_transcripts if "Phase2" in p]
         # Find the entries that match with both Phase 1 and Phase 2
         common_ids = set(phase_1_ids) & set(phase_2_ids)
-
         entries_matching_both_phases = [entry for entry in entries_transcripts if any(f".{common_id}." in entry for common_id in common_ids)]
-
         entries_transcripts = entries_matching_both_phases
-
     else:
         print("Warning: 'retain_phases' argment wrong.") # couldn't use warning due to conflicts
+
+
+    # We can decide to only include patient who completed a given quantities of timepoints
+    # The following stategy for filtering also filters out every patient who have missed a visit up to the given timepoint.
+    if(minimum_time_point == "BL"):
+        print("retaining all patient who have at least passed the Base Line Visit...")
+        BL_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] = "BL"] 
+        matchin_entries = [entry for entry in entries_transcripts if any(f".{common_id}." in entry for common_id in common_ids)]
+
+
 
 
     # if we want a smaller dataset for testing purposes
