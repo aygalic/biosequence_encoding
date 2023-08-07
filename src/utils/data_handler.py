@@ -77,7 +77,7 @@ def generate_dataset(path = absolute_path,
         phase_1_ids = [p.split(".")[1] for p in  entries_transcripts if "Phase1" in p]
         phase_2_ids = [p.split(".")[1] for p in  entries_transcripts if "Phase2" in p]
         # Find the entries that match with both Phase 1 and Phase 2
-        common_ids = set(phase_1_ids) & set(phase_2_ids)
+        common_ids = set(phase_1_ids) & set(phase_2_ids) # set intersection
         entries_matching_both_phases = [entry for entry in entries_transcripts if any(f".{common_id}." in entry for common_id in common_ids)]
         entries_transcripts = entries_matching_both_phases
     else:
@@ -86,10 +86,52 @@ def generate_dataset(path = absolute_path,
 
     # We can decide to only include patient who completed a given quantities of timepoints
     # The following stategy for filtering also filters out every patient who have missed a visit up to the given timepoint.
+    # This comportement could be tweaked easely later on
+    # a bit clunky though
     if(minimum_time_point == "BL"):
         print("retaining all patient who have at least passed the Base Line Visit...")
-        BL_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] = "BL"] 
-        matchin_entries = [entry for entry in entries_transcripts if any(f".{common_id}." in entry for common_id in common_ids)]
+        BL_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "BL"] 
+        matchin_entries = [entry for entry in entries_transcripts if entry.split(".")[1] in BL_ids]
+        print("matchin_entries", matchin_entries)
+        entries_transcripts = matchin_entries
+    elif(minimum_time_point == "V02"):
+        print("retaining all patient who have at least passed the Base Line Visit...")
+        BL_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "BL"] 
+        V02_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "V02"] 
+        common_ids = set(BL_ids) & set(V02_ids) 
+        matchin_entries = [entry for entry in entries_transcripts if entry.split(".")[1] in common_ids]
+        print("matchin_entries", matchin_entries)
+        entries_transcripts = matchin_entries
+    elif(minimum_time_point == "V04"):
+        print("retaining all patient who have at least passed the Base Line Visit...")
+        BL_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "BL"] 
+        V02_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "V02"] 
+        V04_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "V04"] 
+        common_ids = set(BL_ids) & set(V02_ids) & set(V04_ids) 
+        matchin_entries = [entry for entry in entries_transcripts if entry.split(".")[1] in common_ids]
+        print("matchin_entries", matchin_entries)
+        entries_transcripts = matchin_entries
+    elif(minimum_time_point == "V06"):
+        print("retaining all patient who have at least passed the Base Line Visit...")
+        BL_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "BL"] 
+        V02_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "V02"] 
+        V04_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "V04"] 
+        V06_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "V06"] 
+        common_ids = set(BL_ids) & set(V02_ids) & set(V04_ids) & set(V06_ids) 
+        matchin_entries = [entry for entry in entries_transcripts if entry.split(".")[1] in common_ids]
+        print("matchin_entries", matchin_entries)
+        entries_transcripts = matchin_entries
+    elif(minimum_time_point == "V08"):
+        print("retaining all patient who have at least passed the Base Line Visit...")
+        BL_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "BL"] 
+        V02_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "V02"] 
+        V04_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "V04"] 
+        V06_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "V06"] 
+        V08_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "V08"] 
+        common_ids = set(BL_ids) & set(V02_ids) & set(V04_ids) & set(V06_ids) & set(V08_ids) 
+        matchin_entries = [entry for entry in entries_transcripts if entry.split(".")[1] in common_ids]
+        print("matchin_entries", matchin_entries)
+        entries_transcripts = matchin_entries
 
 
 
