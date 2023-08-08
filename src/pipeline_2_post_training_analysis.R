@@ -9,6 +9,7 @@ library("purrr")
 library("viridis")   
 library(plotly)
 library(scales)
+library(data.table)
 
 setwd("~/Thesis/genome_analysis_parkinson/src")
 
@@ -33,7 +34,7 @@ encoded_experession = table[,1:256]
 
 pc.data = princomp(encoded_experession, scores=T)
 
-plot(pc.data) # this is a very basic classifier and the PCA is able to enhance it a lot
+plot(pc.data) 
 
 
 # proportion of variance explained by each PC
@@ -50,12 +51,23 @@ plot(projected_data) # it would be nice to know which patient correspond to what
 meta <- read_excel("../../METADATA_200123.xlsx", sheet = "Foglio1")
 patient_ids <- sapply(names, function(names) c(strsplit(names, ".", fixed = T)[[1]][2]), USE.NAMES=FALSE)
 cohorts = meta$Cohort[match(patient_ids, meta$`Patient Number`)]
+DS = meta$`Disease Status`[match(patient_ids, meta$`Patient Number`)]
 phases <- sapply(names, function(names) c(strsplit(names, "-", fixed = T)[[1]][2]), USE.NAMES=FALSE)
 time_points <- sapply(names, function(names) c(strsplit(names, ".", fixed = T)[[1]][3]), USE.NAMES=FALSE)
+
+dim(encoded_experession)
+length(cohorts)
+
+xlim_ = c(min(projected_data[,1]), max(projected_data[,1]))
+ylim_ = c(min(projected_data[,2]), max(projected_data[,2]))
 
 
 plot(projected_data, col = factor(time_points), pch = 16)
 plot(projected_data, col = factor(cohorts), pch = 16)
+
+plot(projected_data, col = factor(cohorts), pch = 16, xlim = xlim_, ylim = ylim_)
+
+
 
 legend_ = c("Parkinson's Disease", "Healthy Control", "SWEDD", "Prodromal")
 legend("topleft",
@@ -64,6 +76,35 @@ legend("topleft",
        col = factor(levels(factor(cohorts))))
 
 
+plot(projected_data, col = factor(DS), pch = 16)
+
+legend("topleft",
+       pch = 19,
+       col = DS)
+
+
+# here we have some decent separation between PD and Prodromal
+plot(projected_data, col = factor(cohorts), pch = 16)
+
+plot( projected_data[cohorts %in% c(1,4),],
+      col = factor(cohorts[cohorts %in% c(1,4)]), 
+      pch = 16, xlim = xlim_, ylim = ylim_)
+
+plot( projected_data[cohorts %in% c(1),],
+      col = factor(cohorts[cohorts %in% c(1)]), 
+      pch = 16, xlim = xlim_, ylim = ylim_)
+
+plot( projected_data[cohorts %in% c(2),],
+      col = factor(cohorts[cohorts %in% c(2)]), 
+      pch = 16, xlim = xlim_, ylim = ylim_)
+
+plot( projected_data[cohorts %in% c(3),],
+      col = factor(cohorts[cohorts %in% c(3)]), 
+      pch = 16, xlim = xlim_, ylim = ylim_)
+
+plot( projected_data[cohorts %in% c(4),],
+      col = factor(cohorts[cohorts %in% c(4)]), 
+      pch = 16, xlim = xlim_, ylim = ylim_)
 
 
 
@@ -75,8 +116,9 @@ legend("topleft",
 data_matrix <- as.matrix(encoded_experession)
 perplexities = c(2, 3, 4, 5, 10, 25, 50, 75, 100)
 iter = c(100, 200, 300, 400, 500, 700)
-levels = as.factor(cohorts)
+
 levels = as.factor(time_points)
+levels = as.factor(cohorts)
 
 
 

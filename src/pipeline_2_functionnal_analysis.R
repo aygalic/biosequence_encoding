@@ -9,6 +9,7 @@ library("purrr")
 library("viridis")   
 library(plotly)
 library(scales)
+library(data.table)
 
 setwd("~/Thesis/genome_analysis_parkinson/src")
 
