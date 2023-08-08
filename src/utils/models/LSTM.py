@@ -20,17 +20,29 @@ class Autoencoder(Model):
     def __init__(self, shape, latent_dim = 64):
         super(Autoencoder, self).__init__()
         self.latent_dim = latent_dim   
+        self.regularizer = tf.keras.regularizers.L1L2(l1 = 0.05 , l2 = 0.05)  # Adjust the regularization strength as needed
+
         self.encoder = tf.keras.Sequential([
             layers.Input(shape=(shape)),
-            layers.LSTM(64, activation='relu', return_sequences=True),
-            layers.LSTM(latent_dim, activation='relu'),
+            layers.LSTM(64, activation='linear', return_sequences=True, kernel_regularizer = self.regularizer, activity_regularizer = self.regularizer),
+            layers.LeakyReLU(alpha=0.05),
+            layers.Dropout(0.5),
+
+            layers.LSTM(latent_dim, activation='linear', activity_regularizer = self.regularizer),
+            layers.LeakyReLU(alpha=0.05),
+
         ])
         self.total_loss_tracker = keras.metrics.Mean(name="total_loss")
 
         
         self.decoder = tf.keras.Sequential([
             layers.RepeatVector(shape[0]),
-            layers.LSTM(64, activation='relu', return_sequences=True),
+            layers.LSTM(64, activation='linear', return_sequences=True),
+            layers.LeakyReLU(alpha=0.05),
+
+            layers.LSTM(64, activation='linear', return_sequences=True),
+            layers.LeakyReLU(alpha=0.05),
+
             layers.TimeDistributed(tf.keras.layers.Dense(shape[1]))
         ])
     

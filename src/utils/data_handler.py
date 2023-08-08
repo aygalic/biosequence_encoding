@@ -7,6 +7,8 @@ import tensorflow as tf
 from tensorflow import keras
 import scipy
 
+from sklearn.preprocessing import normalize
+
 
 from tensorflow.keras import layers, losses
 from tensorflow.keras.models import Model
@@ -204,7 +206,7 @@ def generate_timeseries_dataset(path = absolute_path,
                      feature_selection_threshold = None, 
                      batch_size = 64, 
                      subsample = None, 
-                     return_filenames = False,
+                     return_id = False,
                      retain_phases = None,
                      feature_selection_proceedure = None,
                      sgdc_params = None,
@@ -321,12 +323,25 @@ def generate_timeseries_dataset(path = absolute_path,
 
     print("number of genes selected : ", len(train_ds[0]))
 
+
+    ###########################################
+    ############## normalisation  #############
+    ###########################################
+
+    if(True): # i'll set it as an option when i feel like it'll be reasonable
+        print("normalizing data...")
+        data_array = np.array(train_ds)
+        train_ds = normalize(data_array)
+        print("normalization done")
+
     ##########################################
     ######## Building the time series ########
     ##########################################
 
     big_bad_dict = {key: [sample for (sample, name) in zip(train_ds, entries_transcripts) if int(name.split(".")[1]) == key] for key in patient_id}
-    print(big_bad_dict)
+
+    print("number of seq to be analized :", len(train_ds))
+    print("number of actual individual to be studied :", len(big_bad_dict))
 
     # Convert dictionary values to numpy arrays
     sequences = np.array(list(big_bad_dict.values()), dtype=np.float32)
@@ -334,9 +349,14 @@ def generate_timeseries_dataset(path = absolute_path,
     # Step 2: Create a TensorFlow Dataset
     x_train = tf.data.Dataset.from_tensor_slices(sequences)
 
+    # to keep track of which timeserie correspond to which identifier
+    sequence_names = list(big_bad_dict.keys())
+
     # same process as previously
     dataset = x_train.batch(batch_size)
-    if(return_filenames):
-        filenames = [f for (f, test) in  zip(entries_transcripts, samples_to_keep) if test]
-        return dataset, filenames, len(train_ds[0])
+
+    print(dataset.cardinality().numpy())
+
+    if(return_id):
+        return dataset, sequence_names, len(train_ds[0])
     return dataset, len(train_ds[0])
