@@ -21,9 +21,9 @@ class CNN_Autoencoder(Model):
         super(CNN_Autoencoder, self).__init__()
         self.latent_dim = latent_dim   
         self.encoder = tf.keras.Sequential([
-            tf.keras.layers.Conv1D(filters=64, kernel_size=5, activation='relu', padding='same', input_shape=shape),
+            tf.keras.layers.Conv1D(filters=64, kernel_size=5, activation='selu', padding='same', input_shape=shape),
             layers.MaxPooling1D(2, padding='same'),
-            tf.keras.layers.Conv1D(filters=32, kernel_size=3, activation='relu', padding='same', input_shape=shape),
+            tf.keras.layers.Conv1D(filters=32, kernel_size=3, activation='selu', padding='same', input_shape=shape),
             tf.keras.layers.Flatten(),
             tf.keras.layers.Dense(latent_dim),
         ])
