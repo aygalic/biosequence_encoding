@@ -21,31 +21,22 @@ class CNN_Autoencoder(Model):
         super(CNN_Autoencoder, self).__init__()
         self.latent_dim = latent_dim   
         self.encoder = tf.keras.Sequential([
-            layers.Reshape((shape, 1)),
-            layers.Dropout(0.5),
-            layers.BatchNormalization(),
-            layers.UnitNormalization(), # to avoid overloading float32
-            layers.Conv1D(filters=16, kernel_size=5, padding = "same", activation='selu', kernel_regularizer = tf.keras.regularizers.L2(0.1), bias_regularizer = tf.keras.regularizers.L2(0.1)),
-            layers.MaxPooling1D(2),
-            layers.Dropout(0.5),
-            layers.Conv1D(filters=32, kernel_size=3, padding = "same", activation='selu', kernel_regularizer = tf.keras.regularizers.L2(0.1), bias_regularizer = tf.keras.regularizers.L2(0.1)),
-            layers.AveragePooling1D(2),
-            layers.Dropout(0.5),
-            layers.Flatten(),
-            layers.Dense(latent_dim, activation='softplus'),
+            tf.keras.layers.Conv1D(filters=256, kernel_size=5, activation='relu', padding='same', input_shape=shape),
+            layers.MaxPooling1D(2, padding='same'),
+            tf.keras.layers.Conv1D(filters=latent_dim, kernel_size=3, activation='relu', padding='same', input_shape=shape),
+
         ])
         self.total_loss_tracker = keras.metrics.Mean(name="total_loss")
 
         
         self.decoder = tf.keras.Sequential([
-            layers.Dense(latent_dim, activation='softplus'),
-            layers.Reshape((latent_dim, 1)),
-            layers.Conv1D(filters=32, kernel_size=3, padding = "same", activation='selu'),
+            layers.Conv1D(filters=256, kernel_size=5, padding = "same", activation='selu'),
             layers.UpSampling1D(2),
-            layers.Conv1D(filters=16, kernel_size=5, padding = "same", activation='selu'),
-            layers.UpSampling1D(2),
-            layers.Flatten(),
-            layers.Dense(1 * shape, activation='softplus'), # softplus so we can have value in the expected range
+            #layers.UpSampling1D(1),  # Use 1 for upsampling factor
+            layers.Cropping1D(cropping=(1, 0)),            
+            layers.Conv1D(filters=shape[1], kernel_size=5, padding="same", activation='selu'),  # Change kernel size here
+
+
         ])
     
     @property

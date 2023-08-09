@@ -13,21 +13,17 @@ library(data.table)
 
 setwd("~/Thesis/genome_analysis_parkinson/src")
 
-table = fread("../workfiles/processed_data.csv", header = T)
+table = fread("../workfiles/processed_data_lstm.csv", header = T)
+
 # these are the file names for each encoded observation
 names = table$name
-
-
-#####
-#####
-#####
-
 
 
 p = dim(table)[2] - 1
 n = dim(table)[1] 
 # this is the corresponding encoding
 encoded_experession = table[,1:p] 
+
 
 
 
@@ -57,21 +53,21 @@ projected_data = as.matrix(encoded_experession) %*% as.matrix(pc.data$loadings[,
 plot(projected_data) # it would be nice to know which patient correspond to what
 
 meta <- read_excel("../../METADATA_200123.xlsx", sheet = "Foglio1")
-patient_ids <- sapply(names, function(names) c(strsplit(names, ".", fixed = T)[[1]][2]), USE.NAMES=FALSE)
-cohorts = meta$Cohort[match(patient_ids, meta$`Patient Number`)]
-DS = meta$`Disease Status`[match(patient_ids, meta$`Patient Number`)]
-phases <- sapply(names, function(names) c(strsplit(names, "-", fixed = T)[[1]][2]), USE.NAMES=FALSE)
-time_points <- sapply(names, function(names) c(strsplit(names, ".", fixed = T)[[1]][3]), USE.NAMES=FALSE)
+patient_ids <- names 
+cohorts   = meta$Cohort[match(patient_ids, meta$`Patient Number`)]
+DS        = meta$`Disease Status`[match(patient_ids, meta$`Patient Number`)]
+GS        = meta$`Genetic Status`[match(patient_ids, meta$`Patient Number`)]
+
+
+
 
 dim(encoded_experession)
 length(cohorts)
 
+# we keep track of the plot dimension for futher visualisations
 xlim_ = c(min(projected_data[,1]), max(projected_data[,1]))
 ylim_ = c(min(projected_data[,2]), max(projected_data[,2]))
 
-
-plot(projected_data, col = factor(time_points), pch = 16)
-plot(projected_data, col = factor(cohorts), pch = 16)
 
 plot(projected_data, col = factor(cohorts), pch = 16, xlim = xlim_, ylim = ylim_)
 
@@ -84,32 +80,31 @@ legend("topleft",
        col = factor(levels(factor(cohorts))))
 
 
-plot(projected_data, col = factor(cohorts), pch = 16)
+plot(projected_data, col = factor(DS), pch = 16, xlim = xlim_, ylim = ylim_)
 
 
 
 # here we have some decent separation between PD and Prodromal
-plot(projected_data, col = factor(cohorts), pch = 16)
+plot(projected_data, col = factor(cohorts), 
+     pch = 16, xlim = xlim_, ylim = ylim_)
 
 plot( projected_data[cohorts %in% c(1,4),],
       col = factor(cohorts[cohorts %in% c(1,4)]), 
       pch = 16, xlim = xlim_, ylim = ylim_)
 
 plot( projected_data[cohorts %in% c(1),],
-      col = factor(cohorts[cohorts %in% c(1)]), 
       pch = 16, xlim = xlim_, ylim = ylim_)
 
 plot( projected_data[cohorts %in% c(2),],
-      col = factor(cohorts[cohorts %in% c(2)]), 
       pch = 16, xlim = xlim_, ylim = ylim_)
 
 plot( projected_data[cohorts %in% c(3),],
-      col = factor(cohorts[cohorts %in% c(3)]), 
       pch = 16, xlim = xlim_, ylim = ylim_)
 
 plot( projected_data[cohorts %in% c(4),],
-      col = factor(cohorts[cohorts %in% c(4)]), 
       pch = 16, xlim = xlim_, ylim = ylim_)
+
+
 
 
 
@@ -120,11 +115,12 @@ plot( projected_data[cohorts %in% c(4),],
 
 data_matrix <- as.matrix(encoded_experession)
 perplexities = c(2, 3, 4, 5, 10, 25, 50, 75, 100)
-iter = c(100, 200, 300, 400, 500, 700, 2000)
+iter = c(100, 200, 300, 400, 500, 700)
 
-levels = as.factor(time_points)
+levels = as.factor(DS)
+levels = as.factor(GS)
+
 levels = as.factor(cohorts)
-
 
 
 
