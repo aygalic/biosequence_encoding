@@ -21,19 +21,23 @@ class CNN_Autoencoder(Model):
         super(CNN_Autoencoder, self).__init__()
         self.latent_dim = latent_dim   
         self.encoder = tf.keras.Sequential([
-            tf.keras.layers.Conv1D(filters=256, kernel_size=5, activation='relu', padding='same', input_shape=shape),
+            tf.keras.layers.Conv1D(filters=64, kernel_size=5, activation='relu', padding='same', input_shape=shape),
             layers.MaxPooling1D(2, padding='same'),
-            tf.keras.layers.Conv1D(filters=latent_dim, kernel_size=3, activation='relu', padding='same', input_shape=shape),
-
+            tf.keras.layers.Conv1D(filters=32, kernel_size=3, activation='relu', padding='same', input_shape=shape),
+            tf.keras.layers.Flatten(),
+            tf.keras.layers.Dense(latent_dim),
         ])
         self.total_loss_tracker = keras.metrics.Mean(name="total_loss")
 
         
         self.decoder = tf.keras.Sequential([
-            layers.Conv1D(filters=256, kernel_size=5, padding = "same", activation='selu'),
+            layers.Reshape((2, int(latent_dim/2))),
+            layers.Conv1D(filters=32, kernel_size=3, padding = "same", activation='selu'),
+            layers.UpSampling1D(2),            
+            layers.Conv1D(filters=16, kernel_size=5, padding = "same", activation='selu'),
             layers.UpSampling1D(2),
             #layers.UpSampling1D(1),  # Use 1 for upsampling factor
-            layers.Cropping1D(cropping=(1, 0)),            
+            layers.Cropping1D(cropping=(1, 2)),            
             layers.Conv1D(filters=shape[1], kernel_size=5, padding="same", activation='selu'),  # Change kernel size here
 
 

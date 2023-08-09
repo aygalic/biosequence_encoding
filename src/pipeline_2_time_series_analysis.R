@@ -14,6 +14,7 @@ library(data.table)
 setwd("~/Thesis/genome_analysis_parkinson/src")
 
 table = fread("../workfiles/processed_data_lstm.csv", header = T)
+table = fread("../workfiles/compressed_data_cnn.csv", header = T)
 
 # these are the file names for each encoded observation
 names = table$name
@@ -57,6 +58,10 @@ patient_ids <- names
 cohorts   = meta$Cohort[match(patient_ids, meta$`Patient Number`)]
 DS        = meta$`Disease Status`[match(patient_ids, meta$`Patient Number`)]
 GS        = meta$`Genetic Status`[match(patient_ids, meta$`Patient Number`)]
+ethnicity = meta$Ethnicity[match(patient_ids, meta$`Patient Number`)]
+race      = meta$Race[match(patient_ids, meta$`Patient Number`)] # it's mostly white people
+age       = meta$`Age (Bin)`[match(patient_ids, meta$`Patient Number`)]
+sex       = meta$Sex[match(patient_ids, meta$`Patient Number`)] # turns out to be pretty useless
 
 
 
@@ -119,6 +124,9 @@ iter = c(100, 200, 300, 400, 500, 700)
 
 levels = as.factor(DS)
 levels = as.factor(GS)
+levels = as.factor(sex)
+levels = as.factor(race)
+levels = as.factor(age)
 
 levels = as.factor(cohorts)
 
@@ -152,7 +160,7 @@ make_animated_plot = function(param){
 
 
 plots <- map(perplexities, make_animated_plot, .progress = TRUE) # use map for efficiency 
-subplot(plots, nrows = 3)
+subplot(plots, nrows = 3, margin = 0)
 
 
 
