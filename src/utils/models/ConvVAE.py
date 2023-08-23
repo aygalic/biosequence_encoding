@@ -84,7 +84,7 @@ def generate_model(shape, latent_dim = 64):
     x = layers.LeakyReLU(alpha=0.05)(x)
 
     x = layers.Dropout(0.5)(x)
-    x = layers.Conv1D(filters=64, kernel_size=3, activation='linear', padding='same', input_shape=shape)(x)
+    x = layers.Conv1D(filters=128, kernel_size=3, activation='linear', padding='same', input_shape=shape)(x)
     x = layers.LeakyReLU(alpha=0.05)(x)
 
 
@@ -107,10 +107,10 @@ def generate_model(shape, latent_dim = 64):
 
     x = layers.Reshape((2, int(latent_dim/2)))(latent_inputs)
     x = layers.UpSampling1D(2)(x)           
-    x = layers.Conv1D(filters=16, kernel_size=5, padding = "same", activation='selu')(x)
+    x = layers.Conv1D(filters=64, kernel_size=5, padding = "same", activation='selu')(x)
     x = layers.UpSampling1D(2)(x)
-
-    x = layers.Cropping1D(cropping=(1, 2))(x)          
+    x = layers.Cropping1D(cropping=(1, 2))(x)  # to have the right length time series        
+    x = layers.Conv1D(filters= 128, kernel_size=5, padding="same", activation='selu')(x)
     decoder_outputs = layers.Conv1D(filters=shape[1], kernel_size=5, padding="same", activation='selu')(x)
 
 

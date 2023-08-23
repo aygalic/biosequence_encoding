@@ -25,9 +25,9 @@ from sklearn.preprocessing import StandardScaler
 
 def MAD_selection(data_array, threshold):
         MAD = scipy.stats.median_abs_deviation(data_array)
-        #gene_selected = [True if val > threshold else False for val in MAD]
+        gene_selected = [True if val > threshold else False for val in MAD]
         # experimenting with upper bounds 
-        gene_selected = [True if val > threshold and val < 10 else False for val in MAD]
+        #gene_selected = [True if val > threshold and val < 10 else False for val in MAD]
 
         return gene_selected
 

@@ -15,6 +15,10 @@ setwd("~/Thesis/genome_analysis_parkinson/src")
 
 table = fread("../workfiles/processed_data_lstm.csv", header = T)
 table = fread("../workfiles/compressed_data_cnn.csv", header = T)
+table = fread("../workfiles/compressed_data_ConvVAE.csv", header = T)
+
+
+
 
 # these are the file names for each encoded observation
 names = table$name
@@ -119,7 +123,7 @@ plot( projected_data[cohorts %in% c(4),],
 
 
 data_matrix <- as.matrix(encoded_experession)
-perplexities = c(2, 3, 4, 5, 10, 25, 50, 75, 100)
+perplexities = c(2, 3, 4, 5, 10, 20, 30, 40, 50)
 iter = c(100, 200, 300, 400, 500, 700)
 
 levels = as.factor(DS)

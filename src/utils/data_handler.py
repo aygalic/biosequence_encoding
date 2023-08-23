@@ -54,7 +54,8 @@ def generate_dataset(path = absolute_path,
                      class_balancing = None,
                      normalization = True,
                      minimum_time_point = "V08",
-                     as_time_series = True):
+                     as_time_series = True,
+                     transpose = False):
     # getting entries ready
     # each couple of entries correspond to one patient, we are only interested in the "transcript" files
     entries = os.listdir(path)
@@ -106,14 +107,14 @@ def generate_dataset(path = absolute_path,
         matchin_entries = [entry for entry in entries_transcripts if entry.split(".")[1] in BL_ids]
         entries_transcripts = matchin_entries
     elif(minimum_time_point == "V02"):
-        print("retaining all patient who have at least passed the Base Line Visit...")
+        print("retaining all patient who have at least passed the Base Line to month 6 Visit...")
         BL_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "BL"] 
         V02_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "V02"] 
         common_ids = set(BL_ids) & set(V02_ids) 
         matchin_entries = [entry for entry in entries_transcripts if entry.split(".")[1] in common_ids]
         entries_transcripts = matchin_entries
     elif(minimum_time_point == "V04"):
-        print("retaining all patient who have at least passed the Base Line Visit...")
+        print("retaining all patient who have at least passed the Base Line to month 12 Visit...")
         BL_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "BL"] 
         V02_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "V02"] 
         V04_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "V04"] 
@@ -121,7 +122,7 @@ def generate_dataset(path = absolute_path,
         matchin_entries = [entry for entry in entries_transcripts if entry.split(".")[1] in common_ids]
         entries_transcripts = matchin_entries
     elif(minimum_time_point == "V06"):
-        print("retaining all patient who have at least passed the Base Line Visit...")
+        print("retaining all patient who have at least passed the Base Line to month 24 Visit...")
         BL_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "BL"] 
         V02_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "V02"] 
         V04_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "V04"] 
@@ -132,7 +133,7 @@ def generate_dataset(path = absolute_path,
     
     # if we want time series, we constrain them to only patients that went through every visits.
     elif(minimum_time_point == "V08" or as_time_series == True):
-        print("retaining all patient who have at least passed the Base Line Visit...")
+        print("retaining all patient who have passed all visits...")
         BL_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "BL"] 
         V02_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "V02"] 
         V04_ids = [p.split(".")[1] for p in  entries_transcripts if p.split(".")[2] == "V04"] 
@@ -175,8 +176,7 @@ def generate_dataset(path = absolute_path,
     meta_data = meta_data.reset_index()
 
 
-    # for each patient in our dataset, we want to know to what cohort he belongs
-    cohorts = np.array(meta_data["Cohort"], dtype=np.int32)
+
 
 
     ###########################################
@@ -190,6 +190,10 @@ def generate_dataset(path = absolute_path,
         data_array = data_array[:,gene_selected]
 
     if(feature_selection_proceedure == "LASSO"):
+        # for each patient in our dataset, we want to know to what cohort he belongs
+        cohorts = np.array(meta_data["Cohort"], dtype=np.int32)
+
+
         print("selecting genes based on LASSO-like classification...")
         gene_selected = feature_selection.LASSO_selection(data_array, cohorts, sgdc_params, class_balancing)
         data_array = data_array[:,gene_selected]
@@ -205,6 +209,8 @@ def generate_dataset(path = absolute_path,
         print("normalizing data...")
         data_array = normalize(data_array)
         print("normalization done")
+
+
 
     ##########################################
     ######## Building the time series ########
@@ -223,6 +229,18 @@ def generate_dataset(path = absolute_path,
         # Step 2: Create a TensorFlow Dataset
         x_train = tf.data.Dataset.from_tensor_slices(sequences)
 
+        if(transpose):
+            print("using transposed data...")
+            #transposed_dataset = x_train.map(lambda seq: tf.transpose(seq, perm=[1, 0]))
+
+            # Define a function to transpose a sequence
+            def transpose_sequence(sequence):
+                return tf.transpose(sequence, perm=[1, 0])
+
+            # Transpose each element in the dataset
+            x_train = x_train.map(transpose_sequence)
+
+
         # to keep track of which timeserie correspond to which identifier
         sequence_names = list(big_bad_dict.keys())
     else:
@@ -233,7 +251,7 @@ def generate_dataset(path = absolute_path,
 
     # make it a batched dataset
     dataset = x_train.batch(batch_size)
-
+    #dataset = x_train # trying without batching the dataset
     if(return_id):
         return dataset, sequence_names, len(data_array[0])
     return dataset, len(data_array[0])
