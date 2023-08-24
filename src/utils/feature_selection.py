@@ -18,7 +18,7 @@ from numpy import arange
 from collections import Counter
 
 
-from glmnet import LogitNet
+#from glmnet import LogitNet
 
 
 from sklearn.preprocessing import StandardScaler

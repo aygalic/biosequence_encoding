@@ -28,11 +28,11 @@ metadata_path = '/Users/aygalic/Thesis/METADATA_200123.xlsx'
 
 # from filename to tensor
 # here we open a single file passed as "filename" we return a tensor of TPM values.
-def load_patient_data(filename):
+def load_patient_data(filename, path = absolute_path):
   #specify read types for our data
   read_types = [float()]
   # get a first sample to base everything of
-  text = pathlib.Path(absolute_path + filename).read_text()
+  text = pathlib.Path(os.path.join(path,filename)).read_text()
   lines = text.split('\n')[1:-1]
   # the 3rd column correspond to TPM values.
   features = tf.io.decode_csv(lines, record_defaults=read_types, field_delim = "\t", select_cols=[3])
@@ -159,7 +159,7 @@ def generate_dataset(path = absolute_path,
 
     # load the dataset into an array 
     print("loading samples...")
-    data = [load_patient_data(e) for e in entries_transcripts]
+    data = [load_patient_data(e, path) for e in entries_transcripts]
 
     # remove artifacts by keeping samples of correct length
     samples_to_keep = [1 if s.shape == (95309) else 0 for s in data]
