@@ -10,8 +10,6 @@ import scipy
 from sklearn.preprocessing import normalize
 
 
-from tensorflow.keras import layers, losses
-from tensorflow.keras.models import Model
 from tensorflow import keras
 
 from utils import feature_selection
