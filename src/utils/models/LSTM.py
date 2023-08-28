@@ -82,7 +82,8 @@ class biDir_LSTM_Autoencoder(Model):
 
         self.encoder = tf.keras.Sequential([
             layers.Input(shape=(shape)),
-            layers.Bidirectional(layers.LSTM(512, activation='tanh', return_sequences=True, bias_initializer = initializers.glorot_uniform(seed=0))),
+            layers.Bidirectional(layers.LSTM(512, activation='tanh', return_sequences=True)),
+            layers.Bidirectional(layers.LSTM(256, activation='tanh', return_sequences=True)),
             #layers.LeakyReLU(alpha=0.05),
             #layers.Dropout(0.5),
 
@@ -94,7 +95,8 @@ class biDir_LSTM_Autoencoder(Model):
 
         self.decoder = tf.keras.Sequential([
             layers.RepeatVector(shape[0]),
-            layers.Bidirectional(layers.LSTM(512, activation='tanh', return_sequences=True, bias_initializer = initializers.glorot_uniform(seed=0))),
+            layers.Bidirectional(layers.LSTM(256, activation='tanh', return_sequences=True)),
+            layers.Bidirectional(layers.LSTM(512, activation='tanh', return_sequences=True)),
             #layers.LeakyReLU(alpha=0.05),
 
             #layers.Bidirectional(layers.LSTM(64, activation='tanh', return_sequences=True)),
