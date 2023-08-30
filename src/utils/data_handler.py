@@ -47,6 +47,7 @@ def get_names(filename, path = absolute_path):
     return [n.split(".")[0] for n in names.Name]
 
 ### now we design a function that return a dataset of multivriate time series or the individual timestamps
+
 def generate_dataset(path = absolute_path, 
                      metadata_path = metadata_path,
                      feature_selection_threshold = None, 
@@ -62,7 +63,8 @@ def generate_dataset(path = absolute_path,
                      as_time_series = True,
                      transpose = False,
                      dataset_of_interest = "genes",
-                     MT_removal = True):
+                     MT_removal = True,
+                     log1p = True):
 
     if(dataset_of_interest not in ["genes", "transcripts"]):
         print("err, 'dataset_of_interest' must be either 'genes' or 'transcripts'")
@@ -202,15 +204,16 @@ def generate_dataset(path = absolute_path,
     ############ feature selection  ###########
     ###########################################
     
+    print("retriving symbols for genes")
+    entry = entries[0] # we pick an entry to get the names from
+    symbols = mg.getgenes(get_names(entry), fields='symbol', species='human',verbose = 0) # takes around 90 sec
+    query_result = [s["symbol"] if "symbol" in s else s["query"] for s in symbols]
+    names = query_result
+    
     if(MT_removal == True):
-        print("retriving symbols for genes")
-        entry = entries[0] # we pick an entry to get the names from
-        symbols = mg.getgenes(get_names(entry), fields='symbol', species='human',verbose = 0) # takes around 90 sec
-        query_result = [s["symbol"] if "symbol" in s else s["query"] for s in symbols ]
         is_not_MT = [False if q.startswith('MT') else True for q in query_result]
         print("removing", len(is_not_MT) - sum(is_not_MT), "mithocondrial genes from the dataset")
         data_array = data_array[:,is_not_MT]
-        #names = names[is_not_MT]
         names = [name for (name, test) in  zip(names, is_not_MT) if test]
 
 
@@ -219,18 +222,14 @@ def generate_dataset(path = absolute_path,
         print("selecting genes based on median absolute deviation threshold: ",feature_selection_threshold, "...")
         gene_selected = feature_selection.MAD_selection(data_array, feature_selection_threshold)
         data_array = data_array[:,gene_selected]
-        #names = names[gene_selected]
         names = [name for (name, test) in  zip(names, gene_selected) if test]
 
     if(feature_selection_proceedure == "LASSO"):
         # for each patient in our dataset, we want to know to what cohort he belongs
         cohorts = np.array(meta_data["Cohort"], dtype=np.int32)
-
-
         print("selecting genes based on LASSO-like classification...")
         gene_selected = feature_selection.LASSO_selection(data_array, cohorts, sgdc_params, class_balancing)
         data_array = data_array[:,gene_selected]
-        #names = names[gene_selected]
         names = [name for (name, test) in  zip(names, gene_selected) if test]
 
 
@@ -246,6 +245,9 @@ def generate_dataset(path = absolute_path,
         print("normalizing data...")
         data_array = normalize(data_array)
         print("normalization done")
+
+    if(log1p == True): 
+        data_array = np.log1p(data_array)
 
 
 
@@ -291,7 +293,6 @@ def generate_dataset(path = absolute_path,
     if(return_id):
         return dataset, sequence_names, len(data_array[0]), names
     return dataset, len(data_array[0]), names
-
 
 
 

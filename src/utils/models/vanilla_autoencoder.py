@@ -10,7 +10,7 @@ from tensorflow import keras
 import scipy
 
 
-from tensorflow.keras import layers, losses
+from tensorflow.keras import layers, losses, regularizers
 from tensorflow.keras.models import Model
 from tensorflow import keras
 
@@ -21,26 +21,29 @@ class Autoencoder(Model):
         super(Autoencoder, self).__init__()
         self.latent_dim = latent_dim   
         self.encoder = tf.keras.Sequential([
-            layers.Flatten(),
-            layers.BatchNormalization(),
+            #layers.Flatten(),
+            #layers.BatchNormalization(),
+            layers.Dropout(0.5),
+            layers.Dense(1024),
+            layers.LeakyReLU(alpha=0.05),
+
+
             layers.Dropout(0.5),
             layers.Dense(512),
             layers.LeakyReLU(alpha=0.05),
-
 
             layers.Dropout(0.5),
             layers.Dense(256),
             layers.LeakyReLU(alpha=0.05),
 
             #layers.Dropout(0.5),
-            #layers.Dense(128),
-            #layers.LeakyReLU(alpha=0.05),
-
-            #layers.Dropout(0.5),
             #layers.Dense(64),
             #layers.LeakyReLU(alpha=0.05),
 
-            layers.Dense(latent_dim, activation='linear'),
+            #layers.Dense(latent_dim, activation='tanh', kernel_regularizer= regularizers.l2(10)), # this makes for abysmal performance
+            layers.Dense(latent_dim, activation='linear', kernel_regularizer= regularizers.l2(10)),
+            layers.LeakyReLU(alpha=0.05),
+
         ])
         self.total_loss_tracker = keras.metrics.Mean(name="total_loss")
 
@@ -52,11 +55,18 @@ class Autoencoder(Model):
 
             #layers.Dense(64, activation='linear'),
 
-            #layers.Dense(128, activation='linear'),
-
+            
+            layers.Dropout(0.5),
             layers.Dense(256),
+            layers.LeakyReLU(alpha=0.05),
 
+            layers.Dropout(0.5),
             layers.Dense(512),
+            layers.LeakyReLU(alpha=0.05),
+
+            layers.Dropout(0.5),
+            layers.Dense(1024),
+            layers.LeakyReLU(alpha=0.05),
 
             layers.Dense(1 * shape, activation='linear', use_bias = True)
         ])

@@ -83,6 +83,8 @@ We also monitor different parameters of PCA before plotting the dataset into the
 
 ### t-SNE Visualisation
 
+![t-SNE simple auto encoder on log1p data](img/t-SNE_simple_ae_log1p.png)
+
 Here we proceed to build multiple plots, on a grid of parametters.
 
 We then use an animated plot to search for a satisfactory representation.

@@ -25,6 +25,7 @@ class CNN_Autoencoder(Model):
             layers.MaxPooling1D(2, padding='same'),
             tf.keras.layers.Conv1D(filters=32, kernel_size=3, activation='selu', padding='same', input_shape=shape),
             tf.keras.layers.Flatten(),
+            #tf.keras.layers.Dense(latent_dim, activation = "tanh"), # this dooms the learning process
             tf.keras.layers.Dense(latent_dim),
         ])
         self.total_loss_tracker = keras.metrics.Mean(name="total_loss")

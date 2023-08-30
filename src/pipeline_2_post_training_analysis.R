@@ -14,6 +14,8 @@ library(data.table)
 setwd("~/Thesis/genome_analysis_parkinson/src")
 
 table = fread("../workfiles/processed_data.csv", header = T)
+table = fread("../workfiles/processed_data_vae.csv", header = T)
+
 # these are the file names for each encoded observation
 names = table$name
 
@@ -27,8 +29,7 @@ names = table$name
 p = dim(table)[2] - 1
 n = dim(table)[1] 
 # this is the corresponding encoding
-encoded_experession = table[,1:p] 
-
+encoded_experession = table[,1:p] # PAY ATTENTION TO THIS, maybe it needs to be [,1:p]
 
 
 #################################
@@ -162,4 +163,24 @@ subplot(plots, nrows = 3)
 
 
 
+# if you want to investigate a given plot : 
 
+group = as.factor(time_points)
+group = as.factor(cohorts)
+
+
+tsne_out <- Rtsne(data_matrix,perplexity = 3, pca = FALSE, max_iter = 100)
+plt_data <- data.frame(x = rescale(tsne_out$Y[,1]), # rescale for viz
+                         y = rescale(tsne_out$Y[,2]))
+
+plot = ggplot(plt_data, aes(x=x, y=y, col = group)) + 
+ geom_point(size = 1) + 
+ theme_void() +
+ scale_color_viridis(discrete = TRUE, option = "A")  # A for mamgma colors
+plot <- ggplotly(plot)
+plot                         
+
+
+orca(plot, "../img/t-SNE_simple_ae_log1p.png") 
+
+                         

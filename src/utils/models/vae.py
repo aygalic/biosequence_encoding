@@ -112,8 +112,14 @@ def generate_model(shape, latent_dim = 64):
     # default decoder
     latent_inputs = keras.Input(shape=(latent_dim,))
     x = layers.Dense(64)(latent_inputs)
+    x = layers.LeakyReLU(alpha=0.05)(x)
+
     x = layers.Dense(256)(x)
+    x = layers.LeakyReLU(alpha=0.05)(x)
+
     x = layers.Dense(512)(x)
+    x = layers.LeakyReLU(alpha=0.05)(x)
+
     decoder_outputs = layers.Dense(shape)(x)
     decoder = keras.Model(latent_inputs, decoder_outputs, name="decoder")
 
