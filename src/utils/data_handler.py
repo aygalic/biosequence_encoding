@@ -176,7 +176,7 @@ def generate_dataset(path = absolute_path,
     data = [load_patient_data(e, path) for e in entries]
 
     # get the entry name list
-    names = get_names(entries[0])
+    names = get_names(entries[0], path)
     
     # remove artifacts by keeping samples of correct length
     if(dataset_of_interest == "transcprits"):
@@ -205,8 +205,8 @@ def generate_dataset(path = absolute_path,
     ###########################################
     
     print("retriving symbols for genes")
-    entry = entries[0] # we pick an entry to get the names from
-    symbols = mg.getgenes(get_names(entry), fields='symbol', species='human',verbose = 0) # takes around 90 sec
+
+    symbols = mg.getgenes(names, fields='symbol', species='human',verbose = 0) # takes around 90 sec
     query_result = [s["symbol"] if "symbol" in s else s["query"] for s in symbols]
     names = query_result
     
