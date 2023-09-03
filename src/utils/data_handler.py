@@ -206,8 +206,16 @@ def generate_dataset(path = absolute_path,
     
     print("retriving symbols for genes")
 
-    symbols = mg.getgenes(names, fields='symbol', species='human',verbose = 0) # takes around 90 sec
-    query_result = [s["symbol"] if "symbol" in s else s["query"] for s in symbols]
+    #symbols = mg.getgenes(names, fields='symbol', species='human',verbose = 0) # takes around 90 sec
+    #query_result = [s["symbol"] if "symbol" in s else s["query"] for s in symbols]
+    #query_result = pd.DataFrame(query_result).drop_duplicates
+
+    symbols = mg.querymany(names, scopes='ensembl.gene', fields='symbol', species='human', verbose = False, as_dataframe = True)
+    symbols = symbols.reset_index()
+    symbols = symbols.drop_duplicates(subset = ["query"])
+
+    query_result = [q if(pd.isna(s)) else s for (s,q) in zip(symbols["symbol"],symbols["query"])]
+    
     names = query_result
     
     if(MT_removal == True):
