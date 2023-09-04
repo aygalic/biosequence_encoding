@@ -48,6 +48,8 @@ def get_names(filename, path = absolute_path):
 
 ### now we design a function that return a dataset of multivriate time series or the individual timestamps
 
+### now we design a function that return a dataset of multivriate time series or the individual timestamps
+
 def generate_dataset(path = absolute_path, 
                      metadata_path = metadata_path,
                      feature_selection_threshold = None, 
@@ -64,7 +66,8 @@ def generate_dataset(path = absolute_path,
                      transpose = False,
                      dataset_of_interest = "genes",
                      MT_removal = True,
-                     log1p = True):
+                     log1p = True,
+                     keep_only_symbols = False):
 
     if(dataset_of_interest not in ["genes", "transcripts"]):
         print("err, 'dataset_of_interest' must be either 'genes' or 'transcripts'")
@@ -223,9 +226,16 @@ def generate_dataset(path = absolute_path,
         print("removing", len(is_not_MT) - sum(is_not_MT), "mithocondrial genes from the dataset")
         data_array = data_array[:,is_not_MT]
         names = [name for (name, test) in  zip(names, is_not_MT) if test]
+        query_result = [qr for (qr, test) in  zip(query_result, is_not_MT) if test]
+
+    if(keep_only_symbols == True):
+        is_symbol = [False if s.startswith('ENSG') else True for s in query_result]
+        print("removing", len(is_symbol) - sum(is_symbol), "not found symbols from the dataset")
+        data_array = data_array[:,is_symbol]
+        names = [name for (name, test) in  zip(names, is_symbol) if test]
 
 
-    # if feature selection is applied
+
     if(feature_selection_threshold is not None):
         print("selecting genes based on median absolute deviation threshold: ",feature_selection_threshold, "...")
         gene_selected = feature_selection.MAD_selection(data_array, feature_selection_threshold)
