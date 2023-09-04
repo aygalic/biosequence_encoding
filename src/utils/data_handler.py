@@ -48,8 +48,6 @@ def get_names(filename, path = absolute_path):
 
 ### now we design a function that return a dataset of multivriate time series or the individual timestamps
 
-### now we design a function that return a dataset of multivriate time series or the individual timestamps
-
 def generate_dataset(path = absolute_path, 
                      metadata_path = metadata_path,
                      feature_selection_threshold = None, 
@@ -67,7 +65,9 @@ def generate_dataset(path = absolute_path,
                      dataset_of_interest = "genes",
                      MT_removal = True,
                      log1p = True,
-                     keep_only_symbols = False):
+                     keep_only_symbols = False,
+                     drop_ambiguous_pos = False,
+                     sort_symbols = False):
 
     if(dataset_of_interest not in ["genes", "transcripts"]):
         print("err, 'dataset_of_interest' must be either 'genes' or 'transcripts'")
@@ -208,39 +208,38 @@ def generate_dataset(path = absolute_path,
     ###########################################
     
     print("retriving symbols for genes")
+    query_result = mg.querymany(names, fields = ['genomic_pos', 'symbol'], scopes='ensembl.gene', species='human', verbose = False, as_dataframe = True)
 
-    #symbols = mg.getgenes(names, fields='symbol', species='human',verbose = 0) # takes around 90 sec
-    #query_result = [s["symbol"] if "symbol" in s else s["query"] for s in symbols]
-    #query_result = pd.DataFrame(query_result).drop_duplicates
+    query_result = query_result.reset_index()
+    query_result = query_result.drop_duplicates(subset = ["query"])
+    # here we have the correct length
 
-    symbols = mg.querymany(names, scopes='ensembl.gene', fields='symbol', species='human', verbose = False, as_dataframe = True)
-    symbols = symbols.reset_index()
-    symbols = symbols.drop_duplicates(subset = ["query"])
+    names = [q if(pd.isna(s)) else s for (s,q) in zip(query_result["symbol"],query_result["query"])]
+    query_result['name'] = names
 
-    query_result = [q if(pd.isna(s)) else s for (s,q) in zip(symbols["symbol"],symbols["query"])]
-    
-    names = query_result
-    
     if(MT_removal == True):
-        is_not_MT = [False if q.startswith('MT') else True for q in query_result]
-        print("removing", len(is_not_MT) - sum(is_not_MT), "mithocondrial genes from the dataset")
-        data_array = data_array[:,is_not_MT]
-        names = [name for (name, test) in  zip(names, is_not_MT) if test]
-        query_result = [qr for (qr, test) in  zip(query_result, is_not_MT) if test]
+        gene_selected = [False if q.startswith('MT') else True for q in query_result['name']]
+        print("removing", len(gene_selected) - sum(gene_selected), "mithocondrial genes from the dataset")
+        data_array = data_array[:,gene_selected]
+        query_result = query_result[gene_selected]
 
     if(keep_only_symbols == True):
-        is_symbol = [False if s.startswith('ENSG') else True for s in query_result]
-        print("removing", len(is_symbol) - sum(is_symbol), "not found symbols from the dataset")
-        data_array = data_array[:,is_symbol]
-        names = [name for (name, test) in  zip(names, is_symbol) if test]
+        gene_selected = [False if s.startswith('ENSG') else True for s in query_result['name']]
+        print("removing", len(gene_selected) - sum(gene_selected), "not found symbols from the dataset")
+        data_array = data_array[:,gene_selected]
+        query_result = query_result[gene_selected]
 
-
+    if(drop_ambiguous_pos == True):
+        gene_selected = query_result["genomic_pos"].isna()
+        print("removing", len(gene_selected) - sum(gene_selected), "ambigously positioned symbols from the dataset")
+        data_array = data_array[:,gene_selected]
+        query_result = query_result[gene_selected]
 
     if(feature_selection_threshold is not None):
         print("selecting genes based on median absolute deviation threshold: ",feature_selection_threshold, "...")
         gene_selected = feature_selection.MAD_selection(data_array, feature_selection_threshold)
         data_array = data_array[:,gene_selected]
-        names = [name for (name, test) in  zip(names, gene_selected) if test]
+        query_result = query_result[gene_selected]
 
     if(feature_selection_proceedure == "LASSO"):
         # for each patient in our dataset, we want to know to what cohort he belongs
@@ -248,11 +247,23 @@ def generate_dataset(path = absolute_path,
         print("selecting genes based on LASSO-like classification...")
         gene_selected = feature_selection.LASSO_selection(data_array, cohorts, sgdc_params, class_balancing)
         data_array = data_array[:,gene_selected]
-        names = [name for (name, test) in  zip(names, gene_selected) if test]
+        query_result = query_result[gene_selected]
 
 
 
     print("number of genes selected : ", len(data_array[0]))
+
+
+    ###########################################
+    ################# sorting  ################
+    ###########################################
+    if(sort_symbols):
+        print("sorting...")
+        # reset the indexes because of all the previous transformations we have done
+        query_result = query_result.reset_index(drop=True)
+        query_result = query_result.sort_values(['genomic_pos.chr', 'genomic_pos.start'], ascending=[True, True])
+        # Extract the sorted rows as a NumPy array
+        data_array = data_array[:, query_result.index]
 
 
     ###########################################
@@ -309,8 +320,8 @@ def generate_dataset(path = absolute_path,
     dataset = x_train.batch(batch_size)
     #dataset = x_train # trying without batching the dataset
     if(return_id):
-        return dataset, sequence_names, len(data_array[0]), names
-    return dataset, len(data_array[0]), names
+        return dataset, sequence_names, len(data_array[0]), query_result
+    return dataset, len(data_array[0]), query_result
 
 
 
