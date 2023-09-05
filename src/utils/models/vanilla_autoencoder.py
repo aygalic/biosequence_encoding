@@ -21,8 +21,8 @@ class Autoencoder(Model):
         super(Autoencoder, self).__init__()
         self.latent_dim = latent_dim   
         self.encoder = tf.keras.Sequential([
-            #layers.Flatten(),
-            #layers.BatchNormalization(),
+
+
             layers.Dropout(0.5),
             layers.Dense(1024),
             layers.LeakyReLU(alpha=0.05),
