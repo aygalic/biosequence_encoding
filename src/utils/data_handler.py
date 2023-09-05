@@ -53,14 +53,13 @@ def generate_dataset(path = absolute_path,
                      feature_selection_threshold = None, 
                      batch_size = 64, 
                      subsample = None, 
-                     return_id = False,
                      retain_phases = None,
                      feature_selection_proceedure = None,
                      sgdc_params = None,
                      class_balancing = None,
                      normalization = True,
-                     minimum_time_point = "V08",
-                     as_time_series = True,
+                     minimum_time_point = "BL",
+                     as_time_series = False,
                      transpose = False,
                      dataset_of_interest = "genes",
                      MT_removal = True,
@@ -118,19 +117,19 @@ def generate_dataset(path = absolute_path,
     # The following stategy for filtering also filters out every patient who have missed a visit up to the given timepoint.
     # This comportement could be tweaked easely later on
     # a bit clunky though
-    if(minimum_time_point == "BL"):
+    if(minimum_time_point == "BL" and as_time_series == False):
         print("retaining all patient who have at least passed the Base Line Visit...")
         BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
         matchin_entries = [entry for entry in entries if entry.split(".")[1] in BL_ids]
         entries = matchin_entries
-    elif(minimum_time_point == "V02"):
+    elif(minimum_time_point == "V02" and as_time_series == False):
         print("retaining all patient who have at least passed the Base Line to month 6 Visit...")
         BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
         V02_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V02"] 
         common_ids = set(BL_ids) & set(V02_ids) 
         matchin_entries = [entry for entry in entries if entry.split(".")[1] in common_ids]
         entries = matchin_entries
-    elif(minimum_time_point == "V04"):
+    elif(minimum_time_point == "V04" and as_time_series == False):
         print("retaining all patient who have at least passed the Base Line to month 12 Visit...")
         BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
         V02_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V02"] 
@@ -138,7 +137,7 @@ def generate_dataset(path = absolute_path,
         common_ids = set(BL_ids) & set(V02_ids) & set(V04_ids) 
         matchin_entries = [entry for entry in entries if entry.split(".")[1] in common_ids]
         entries = matchin_entries
-    elif(minimum_time_point == "V06"):
+    elif(minimum_time_point == "V06" and as_time_series == False):
         print("retaining all patient who have at least passed the Base Line to month 24 Visit...")
         BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
         V02_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V02"] 
@@ -318,10 +317,9 @@ def generate_dataset(path = absolute_path,
 
     # make it a batched dataset
     dataset = x_train.batch(batch_size)
-    #dataset = x_train # trying without batching the dataset
-    if(return_id):
-        return dataset, sequence_names, len(data_array[0]), query_result
-    return dataset, len(data_array[0]), query_result
+
+    
+    return dataset, sequence_names, len(data_array[0]), query_result
 
 
 
