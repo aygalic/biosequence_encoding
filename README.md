@@ -27,9 +27,11 @@ For patient selection :
 
 For gene selection/feature engineering:
 
-- Mean absolute deviation threshold
+- Mean absolute deviation threshold/ceiling
 - LASSO selection
+- min max scaling
 - Normalisation
+- log1p transform
 
 The dataset can then be output following 2 different architectures:
 
