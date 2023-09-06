@@ -24,7 +24,15 @@ class LSTM_Autoencoder(Model):
 
         self.encoder = tf.keras.Sequential([
             layers.Input(shape=(shape)),
-            layers.LSTM(64, activation='tanh', return_sequences=True, kernel_regularizer = self.regularizer, activity_regularizer = self.regularizer),
+            layers.LSTM(1024, activation='tanh', return_sequences=True, kernel_regularizer = self.regularizer, activity_regularizer = self.regularizer),
+            layers.LeakyReLU(alpha=0.05),
+            layers.Dropout(0.5),
+
+            layers.LSTM(512, activation='tanh', return_sequences=True, kernel_regularizer = self.regularizer, activity_regularizer = self.regularizer),
+            layers.LeakyReLU(alpha=0.05),
+            layers.Dropout(0.5),
+
+            layers.LSTM(256, activation='tanh', return_sequences=True, kernel_regularizer = self.regularizer, activity_regularizer = self.regularizer),
             layers.LeakyReLU(alpha=0.05),
             layers.Dropout(0.5),
 
@@ -37,10 +45,13 @@ class LSTM_Autoencoder(Model):
         
         self.decoder = tf.keras.Sequential([
             layers.RepeatVector(shape[0]),
-            layers.LSTM(64, activation='tanh', return_sequences=True),
+            layers.LSTM(256, activation='tanh', return_sequences=True),
             layers.LeakyReLU(alpha=0.05),
 
-            layers.LSTM(64, activation='tanh', return_sequences=True),
+            layers.LSTM(512, activation='tanh', return_sequences=True),
+            layers.LeakyReLU(alpha=0.05),
+
+            layers.LSTM(1024, activation='tanh', return_sequences=True),
             layers.LeakyReLU(alpha=0.05),
 
             layers.TimeDistributed(tf.keras.layers.Dense(shape[1], activation='relu'))  # Use 'relu' activation
