@@ -7,6 +7,9 @@
 
 import numpy as np
 import scipy
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 
 from sklearn.linear_model import SGDClassifier    
 from sklearn.model_selection import GridSearchCV
@@ -24,12 +27,26 @@ from collections import Counter
 from sklearn.preprocessing import StandardScaler
 
 def MAD_selection(data_array, threshold):
-        MAD = scipy.stats.median_abs_deviation(data_array)
-        gene_selected = [True if val > threshold else False for val in MAD]
-        # experimenting with upper bounds 
-        #gene_selected = [True if val > threshold and val < 10 else False for val in MAD]
+    MAD = scipy.stats.median_abs_deviation(data_array)
 
-        return gene_selected
+    print(min(MAD))
+    print(max(MAD))
+
+    # we also use a cieling to get rid of outliers.
+    gene_selected = [True if val > threshold and val < 100 else False for val in MAD]
+    
+    # Plot the distribution of MAD
+    plt.figure(figsize=(10, 5))
+    plt.hist(MAD, bins=200, color='blue', range = [0,50])
+    plt.axvline(threshold, color='red', linestyle='--', label='Threshold')
+    plt.title('Distribution of Median Absolute Deviation (MAD)')
+    plt.xlabel('MAD Value')
+    plt.ylabel('Frequency')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    return gene_selected
 
 def LASSO_selection(data_array, labels, sgdc_params = None, class_balancing = None):
 
