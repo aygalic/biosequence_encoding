@@ -64,6 +64,7 @@ def generate_dataset(path = absolute_path,
                      dataset_of_interest = "genes",
                      MT_removal = True,
                      log1p = True,
+                     min_max = True,
                      keep_only_symbols = False,
                      drop_ambiguous_pos = False,
                      sort_symbols = False):
@@ -237,6 +238,7 @@ def generate_dataset(path = absolute_path,
     if(feature_selection_threshold is not None):
         print("selecting genes based on median absolute deviation threshold: ",feature_selection_threshold, "...")
         gene_selected = feature_selection.MAD_selection(data_array, feature_selection_threshold)
+        print("removing", len(gene_selected) - sum(gene_selected), "genes under the MAD threshold from the dataset")
         data_array = data_array[:,gene_selected]
         query_result = query_result[gene_selected]
 
@@ -257,7 +259,7 @@ def generate_dataset(path = absolute_path,
     ################# sorting  ################
     ###########################################
     if(sort_symbols):
-        print("sorting...")
+        print("sorting based on genomic position chr then transcript start...")
         # reset the indexes because of all the previous transformations we have done
         query_result = query_result.reset_index(drop=True)
         query_result = query_result.sort_values(['genomic_pos.chr', 'genomic_pos.start'], ascending=[True, True])
@@ -269,14 +271,20 @@ def generate_dataset(path = absolute_path,
     ############## normalisation  #############
     ###########################################
 
+    
     if(normalization == True): 
         print("normalizing data...")
         data_array = normalize(data_array)
-        print("normalization done")
 
     if(log1p == True): 
+        print("log(1 + x) transformation...")
         data_array = np.log1p(data_array)
 
+    # after log1p transform because it already provide us with a very good dataset 
+    if(min_max == True):
+        print("scaling to [-1, 1]...")
+        scaler = MinMaxScaler(feature_range=(-1, 1))
+        data_array = scaler.fit_transform(data_array)
 
 
     ##########################################
