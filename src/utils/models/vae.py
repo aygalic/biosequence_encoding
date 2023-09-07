@@ -75,8 +75,8 @@ def generate_model(shape, latent_dim = 64):
 
     # default encoder
     encoder_inputs = keras.Input(shape=(shape,))
-    x = layers.UnitNormalization()(encoder_inputs) # to avoid overflowing float32
-    x = layers.Dropout(0.2)(x)
+   #x = layers.UnitNormalization()(encoder_inputs) # to avoid overflowing float32
+    x = layers.Dropout(0.2)(encoder_inputs)
     x = layers.Dense(1024)(x)
     x = layers.LeakyReLU(alpha=0.05)(x)
 

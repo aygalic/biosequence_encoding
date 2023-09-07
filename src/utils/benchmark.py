@@ -7,7 +7,7 @@ from tensorflow.keras import losses
 
 
 
-def brenchmark(model, dataset, param_set):
+def benchmark(model, dataset, param_set):
     ############
     ###### GATHER INFO
     ############
@@ -25,15 +25,19 @@ def brenchmark(model, dataset, param_set):
     # we want some basic info about the data:
     print("shape of the dataset:", data.shape)
 
+    obs_count = data.shape[0]
+    gene_count = data.shape[1]
+
     # check if the dataset has the correct range : 
-    if(min(data) < 0):
+    if(np.amin(data) < 0):
         print("the dataset is NOT meeting requirement : min(data) =", min(data))
         return None
-    if(max(data) > 1):
+    if(np.amax(data) > 1):
         print("the dataset is NOT meeting requirement : max(data) =", max(data))
         return None
 
     print("the dataset meets the min_max requirement")
+    
 
 
     ############
@@ -41,8 +45,13 @@ def brenchmark(model, dataset, param_set):
     ############
     # compute the loss of the model over the whole dataset
     # dataset has to be normalized in the range [0,1]
-    z = model.encoder(data)
+    try:
+        _,__, z = model.encoder(data)
+    except ValueError:
+        z = model.encoder(data)
     reconstruction = model.decoder(z)
+    reconstruction = model.decoder(z) # in case of variational autoencoder
+    
     total_loss = tf.reduce_mean(losses.mean_squared_error(data, reconstruction), axis=(0)).numpy()
     print("loss:", total_loss)
 
@@ -52,7 +61,9 @@ def brenchmark(model, dataset, param_set):
     # put everything into a dataframe
     curr_bench = pd.DataFrame({"model_name" : name,
                                "param_count" : n,
-                               "loss" : total_loss}, index=[0])
+                               "loss" : total_loss,
+                               "obs_count" : obs_count,
+                               "gene_number" : gene_count}, index=[0],)
 
     csv_file_path = '../workfiles/benchmark_history.csv'
 

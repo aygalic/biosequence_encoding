@@ -283,7 +283,7 @@ def generate_dataset(path = absolute_path,
     # after log1p transform because it already provide us with a very good dataset 
     if(min_max == True):
         print("scaling to [0, 1]...")
-        scaler = MinMaxScaler(feature_range=(0, 1))
+        scaler = MinMaxScaler(feature_range=(0, 1), clip = True)
         data_array = scaler.fit_transform(data_array)
 
 

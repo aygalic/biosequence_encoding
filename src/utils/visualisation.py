@@ -37,7 +37,10 @@ def dataset_plot(data):
 # plot a single observation, its latent space as well as its reconstruction
 def plot_single_obs_processing(x_train, autoencoder):
     e = iter(x_train).next()
-    z = autoencoder.encoder(e)
+    try:
+        _,__, z = autoencoder.encoder(e)
+    except ValueError:
+        z = autoencoder.encoder(e)
     decoded = autoencoder.decoder(z)
 
     e_ = e[0].reshape(1, -1) 
@@ -82,7 +85,11 @@ def plot_single_obs_processing(x_train, autoencoder):
 def plot_dataset_processing(x_train, autoencoder):
     # get everything out of TensorFlow back to numpy/pandas
     data = np.concatenate(list(x_train.as_numpy_iterator()), axis=0)
-    z = autoencoder.encoder.predict(x_train)
+    try:
+        _,__, z = autoencoder.encoder(data)
+    except ValueError:
+        z = autoencoder.encoder(data)
+
     reconstruction = autoencoder.decoder.predict(z)
 
     # Create a single figure with two subplots
