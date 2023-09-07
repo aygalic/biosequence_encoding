@@ -41,7 +41,7 @@ class Autoencoder(Model):
             #layers.LeakyReLU(alpha=0.05),
 
             #layers.Dense(latent_dim, activation='tanh', kernel_regularizer= regularizers.l2(10)), # this makes for abysmal performance
-            layers.Dense(latent_dim, activation='linear', kernel_regularizer= regularizers.l2(10)),
+            layers.Dense(latent_dim, activation='linear'),
             layers.LeakyReLU(alpha=0.05),
 
         ])
