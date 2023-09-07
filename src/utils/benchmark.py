@@ -1,7 +1,7 @@
 # sup
 import numpy as np
 import pandas as pd
-
+import seaborn as sns
 import tensorflow as tf
 from tensorflow.keras import losses
 
@@ -24,6 +24,17 @@ def brenchmark(model, dataset, param_set):
     
     # we want some basic info about the data:
     print("shape of the dataset:", data.shape)
+
+    # check if the dataset has the correct range : 
+    if(min(data) < 0):
+        print("the dataset is NOT meeting requirement : min(data) =", min(data))
+        return None
+    if(max(data) > 1):
+        print("the dataset is NOT meeting requirement : max(data) =", max(data))
+        return None
+
+    print("the dataset meets the min_max requirement")
+
 
     ############
     ###### COMPUTE METRICS
@@ -57,6 +68,18 @@ def brenchmark(model, dataset, param_set):
         
     # Save the DataFrame to the  CSV file
     df.to_csv(csv_file_path, index=False)
+
+    sns.set_theme(style="whitegrid")
+    g = sns.relplot(
+        data=df,
+        x="param_count", y="loss", size="param_count",
+        sizes=(10, 200),
+    )
+    #g.set(xscale="log", yscale="log")
+    g.ax.xaxis.grid(True, "minor", linewidth=.25)
+    g.ax.yaxis.grid(True, "minor", linewidth=.25)
+    g.despine(left=True, bottom=True)
+    g
 
     return df
 
