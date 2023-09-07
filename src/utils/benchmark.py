@@ -25,8 +25,34 @@ def benchmark(model, dataset, param_set):
     # we want some basic info about the data:
     print("shape of the dataset:", data.shape)
 
-    obs_count = data.shape[0]
-    gene_count = data.shape[1]
+    # for compatibility purpose :
+    try:
+        dataset._is_transpose
+    except AttributeError:
+        dataset._is_transpose = False
+    try:
+        dataset._is_time_series
+    except AttributeError:
+        dataset._is_time_series = False
+
+
+    if(~dataset._is_transpose and ~dataset._is_time_series):
+        obs_count = data.shape[0]
+        gene_count = data.shape[1]
+    elif(~dataset._is_transpose and dataset._is_time_series):
+        obs_count = data.shape[0]
+        gene_count = data.shape[2]
+        n_time_stamps = data.shape[1]
+    elif(dataset._is_transpose and dataset._is_time_series):
+        obs_count = data.shape[0]
+        gene_count = data.shape[1]
+        n_time_stamps = data.shape[2]
+
+    else:
+        print("wrong data format")
+        return None
+
+
 
     # check if the dataset has the correct range : 
     if(np.amin(data) < 0):
@@ -52,7 +78,11 @@ def benchmark(model, dataset, param_set):
     reconstruction = model.decoder(z)
     reconstruction = model.decoder(z) # in case of variational autoencoder
     
-    total_loss = tf.reduce_mean(losses.mean_squared_error(data, reconstruction), axis=(0)).numpy()
+    if(dataset._is_time_series):
+        total_loss = tf.reduce_mean(tf.reduce_mean(losses.mean_squared_error(data, reconstruction), axis=(0))).numpy()
+    else:
+        total_loss = tf.reduce_mean(losses.mean_squared_error(data, reconstruction), axis=(0)).numpy()
+
     print("loss:", total_loss)
 
     ############

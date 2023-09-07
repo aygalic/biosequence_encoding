@@ -36,16 +36,29 @@ def dataset_plot(data):
 
 # plot a single observation, its latent space as well as its reconstruction
 def plot_single_obs_processing(x_train, autoencoder):
+    try:
+        x_train._is_time_series
+    except AttributeError:
+        x_train._is_time_series = False
+
+
     e = iter(x_train).next()
+
     try:
         _,__, z = autoencoder.encoder(e)
     except ValueError:
         z = autoencoder.encoder(e)
     decoded = autoencoder.decoder(z)
 
-    e_ = e[0].reshape(1, -1) 
-    z_ = z[0].reshape(1, -1) 
-    decoded_ = decoded[0].reshape(1, -1) 
+
+    if(x_train._is_time_series):
+        e_ = e[0]  
+        z_ = z[0].reshape(1, -1) 
+        decoded_ = decoded[0]  
+    else:
+        e_ = e[0].reshape(1, -1) 
+        z_ = z[0].reshape(1, -1) 
+        decoded_ = decoded[0].reshape(1, -1) 
 
 
 
@@ -83,6 +96,23 @@ def plot_single_obs_processing(x_train, autoencoder):
 
 # plot the whole , its latent representation as well as its reconstruction
 def plot_dataset_processing(x_train, autoencoder):
+
+
+    try:
+        x_train._is_time_series
+    except AttributeError:
+        x_train._is_time_series = False
+    try:
+        x_train._is_transpose
+    except AttributeError:
+        x_train._is_transpose = False
+
+
+
+
+
+    
+
     # get everything out of TensorFlow back to numpy/pandas
     data = np.concatenate(list(x_train.as_numpy_iterator()), axis=0)
     try:
@@ -90,7 +120,19 @@ def plot_dataset_processing(x_train, autoencoder):
     except ValueError:
         z = autoencoder.encoder(data)
 
+
+
     reconstruction = autoencoder.decoder.predict(z)
+
+
+    if(x_train._is_time_series):
+        if(x_train._is_transpose):
+            data = data.reshape(data.shape[0], data.shape[2]*data.shape[1])
+            reconstruction = reconstruction.reshape(reconstruction.shape[0], reconstruction.shape[2]*reconstruction.shape[1])
+        else:
+            data = data.reshape(data.shape[0], data.shape[1]*data.shape[2])
+            reconstruction = reconstruction.reshape(reconstruction.shape[0], reconstruction.shape[1]*reconstruction.shape[2])
+
 
     # Create a single figure with two subplots
     plt.figure(figsize=(18, 6))
@@ -110,7 +152,7 @@ def plot_dataset_processing(x_train, autoencoder):
     plt.ylabel('Cells')
 
     plt.subplot(1, 3, 3)
-    sns.heatmap(data, yticklabels=False, xticklabels=False, cbar=True)
+    sns.heatmap(reconstruction, yticklabels=False, xticklabels=False, cbar=True)
     plt.title('Reconstruction - Gene expression plot')
     plt.xlabel('Genes')
     plt.ylabel('Cells')

@@ -20,24 +20,15 @@ class LSTM_Autoencoder(Model):
     def __init__(self, shape, latent_dim = 64):
         super(LSTM_Autoencoder, self).__init__()
         self.latent_dim = latent_dim   
-        self.regularizer = tf.keras.regularizers.L1L2(l1 = 0.05 , l2 = 0.05)  # Adjust the regularization strength as needed
+
 
         self.encoder = tf.keras.Sequential([
             layers.Input(shape=(shape)),
-            layers.LSTM(1024, activation='tanh', return_sequences=True, kernel_regularizer = self.regularizer, activity_regularizer = self.regularizer),
-            layers.LeakyReLU(alpha=0.05),
-            layers.Dropout(0.5),
 
-            layers.LSTM(512, activation='tanh', return_sequences=True, kernel_regularizer = self.regularizer, activity_regularizer = self.regularizer),
-            layers.LeakyReLU(alpha=0.05),
-            layers.Dropout(0.5),
+            layers.LSTM(256, activation='sigmoid', return_sequences=True),
+            layers.LSTM(128, activation='sigmoid', return_sequences=True),
 
-            layers.LSTM(256, activation='tanh', return_sequences=True, kernel_regularizer = self.regularizer, activity_regularizer = self.regularizer),
-            layers.LeakyReLU(alpha=0.05),
-            layers.Dropout(0.5),
-
-            layers.LSTM(latent_dim, activation='tanh', activity_regularizer = self.regularizer),
-            layers.LeakyReLU(alpha=0.05),
+            layers.LSTM(latent_dim, activation='sigmoid'),
 
         ])
         self.total_loss_tracker = keras.metrics.Mean(name="total_loss")
@@ -45,14 +36,9 @@ class LSTM_Autoencoder(Model):
         
         self.decoder = tf.keras.Sequential([
             layers.RepeatVector(shape[0]),
-            layers.LSTM(256, activation='tanh', return_sequences=True),
-            layers.LeakyReLU(alpha=0.05),
 
-            layers.LSTM(512, activation='tanh', return_sequences=True),
-            layers.LeakyReLU(alpha=0.05),
-
-            layers.LSTM(1024, activation='tanh', return_sequences=True),
-            layers.LeakyReLU(alpha=0.05),
+            layers.LSTM(128, activation='sigmoid', return_sequences=True),
+            layers.LSTM(256, activation='sigmoid', return_sequences=True),
 
             layers.TimeDistributed(tf.keras.layers.Dense(shape[1], activation='relu'))  # Use 'relu' activation
 
