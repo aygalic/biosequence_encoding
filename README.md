@@ -3,7 +3,7 @@
 
 ## Intro 
 
-This project enables the analysis of a dataset of single cell RNA seq. Some preliminary steps are performed in R. The LASSO.R file correspond to such analysis. It has the purpose of determining wether or not LASSO could be a good approach as well as some helpers script about dataset generation in R.
+This project enables the analysis of a dataset of single cell RNA seq. Some preliminary steps are performed in R. The `LASSO.R` file correspond to such analysis. It has the purpose of determining wether or not LASSO could be a good approach as well as some helpers script about dataset generation in R.
 
 Those suffer from performance issues that have been hard to overcome due to the slow nature of R.
 
@@ -12,7 +12,7 @@ The following steps of the project are done inside python notebooks.
  
 ## Data Helpers
 
-The folder utils contain the script data_handler.py which is the main interface with our dataset.
+The folder utils contain the script `data_handler.py` which is the main interface with our dataset. This is supplemented by some features contained in the file `feature_selection.py`.
 On top of the minimum machinery necessary to build a tensorflow.dataset, it enables the user to tune feature selection and data engineering.
 The following procedures are supported:
 
@@ -29,9 +29,9 @@ For gene selection/feature engineering:
 
 - Mean absolute deviation threshold/ceiling
 - LASSO selection
-- min max scaling
-- Normalisation
 - log1p transform
+- Normalisation
+- Min Max Scaling to [0,1]
 
 The dataset can then be output following 2 different architectures:
 
@@ -49,11 +49,11 @@ All models built are available in the utils/models folder.
 
 There you can find:
 
-- Simple FC autoencoder 'vanila_autoencoder.py', very effective as a quick way to encode the dataset on a single observation basis
-- FC Variational autoencoder 'vae.py', a first exploratory VAE that lead to similar results to the first one
-- CNN autoencoder 'cnn_encoder.py', turned out pretty tricky to build over so many features
-- Variational CNN autoencoder 'ConvVAE.py', to see if any improvement would be seen.
-- LSTM autoencoder 'LSTM.py', to see if the long term dependancies could be handle by such architectures.
+- Simple FC autoencoder `vanila_autoencoder.py`, very effective as a quick way to encode the dataset on a single observation basis
+- FC Variational autoencoder `vae.py`, a first exploratory VAE that lead to similar results to the first one
+- CNN autoencoder `cnn_encoder.py`, turned out pretty tricky to build over so many features
+- Variational CNN autoencoder `ConvVAE.py`, to see if any improvement would be seen.
+- LSTM autoencoder `LSTM.py`, to see if the long term dependancies could be handle by such architectures.
 
 upcoming : 
 - variational LSTM autoencoder
@@ -68,15 +68,27 @@ Those notebook are mainly following the same step for each model architecture:
 - building model
 - fitting the model to the dataset
 - monitoring the fit
+- benchmarking the model against others
 - providing some preliminary visualisation of the dataset latent space and reconstruction
 - when needed, some troubleshooting steps to enlighten model weaknesses
 - generation and saving of the encoded dataset in a usable format
 
+## Model Benchmarking
+
+`benchmark.py` enables you to benchmark models over the same dataset, or different subsets of it (handles different number of features and entry points by averaging the loss function).
+
+Models are then ranked and ploted on a complexity/loss plot.
+
+
 ## Post encoding analysis
 
-This analysis is held in 2 R files. One being dedicated to time series, the other to single point observations, as those 2 approaches requires slightly distincts analysis.
+This analysis is held in 2 R files located in the `post_training_analysis` folder. 
+* `cell_encoding_analysis.R` dedicated to data encoded from cells
+* `time_series_encoding_analysis.R` dedicated to data encoded from time series 
 
-The proposed analysis is composed of :
+as those 2 approaches requires slightly distincts analysis
+
+The given analysis is composed of :
 
 ### PCA Visualisation
 
