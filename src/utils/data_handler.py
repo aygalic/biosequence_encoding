@@ -44,10 +44,10 @@ def load_patient_data(filename, path = absolute_path):
 # here we open a single file passed as "filename" we return a lit of the values names.
 def get_names(filename, path = absolute_path):
     names = pd.read_csv(os.path.join(path,filename), sep='\t')
-    return [n.split(".")[0] for n in names.Name]
+    return [n for n in names.Name]
+
 
 ### now we design a function that return a dataset of multivriate time series or the individual timestamps
-
 def generate_dataset(path = absolute_path, 
                      metadata_path = metadata_path,
                      feature_selection_threshold = None, 
@@ -180,6 +180,8 @@ def generate_dataset(path = absolute_path,
 
     # get the entry name list
     names = get_names(entries[0], path)
+    # getting rid of the version number
+    names = [n.split(".")[0] for n in names]
     
     # remove artifacts by keeping samples of correct length
     if(dataset_of_interest == "transcprits"):
@@ -283,7 +285,7 @@ def generate_dataset(path = absolute_path,
     # after log1p transform because it already provide us with a very good dataset 
     if(min_max == True):
         print("scaling to [0, 1]...")
-        scaler = MinMaxScaler(feature_range=(0, 1), clip = True)
+        scaler = MinMaxScaler(feature_range=(0, 1))
         data_array = scaler.fit_transform(data_array)
 
 
