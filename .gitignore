@@ -5,3 +5,4 @@ workfiles
 src/.Rhistory
 __pycache__
 .vscode/settings.json
+.vscode
