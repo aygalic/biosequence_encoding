@@ -52,8 +52,6 @@ def benchmark(model, dataset, param_set):
         print("wrong data format")
         return None
 
-
-
     # check if the dataset has the correct range : 
     if(np.amin(data) < 0):
         print("the dataset is NOT meeting requirement : min(data) =", min(data))
@@ -95,7 +93,8 @@ def benchmark(model, dataset, param_set):
                                "obs_count" : obs_count,
                                "gene_number" : gene_count}, index=[0],)
 
-    csv_file_path = '../workfiles/benchmark_history.csv'
+
+    csv_file_path = '../workfiles/benchmark_history'+dataset._name+'.csv'
 
     # Check if the file exists
     try:

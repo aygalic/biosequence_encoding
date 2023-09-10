@@ -12,7 +12,7 @@ from sklearn.preprocessing import normalize, MinMaxScaler
 
 from tensorflow import keras
 
-import feature_selection
+from utils import feature_selection
 
 # for translation of gene symbols
 import mygene
@@ -285,7 +285,7 @@ def generate_dataset(path = absolute_path,
     # after log1p transform because it already provide us with a very good dataset 
     if(min_max == True):
         print("scaling to [0, 1]...")
-        scaler = MinMaxScaler(feature_range=(0, 1))
+        scaler = MinMaxScaler(feature_range=(0, 1), clip = True)
         data_array = scaler.fit_transform(data_array)
 
 
@@ -333,17 +333,23 @@ def generate_dataset(path = absolute_path,
 
 
 
-### now we design a function that return a dataset of multivriate time series or the individual timestamps
 
+
+
+
+
+
+
+
+
+
+### now we design a function that return a dataset of multivriate time series or the individual timestamps
 def generate_dataset_transcripts(path = absolute_path, 
                      metadata_path = metadata_path,
                      feature_selection_threshold = None, 
                      batch_size = 64, 
                      subsample = None, 
                      retain_phases = None,
-                     feature_selection_proceedure = None,
-                     sgdc_params = None,
-                     class_balancing = None,
                      normalization = True,
                      minimum_time_point = "BL",
                      as_time_series = False,
@@ -499,11 +505,10 @@ def generate_dataset_transcripts(path = absolute_path,
     ############ feature selection  ###########
     ###########################################
  
-    if(feature_selection_proceedure == "LASSO"):
-        # for each patient in our dataset, we want to know to what cohort he belongs
-        cohorts = np.array(meta_data["Cohort"], dtype=np.int32)
-        print("selecting genes based on LASSO-like classification...")
-        gene_selected = feature_selection.LASSO_selection(data_array, cohorts, sgdc_params, class_balancing)
+    if(feature_selection_threshold is not None):
+        print("selecting genes based on median absolute deviation threshold: ",feature_selection_threshold, "...")
+        gene_selected = feature_selection.MAD_selection(data_array, feature_selection_threshold)
+        print("removing", len(gene_selected) - sum(gene_selected), "genes under the MAD threshold from the dataset")
         data_array = data_array[:,gene_selected]
         names = names[gene_selected]
 
@@ -527,7 +532,7 @@ def generate_dataset_transcripts(path = absolute_path,
     # after log1p transform because it already provide us with a very good dataset 
     if(min_max == True):
         print("scaling to [0, 1]...")
-        scaler = MinMaxScaler(feature_range=(0, 1))
+        scaler = MinMaxScaler(feature_range=(0, 1), clip = True)
         data_array = scaler.fit_transform(data_array)
 
     
