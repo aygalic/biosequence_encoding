@@ -130,7 +130,12 @@ class biDir_LSTM_Autoencoder(Model):
 def generate_model(shape, latent_dim = 64, bidirrectional = False):
     if(bidirrectional == True):
         model = biDir_LSTM_Autoencoder(shape, latent_dim)
+        model._name = "biDir_LSTM_Autoencoder"
+
 
     else:
         model = LSTM_Autoencoder(shape, latent_dim)
+        model._name = "LSTM_Autoencoder"
+
+    model._is_variational = False
     return model

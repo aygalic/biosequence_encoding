@@ -327,8 +327,12 @@ def generate_dataset(path = absolute_path,
 
     # make it a batched dataset
     dataset = x_train.batch(batch_size)
-
     
+    # adding correct attributes
+    dataset._name = "genes"
+    dataset._is_transpose = transpose
+    dataset._is_time_series = as_time_series
+
     return dataset, sequence_names, len(data_array[0]), query_result
 
 
@@ -576,6 +580,10 @@ def generate_dataset_transcripts(path = absolute_path,
     # make it a batched dataset
     dataset = x_train.batch(batch_size)
 
+    # adding correct attributes
+    dataset._name = "transcripts"
+    dataset._is_transpose = transpose
+    dataset._is_time_series = as_time_series
     
     return dataset, sequence_names, len(data_array[0]), names
 

@@ -36,18 +36,14 @@ def dataset_plot(data):
 
 # plot a single observation, its latent space as well as its reconstruction
 def plot_single_obs_processing(x_train, autoencoder):
-    try:
-        x_train._is_time_series
-    except AttributeError:
-        x_train._is_time_series = False
-
-
+    
     e = iter(x_train).next()
-
-    try:
+    
+    if(autoencoder._is_variational == True):
         _,__, z = autoencoder.encoder(e)
-    except ValueError:
+    else :
         z = autoencoder.encoder(e)
+
     decoded = autoencoder.decoder(z)
 
 
@@ -80,16 +76,6 @@ def plot_single_obs_processing(x_train, autoencoder):
     # Update layout
     fig.update_layout(title='Stacked Graph of Image and Latent Space', showlegend=False)
 
-    # Update x-axis labels
-    #fig.update_xaxes(title_text='genes (normalized)', row=1, col=1)
-    #fig.update_xaxes(title_text='latent representation', row=2, col=1)
-    #fig.update_xaxes(title_text='genes (normalized)', row=3, col=1)
-
-    # Update y-axis labels
-    #fig.update_yaxes(title_text='timestamps', row=1, col=1)
-    #fig.update_yaxes(title_text='latent representation', row=2, col=1)
-    #fig.update_yaxes(title_text='timestamps', row=3, col=1)
-
     fig.show()
 
 
@@ -97,27 +83,12 @@ def plot_single_obs_processing(x_train, autoencoder):
 # plot the whole , its latent representation as well as its reconstruction
 def plot_dataset_processing(x_train, autoencoder):
 
-
-    try:
-        x_train._is_time_series
-    except AttributeError:
-        x_train._is_time_series = False
-    try:
-        x_train._is_transpose
-    except AttributeError:
-        x_train._is_transpose = False
-
-
-
-
-
-    
-
     # get everything out of TensorFlow back to numpy/pandas
     data = np.concatenate(list(x_train.as_numpy_iterator()), axis=0)
-    try:
+
+    if(autoencoder._is_variational == True):
         _,__, z = autoencoder.encoder(data)
-    except ValueError:
+    else :
         z = autoencoder.encoder(data)
 
 
@@ -126,13 +97,9 @@ def plot_dataset_processing(x_train, autoencoder):
 
 
     if(x_train._is_time_series):
-        if(x_train._is_transpose):
-            data = data.reshape(data.shape[0], data.shape[2]*data.shape[1])
-            reconstruction = reconstruction.reshape(reconstruction.shape[0], reconstruction.shape[2]*reconstruction.shape[1])
-        else:
-            data = data.reshape(data.shape[0], data.shape[1]*data.shape[2])
-            reconstruction = reconstruction.reshape(reconstruction.shape[0], reconstruction.shape[1]*reconstruction.shape[2])
-
+        data = data.reshape(data.shape[0], data.shape[2]*data.shape[1])
+        reconstruction = reconstruction.reshape(reconstruction.shape[0], reconstruction.shape[2]*reconstruction.shape[1])
+ 
 
     # Create a single figure with two subplots
     plt.figure(figsize=(18, 6))

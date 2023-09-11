@@ -72,4 +72,6 @@ class CNN_Autoencoder(Model):
 
 def generate_model(shape, latent_dim = 64):
     model = CNN_Autoencoder(shape, latent_dim)
+    model._name = "CNN_Autoencoder"
+    model._is_variational = False
     return model

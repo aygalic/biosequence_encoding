@@ -99,4 +99,7 @@ class Autoencoder(Model):
 
 def generate_model(shape, latent_dim = 64):
     model = Autoencoder(shape, latent_dim)
+    model._name = "vanilla_autoencoder"
+    model._is_variational = False
+
     return model

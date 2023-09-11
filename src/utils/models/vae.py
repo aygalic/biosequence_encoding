@@ -117,4 +117,7 @@ def generate_model(shape, latent_dim = 64):
     decoder = keras.Model(latent_inputs, decoder_outputs, name="decoder")
 
     vae = VAE(encoder, decoder)
+    vae._name = "VAE_autoencoder"
+    vae._is_variational = True
+
     return vae

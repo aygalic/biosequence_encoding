@@ -120,6 +120,9 @@ def generate_model(shape, latent_dim = 64):
     decoder = keras.Model(latent_inputs, decoder_outputs, name="decoder")
 
     vae = ConvVAE(encoder, decoder)
+    vae._name = "ConvVAE"
+    model._is_variational = True
+
     return vae
 
 
@@ -127,9 +130,3 @@ def generate_model(shape, latent_dim = 64):
 
 
 
-
-
-
-
-    model = CNN_Autoencoder(shape, latent_dim)
-    return model

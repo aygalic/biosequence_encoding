@@ -7,7 +7,8 @@ from tensorflow.keras import losses
 
 
 
-def benchmark(model, dataset, param_set):
+def benchmark(model, dataset):
+
     ############
     ###### GATHER INFO
     ############
@@ -24,16 +25,6 @@ def benchmark(model, dataset, param_set):
     
     # we want some basic info about the data:
     print("shape of the dataset:", data.shape)
-
-    # for compatibility purpose :
-    try:
-        dataset._is_transpose
-    except AttributeError:
-        dataset._is_transpose = False
-    try:
-        dataset._is_time_series
-    except AttributeError:
-        dataset._is_time_series = False
 
 
     if(~dataset._is_transpose and ~dataset._is_time_series):
@@ -69,10 +60,11 @@ def benchmark(model, dataset, param_set):
     ############
     # compute the loss of the model over the whole dataset
     # dataset has to be normalized in the range [0,1]
-    try:
+    if(model._is_variational == True):
         _,__, z = model.encoder(data)
-    except ValueError:
+    else :
         z = model.encoder(data)
+
     reconstruction = model.decoder(z)
     reconstruction = model.decoder(z) # in case of variational autoencoder
     
