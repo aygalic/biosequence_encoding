@@ -22,6 +22,8 @@ mg = mygene.MyGeneInfo()
 
 # default path of the folder containing the salmon files
 absolute_path = '/Users/aygalic/Thesis/data/quant/'  
+absolute_path_cancer = '/Users/aygalic/Thesis/data/cancer'  
+
 metadata_path = '/Users/aygalic/Thesis/METADATA_200123.xlsx'  
 
 
@@ -30,21 +32,14 @@ metadata_path = '/Users/aygalic/Thesis/METADATA_200123.xlsx'
 
 # from filename to tensor
 # here we open a single file passed as "filename" we return a tensor of TPM values.
-def load_patient_data(filename, path = absolute_path):
-  #specify read types for our data
-  read_types = [float()]
-  # get a first sample to base everything of
-  text = pathlib.Path(os.path.join(path,filename)).read_text()
-  lines = text.split('\n')[1:-1]
-  # the 3rd column correspond to TPM values.
-  features = tf.io.decode_csv(lines, record_defaults=read_types, field_delim = "\t", select_cols=[3])
-  data = tf.convert_to_tensor(features)[0]
-  return data
+def load_patient_data(filename, header = 0):
+    data = pd.read_table(filename, header = header)
+    return data.iloc[:, 3]
 
 # here we open a single file passed as "filename" we return a lit of the values names.
-def get_names(filename, path = absolute_path):
-    names = pd.read_csv(os.path.join(path,filename), sep='\t')
-    return [n for n in names.Name]
+def get_names(filename, header = 0):
+    names = pd.read_table(filename, header = header)
+    return names.iloc[:, 0]
 
 
 ### now we design a function that return a dataset of multivriate time series or the individual timestamps
@@ -61,7 +56,6 @@ def generate_dataset(path = absolute_path,
                      minimum_time_point = "BL",
                      as_time_series = False,
                      transpose = False,
-                     dataset_of_interest = "genes",
                      MT_removal = True,
                      log1p = True,
                      min_max = True,
@@ -69,9 +63,8 @@ def generate_dataset(path = absolute_path,
                      drop_ambiguous_pos = False,
                      sort_symbols = False):
 
-    if(dataset_of_interest not in ["genes", "transcripts"]):
-        print("err, 'dataset_of_interest' must be either 'genes' or 'transcripts'")
-        return
+    dataset_of_interest = "genes"
+
     # getting entries ready
     # each couple of entries correspond to one patient, we are only interested in the "transcript" files
     entries = os.listdir(path)
@@ -176,23 +169,24 @@ def generate_dataset(path = absolute_path,
 
     # load the dataset into an array 
     print("loading samples...")
-    data = [load_patient_data(e, path) for e in entries]
+    data = [load_patient_data(os.path.join(path, e)) for e in entries]
 
     # get the entry name list
-    names = get_names(entries[0], path)
+    names = get_names(os.path.join(path,entries[0]))
+    
     # getting rid of the version number
     names = [n.split(".")[0] for n in names]
     
     # remove artifacts by keeping samples of correct length
-    if(dataset_of_interest == "transcprits"):
-        samples_to_keep = [1 if s.shape == (95309) else 0 for s in data]
-    elif(dataset_of_interest == "genes"):
-        samples_to_keep = [1 if s.shape == (34569) else 0 for s in data]
+
+    samples_to_keep = [1 if s.shape == (34569,) else 0 for s in data]
         
-    print("loaded",len(samples_to_keep), "samples")
+
+    print("loaded",sum(samples_to_keep), "samples")
     
     train_ds = [sample for (sample, test) in  zip(data, samples_to_keep) if test]
     data_array = np.array(train_ds)
+
 
     patient_id = [int(p.split(".")[1]) for (p, test) in  zip(entries, samples_to_keep) if test]
 
@@ -476,20 +470,18 @@ def generate_dataset_transcripts(path = absolute_path,
 
     # load the dataset into an array 
     print("loading samples...")
-    data = [load_patient_data(e, path) for e in entries]
+    data = [load_patient_data(os.path.join(path, e)) for e in entries]
 
     # get the entry name list
-    names = get_names(entries[0], path)
+    names = get_names(os.path.join(path,entries[0]))
 
     names = pd.DataFrame([n.split("|") for n in names])
     
     # remove artifacts by keeping samples of correct length
-    if(dataset_of_interest == "transcripts"):
-        samples_to_keep = [1 if s.shape == (95309) else 0 for s in data]
-    elif(dataset_of_interest == "genes"):
-        samples_to_keep = [1 if s.shape == (34569) else 0 for s in data]
+    samples_to_keep = [1 if s.shape == (95309,) else 0 for s in data]
+
         
-    print("loaded",len(samples_to_keep), "samples")
+    print("loaded",sum(samples_to_keep), "samples")
     
     train_ds = [sample for (sample, test) in  zip(data, samples_to_keep) if test]
     data_array = np.array(train_ds)
@@ -584,6 +576,143 @@ def generate_dataset_transcripts(path = absolute_path,
     dataset._name = "transcripts"
     dataset._is_transpose = transpose
     dataset._is_time_series = as_time_series
+    
+    return dataset, sequence_names, len(data_array[0]), names
+
+
+
+
+
+### now we design a function that return a dataset of multivriate time series or the individual timestamps
+def generate_dataset_cancer(
+        path = absolute_path_cancer, 
+        metadata_path = metadata_path,
+        feature_selection_threshold = None, 
+        batch_size = 64, 
+        subsample = None, 
+        normalization = True,
+        transpose = False,
+        MT_removal = True,
+        log1p = True,
+        min_max = True):
+
+
+
+
+    # getting entries ready
+
+    entries = os.listdir(path)
+    # entries are contained into their own subdir
+    entries = [[path+"/"+entry+"/"+file for file in os.listdir(path+"/"+entry)] for entry in entries if os.path.isdir(path+"/"+entry)]
+    entries = [[e for e in entries if ".tsv" in e ][0] for entries in entries]
+
+
+
+
+
+    # we load metadata, so we can have access to additional information not included in the filename
+    #meta_data = pd.read_excel(metadata_path, header = 1, usecols = range(1,10) )
+
+    ###########################################
+    ###### pre-loading patient selection ######
+    ###########################################
+    # selecting which entires to include in our analysis
+
+
+    # if we want a smaller dataset for testing purposes
+    if(subsample is not None):
+        entries = entries[0:subsample]
+
+    # sanity check : don't load patient where some values are missing
+    #Na_s =  meta_data[meta_data.isna().any(axis=1)]["Patient Number"]
+    #entries = [e for e in entries if e.split(".")[1] not in str(Na_s) ]
+
+
+    ###########################################
+    ############ loading patients  ############
+    ###########################################
+
+    # load the dataset into an array 
+    print("loading samples...")
+    data = [load_patient_data(e, header = 5) for e in entries]
+
+    # get the entry name list
+    names = get_names(entries[0], header = 5)
+    
+    # remove artifacts by keeping samples of correct length
+    samples_to_keep = [1 if s.shape == (60660,) else 0 for s in data]   
+    print("loaded",sum(samples_to_keep), "/",len(samples_to_keep), "samples")
+    
+    train_ds = [sample for (sample, test) in  zip(data, samples_to_keep) if test]
+    data_array = np.array(train_ds)
+
+    #patient_id = [int(p.split(".")[1]) for (p, test) in  zip(entries, samples_to_keep) if test]
+
+    # only keep metadata for selected patients
+    #meta_data = meta_data.set_index('Patient Number')
+    #meta_data = meta_data.reindex(index=patient_id)
+    #meta_data = meta_data.reset_index()
+
+
+
+
+
+    ###########################################
+    ############ feature selection  ###########
+    ###########################################
+ 
+    if(feature_selection_threshold is not None):
+        print("selecting genes based on median absolute deviation threshold: ",feature_selection_threshold, "...")
+        gene_selected = feature_selection.MAD_selection(data_array, feature_selection_threshold)
+        print("removing", len(gene_selected) - sum(gene_selected), "genes under the MAD threshold from the dataset")
+        data_array = data_array[:,gene_selected]
+        names = names[gene_selected]
+
+
+    
+    print("number of genes selected : ", len(data_array[0]))
+    print("number of genes selected : ", len(names))
+
+    ###########################################
+    ############## normalisation  #############
+    ###########################################
+
+    
+    if(normalization == True): 
+        print("normalizing data...")
+        data_array = normalize(data_array)
+
+    if(log1p == True): 
+        print("log(1 + x) transformation...")
+        data_array = np.log1p(data_array)
+
+    # after log1p transform because it already provide us with a very good dataset 
+    if(min_max == True):
+        print("scaling to [0, 1]...")
+        scaler = MinMaxScaler(feature_range=(0, 1), clip = True)
+        data_array = scaler.fit_transform(data_array)
+
+    
+
+
+    print("shape of the dataset :", data_array.shape)
+
+    print("number of seq in the dataset :", len(data_array))
+
+    sequence_names = [f for (f, test) in  zip(entries, samples_to_keep) if test]
+
+
+    #return data_array, sequence_names, len(data_array[0]), names
+
+    x_train = tf.data.Dataset.from_tensor_slices(data_array)
+
+    # make it a batched dataset
+    dataset = x_train.batch(batch_size)
+
+    # adding correct attributes
+    dataset._name = "cancer"
+    dataset._is_transpose = transpose
+    dataset._is_time_series = False
     
     return dataset, sequence_names, len(data_array[0]), names
 
