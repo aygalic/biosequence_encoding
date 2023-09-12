@@ -25,7 +25,7 @@ absolute_path = '/Users/aygalic/Thesis/data/quant/'
 absolute_path_cancer = '/Users/aygalic/Thesis/data/cancer'  
 
 metadata_path = '/Users/aygalic/Thesis/METADATA_200123.xlsx'  
-
+cancer_metadata_path = '/Users/aygalic/Thesis/data/cancer/clinical.cart.2023-09-11.json'
 
 
 
@@ -586,7 +586,7 @@ def generate_dataset_transcripts(path = absolute_path,
 ### now we design a function that return a dataset of multivriate time series or the individual timestamps
 def generate_dataset_cancer(
         path = absolute_path_cancer, 
-        metadata_path = metadata_path,
+        metadata_path = cancer_metadata_path,
         feature_selection_threshold = None, 
         batch_size = 64, 
         subsample = None, 
