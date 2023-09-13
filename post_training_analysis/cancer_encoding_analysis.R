@@ -119,31 +119,51 @@ plot(projected_data) # it would be nice to know which patient correspond to what
 dim(encoded_experession)
 length(clinical_info)
 
-xlim_ = c(min(projected_data[,1]), max(projected_data[,1]))
-ylim_ = c(min(projected_data[,2]), max(projected_data[,2]))
-legend_ = levels(factor(clinical_info))
-
-
-# Create an empty plot first
-plot(x = NULL, y = NULL, xlim = xlim_, ylim = ylim_, type = "n")
-
-# Add the legend inside the empty plot
-legend("topleft",
-       legend = legend_,
-       pch = 19,
-       col = factor(levels(factor(clinical_info))),
-       inset = c(0.01, 0.01),
-       text.width = 0.5,
-       cex = .5,
-       bty = 'n')  # Adjust the 'inset' values as needed
-
-# Add points to the plot
-points(projected_data, col = factor(clinical_info), pch = 16)
 
 
 
-# same without legend
-plot(projected_data, col = factor(clinical_info), pch = 16)
+#### let's plot the PCA for the most abundant tissues
+plot_df <- data.frame(projected_data)
+
+
+n_tissues = 5
+
+
+
+# Step 1: Count the occurrences of each factor
+factor_counts <- table(clinical_info)
+
+# Step 2: Sort the factor counts in descending order
+sorted_counts <- sort(factor_counts, decreasing = TRUE)
+
+# Step 3: Extract the names of the top n factors
+top_factors <- names(sorted_counts[1:n_tissues])
+
+# Step 4: Create a new factor variable that groups other factors as "other"
+plot_df$tissue_of_origin <- ifelse(clinical_info %in% top_factors, clinical_info, "_other")
+
+
+# A basic scatterplot with color depending on tissue
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
+
+pal <- gg_color_hue(n_tissues + 1)
+pal[1] <- "#000000"
+
+  
+ggplot(plot_df, aes(x = Comp.1,y = Comp.2, color = tissue_of_origin)) + 
+  scale_color_manual(values=pal)+
+  geom_point(size=1) + 
+  theme_void()
+
+
+
+
+
+
+
 
 
 #################################
@@ -200,15 +220,16 @@ perplexity = 50
 iter_max = 2000
 
 tsne_out <- Rtsne(data_matrix,perplexity = perplexity, pca = FALSE, max_iter = iter_max)
-plt_data <- data.frame(x = rescale(tsne_out$Y[,1]), # rescale for viz
-                         y = rescale(tsne_out$Y[,2]))
+plt_data <- data.frame(x = tsne_out$Y[,1],
+                       y = tsne_out$Y[,2])
 
-plot = ggplot(plt_data, aes(x=x, y=y, col = group)) + 
- geom_point(size = 1) + 
- theme_void() +
- scale_color_viridis(discrete = TRUE, option = "A")  # A for mamgma colors
-plot <- ggplotly(plot)
-plot                         
+plt_data$tissue_of_origin <- ifelse(clinical_info %in% top_factors, clinical_info, "_other")
+
+plot = ggplot(plt_data, aes(x=x, y=y, color = tissue_of_origin)) + 
+  geom_point(size = 1) + 
+  scale_color_manual(values=pal)+
+  theme_void()
+plot 
 
 
 
