@@ -113,7 +113,7 @@ def generate_model(shape, latent_dim = 64):
     x = layers.Dense(1024)(x)
     x = layers.LeakyReLU(alpha=0.05)(x)
 
-    decoder_outputs = layers.Dense(shape)(x)
+    decoder_outputs = layers.Dense(shape, activation = 'sigmoid')(x)
     decoder = keras.Model(latent_inputs, decoder_outputs, name="decoder")
 
     vae = VAE(encoder, decoder)

@@ -68,7 +68,7 @@ class Autoencoder(Model):
             layers.Dense(1024),
             layers.LeakyReLU(alpha=0.05),
 
-            layers.Dense(1 * shape, activation='linear', use_bias = True)
+            layers.Dense(1 * shape, activation='sigmoid', use_bias = True)
         ])
     
     @property

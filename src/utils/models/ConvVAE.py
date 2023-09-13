@@ -111,7 +111,7 @@ def generate_model(shape, latent_dim = 64):
     x = layers.UpSampling1D(2)(x)
     x = layers.Cropping1D(cropping=(1, 2))(x)  # to have the right length time series        
     x = layers.Conv1D(filters= 128, kernel_size=5, padding="same", activation='selu')(x)
-    decoder_outputs = layers.Conv1D(filters=shape[1], kernel_size=5, padding="same", activation='selu')(x)
+    decoder_outputs = layers.Conv1D(filters=shape[1], kernel_size=5, padding="same", activation='sigmoid')(x)
 
 
 

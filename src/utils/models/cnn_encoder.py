@@ -39,7 +39,7 @@ class CNN_Autoencoder(Model):
             layers.UpSampling1D(2),
             #layers.UpSampling1D(1),  # Use 1 for upsampling factor
             layers.Cropping1D(cropping=(1, 2)),            
-            layers.Conv1D(filters=shape[1], kernel_size=5, padding="same", activation='selu'),  # Change kernel size here
+            layers.Conv1D(filters=shape[1], kernel_size=5, padding="same", activation='sigmoid'),  # Change kernel size here
 
 
         ])

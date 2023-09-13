@@ -133,7 +133,9 @@ legend("topleft",
        pch = 19,
        col = factor(levels(factor(clinical_info))),
        inset = c(0.01, 0.01),
-       text.width = 0.5)  # Adjust the 'inset' values as needed
+       text.width = 0.5,
+       cex = .5,
+       bty = 'n')  # Adjust the 'inset' values as needed
 
 # Add points to the plot
 points(projected_data, col = factor(clinical_info), pch = 16)
@@ -177,8 +179,8 @@ make_animated_plot = function(param){
   }
   plot = ggplot(tsne_plots, aes(x=x, y=y, col = group, frame = max_iter)) + 
     geom_point() + 
-    theme_void() +
-    scale_color_viridis(discrete = TRUE, option = "A")  # A for mamgma colors
+    theme_void() #+
+    #scale_color_viridis(discrete = TRUE, option = "A")  # A for mamgma colors
   plot <- ggplotly(plot)
   return(plot)
 }
@@ -195,7 +197,7 @@ subplot(plots, nrows = 3)
 # if you want to investigate a given plot : 
 group = as.factor(clinical_info)
 perplexity = 50
-iter_max = 1000
+iter_max = 2000
 
 tsne_out <- Rtsne(data_matrix,perplexity = perplexity, pca = FALSE, max_iter = iter_max)
 plt_data <- data.frame(x = rescale(tsne_out$Y[,1]), # rescale for viz
@@ -209,6 +211,5 @@ plot <- ggplotly(plot)
 plot                         
 
 
-orca(plot, "../img/cancer_t-SNE_simple_ae_log1p.png") 
 
                          

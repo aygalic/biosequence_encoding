@@ -40,7 +40,7 @@ class LSTM_Autoencoder(Model):
             layers.LSTM(128, activation='sigmoid', return_sequences=True),
             layers.LSTM(256, activation='sigmoid', return_sequences=True),
 
-            layers.TimeDistributed(tf.keras.layers.Dense(shape[1], activation='relu'))  # Use 'relu' activation
+            layers.TimeDistributed(tf.keras.layers.Dense(shape[1], activation='sigmoid'))
 
 
         ])

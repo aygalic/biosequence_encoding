@@ -14,7 +14,7 @@ library(data.table)
 setwd("~/Thesis/genome_analysis_parkinson/src")
 
 table = fread("../workfiles/processed_data_lstm.csv", header = T)
-table = fread("../workfiles/processed_data_t_lstm.csv", header = T)
+
 table = fread("../workfiles/compressed_data_cnn.csv", header = T)
 table = fread("../workfiles/compressed_data_ConvVAE.csv", header = T)
 
