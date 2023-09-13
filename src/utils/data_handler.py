@@ -605,8 +605,7 @@ def generate_dataset_cancer(
     # entries are contained into their own subdir
     entries = [[path+"/"+entry+"/"+file for file in os.listdir(path+"/"+entry)] for entry in entries if os.path.isdir(path+"/"+entry)]
     entries = [[e for e in entries if ".tsv" in e ][0] for entries in entries]
-
-
+    entries = [e for e in entries if "augmented_star_gene_counts" in e ]
 
 
 

@@ -209,6 +209,6 @@ plot <- ggplotly(plot)
 plot                         
 
 
-orca(plot, "../img/t-SNE_simple_ae_log1p.png") 
+orca(plot, "../img/cancer_t-SNE_simple_ae_log1p.png") 
 
                          
