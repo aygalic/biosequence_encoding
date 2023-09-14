@@ -6,3 +6,5 @@ src/.Rhistory
 __pycache__
 .vscode/settings.json
 .vscode
+external_aproach/VQ_VAE_disc
+*.csv
