@@ -172,7 +172,7 @@ def generate_dataset(path = absolute_path,
     entries = [e for e in entries if e.split(".")[1] not in str(Na_s) ]
 
 
-
+    #### FOR EXERIMENTATION
     if(keep_only_genetic_pd):
         GPD = [1 if ds == "Genetic PD" else 0 for ds in meta_data["Disease Status"] ]
         entries = entries[GPD]
@@ -370,7 +370,11 @@ def generate_dataset_transcripts(path = absolute_path,
                      transpose = False,
                      MT_removal = True,
                      log1p = True,
-                     min_max = True):
+                     min_max = True,
+                     # for experiment purpose only :
+                     keep_only_BL = False,
+                     keep_only_genetic_pd = False):
+
     dataset_of_interest = "transcripts"
 
 
@@ -471,6 +475,9 @@ def generate_dataset_transcripts(path = absolute_path,
         entries = matchin_entries
 
 
+    #### FOR EXERIMENTATION
+    if(keep_only_BL):
+        entries = [e for e in entries if e.split(".")[2] == "BL"]
 
 
     # sanity check : are the patient numbers actually numeric ? 
@@ -479,6 +486,14 @@ def generate_dataset_transcripts(path = absolute_path,
     # sanity check : don't load patient where some values are missing
     Na_s =  meta_data[meta_data.isna().any(axis=1)]["Patient Number"]
     entries = [e for e in entries if e.split(".")[1] not in str(Na_s) ]
+
+
+    #### FOR EXERIMENTATION
+    if(keep_only_genetic_pd):
+        GPD = [1 if ds == "Genetic PD" else 0 for ds in meta_data["Disease Status"] ]
+        entries = entries[GPD]
+
+
 
     ###########################################
     ############ loading patients  ############
