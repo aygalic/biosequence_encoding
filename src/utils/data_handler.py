@@ -354,7 +354,8 @@ def generate_dataset_transcripts(path = absolute_path,
                      transpose = False,
                      MT_removal = True,
                      log1p = True,
-                     min_max = True):
+                     min_max = True,
+                     gene_selection_file = None):
     dataset_of_interest = "transcripts"
 
 
@@ -476,7 +477,7 @@ def generate_dataset_transcripts(path = absolute_path,
     names = get_names(os.path.join(path,entries[0]))
 
     names = pd.DataFrame([n.split("|") for n in names])
-    
+
     # remove artifacts by keeping samples of correct length
     samples_to_keep = [1 if s.shape == (95309,) else 0 for s in data]
 
@@ -501,6 +502,30 @@ def generate_dataset_transcripts(path = absolute_path,
     ############ feature selection  ###########
     ###########################################
  
+    if(gene_selection_file is not None):
+        name_df = names.set_axis([
+            'trascript_id', 
+            'gene_id', 
+            'idk', 
+            'idk', 
+            'transcript_variant', 
+            'symbol', 
+            'length', 
+            'untranslated_region_3', 
+            'coding_region', 
+            'untranslated_region_5', 
+            'idk'], axis=1)
+        suggested_genes = pd.read_csv(gene_selection_file, sep='\t')
+        suggested_genes = suggested_genes.rename(columns={'Unnamed: 0': 'gene_id'})
+        mask_gene_name = name_df["symbol"].isin(suggested_genes["name"])
+        mask_gene_id = pd.Series([id.split(".")[0] for id in name_df["gene_id"]]).isin(suggested_genes["gene_id"])
+        gene_selected = mask_gene_name | mask_gene_id
+        data_array = data_array[:,gene_selected]
+        names = names[gene_selected]
+
+
+    
+
     if(feature_selection_threshold is not None):
         print("selecting genes based on median absolute deviation threshold: ",feature_selection_threshold, "...")
         gene_selected = feature_selection.MAD_selection(data_array, feature_selection_threshold)
