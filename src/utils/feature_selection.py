@@ -29,8 +29,8 @@ from sklearn.preprocessing import StandardScaler
 def MAD_selection(data_array, threshold):
     MAD = scipy.stats.median_abs_deviation(data_array)
 
-    print(min(MAD))
-    print(max(MAD))
+    print("min MAD",min(MAD))
+    print("max MAD",max(MAD))
 
     # we also use a cieling to get rid of outliers.
     gene_selected = [True if val > threshold and val < 100 else False for val in MAD]
