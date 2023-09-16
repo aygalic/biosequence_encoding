@@ -56,7 +56,7 @@ def generate_dataset(path = absolute_path,
                      minimum_time_point = "BL",
                      as_time_series = False,
                      transpose = False,
-                     MT_removal = True,
+                     MT_removal = False,
                      log1p = True,
                      min_max = True,
                      keep_only_symbols = False,
@@ -71,7 +71,8 @@ def generate_dataset(path = absolute_path,
     entries = os.listdir(path)
     #entries_transcripts = [e for e in entries if "transcripts" in e ]
     entries = [e for e in entries if dataset_of_interest in e ]
-    
+    entries.sort()
+
     # we load metadata, so we can have access to additional information not included in the filename
     meta_data = pd.read_excel(metadata_path, header = 1, usecols = range(1,10) )
 
@@ -360,11 +361,11 @@ def generate_dataset_transcripts(path = absolute_path,
                      batch_size = 64, 
                      subsample = None, 
                      retain_phases = None,
-                     normalization = True,
+                     normalization = False,
                      minimum_time_point = "BL",
                      as_time_series = False,
                      transpose = False,
-                     MT_removal = True,
+                     MT_removal = False,
                      log1p = True,
                      min_max = True,
                      gene_selection_file = None):
@@ -377,6 +378,8 @@ def generate_dataset_transcripts(path = absolute_path,
     entries = os.listdir(path)
     #entries_transcripts = [e for e in entries if "transcripts" in e ]
     entries = [e for e in entries if dataset_of_interest in e ]
+    entries.sort()
+
     # we load metadata, so we can have access to additional information not included in the filename
     meta_data = pd.read_excel(metadata_path, header = 1, usecols = range(1,10) )
 
@@ -627,9 +630,9 @@ def generate_dataset_cancer(
         feature_selection_threshold = None, 
         batch_size = 64, 
         subsample = None, 
-        normalization = True,
+        normalization = False,
         transpose = False,
-        MT_removal = True,
+        MT_removal = False,
         log1p = True,
         min_max = True):
 
@@ -753,4 +756,107 @@ def generate_dataset_cancer(
     return dataset, sequence_names, len(data_array[0]), names
 
 
+# This is a draft function built to evaluate the best way to build a joined dataset
+"""
+# here we go again
+def generate_full_parkinson_ds(path = absolute_path, 
+                     metadata_path = metadata_path,
+                     feature_selection_threshold = None, 
+                     subsample = None, 
+                     minimum_time_point = "BL",
+                     MT_removal = False,
+                     log1p = True,
+                     min_max = True,
+                     gene_selection_file = None):
 
+    entries = os.listdir(path)
+
+    entries_genes       = [e for e in entries if "genes" in e ]
+    entries_transcripts = [e for e in entries if "transcripts" in e ]
+
+
+    entries_genes.sort()
+    entries_transcripts.sort()
+
+
+    print(entries_genes[:5])
+    print(entries_transcripts[:5])
+
+    print(len(entries_genes))
+    print(len(entries_transcripts))
+
+    # we load metadata, so we can have access to additional information not included in the filename
+    meta_data = pd.read_excel(metadata_path, header = 1, usecols = range(1,10) )
+
+
+    # if we want a smaller dataset for testing purposes
+    if(subsample is not None):
+        entries_genes       = entries_genes[0:subsample]
+        entries_transcripts = entries_transcripts[0:subsample]
+
+    # sanity check : are the patient numbers actually numeric ? 
+    entries_genes       = [e for e in entries_genes if e.split(".")[1].isnumeric() ]
+    entries_transcripts = [e for e in entries_transcripts if e.split(".")[1].isnumeric() ]
+
+    print(len(entries_genes))
+    print(len(entries_transcripts))
+
+    # sanity check : don't load patient where some values are missing
+    Na_s =  meta_data[meta_data.isna().any(axis=1)]["Patient Number"]
+    entries_genes       = [e for e in entries_genes if e.split(".")[1] not in str(Na_s) ]
+    entries_transcripts = [e for e in entries_transcripts if e.split(".")[1] not in str(Na_s) ]
+
+    print(entries_genes)
+    print(entries_transcripts)
+
+
+
+    print(len(entries_genes))
+    print(len(entries_transcripts))
+    print("checkpoint 1")
+
+    ###########################################
+    ############ loading patients  ############
+    ###########################################
+
+    # load the dataset into an array 
+    print("loading samples...")
+    data_genes          = [load_patient_data(os.path.join(path, e)) for e in entries_genes]
+    data_transcripts    = [load_patient_data(os.path.join(path, e)) for e in entries_transcripts]
+    
+    # remove artifacts by keeping samples of correct length
+    samples_to_keep_genes       = [1 if s.shape == (34569,) else 0 for s in data_genes]
+    samples_to_keep_transcripts = [1 if s.shape == (95309,) else 0 for s in data_transcripts]
+        
+
+    print("loaded",sum(samples_to_keep_genes), "genes samples")
+    print("loaded",sum(samples_to_keep_transcripts), "transcripts samples")
+    
+
+    train_ds_genes          = [sample for (sample, test) in  zip(data_genes,        samples_to_keep_genes)          if test]
+    train_ds_transcripts    = [sample for (sample, test) in  zip(data_transcripts,  samples_to_keep_transcripts)    if test]
+
+    data_array_genes        = np.array(train_ds_genes)
+    data_array_tanscripts   = np.array(train_ds_transcripts)
+
+    patient_id_genes        = [int(p.split(".")[1]) for (p, test) in  zip(entries_genes,        samples_to_keep_genes) if test]
+    patient_id_transcripts  = [int(p.split(".")[1]) for (p, test) in  zip(entries_transcripts,  samples_to_keep_transcripts) if test]
+
+    print("checkpoint 2")
+    print(patient_id_genes)
+    print(patient_id_transcripts)
+
+    # only keep metadata for selected patients
+    meta_data = meta_data.set_index('Patient Number')
+    meta_data = meta_data.reindex(index=patient_id)
+    meta_data = meta_data.reset_index()
+
+    # get the entry name list
+    names_genes         = get_names(os.path.join(path,data_genes[0]))
+    names_transcripts   = get_names(os.path.join(path,data_transcripts[0]))
+    
+    # getting rid of the version number
+    names_genes = [n.split(".")[0] for n in names_genes]
+
+
+"""
