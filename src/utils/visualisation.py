@@ -28,6 +28,10 @@ import matplotlib.gridspec as gridspec
 # as well as the density of total expression of genes
 def dataset_plot(data):
 
+    # get everything out of TensorFlow back to numpy/pandas
+    data = np.concatenate(list(data.as_numpy_iterator()), axis=0)
+
+
     # Create a single figure with two subplots
     plt.figure(figsize=(12, 6))
 
