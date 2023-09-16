@@ -52,7 +52,7 @@ def generate_dataset(path = absolute_path,
                      feature_selection_proceedure = None,
                      sgdc_params = None,
                      class_balancing = None,
-                     normalization = True,
+                     normalization = False,
                      minimum_time_point = "BL",
                      as_time_series = False,
                      transpose = False,
@@ -61,7 +61,8 @@ def generate_dataset(path = absolute_path,
                      min_max = True,
                      keep_only_symbols = False,
                      drop_ambiguous_pos = False,
-                     sort_symbols = False):
+                     sort_symbols = False,
+                     gene_selection_file = None):
 
     dataset_of_interest = "genes"
 
@@ -203,6 +204,17 @@ def generate_dataset(path = absolute_path,
     ############ feature selection  ###########
     ###########################################
     
+
+    if(gene_selection_file is not None):
+        names = pd.Series(names)
+        suggested_genes = pd.read_csv(gene_selection_file, sep='\t')
+        suggested_genes = suggested_genes.rename(columns={'Unnamed: 0': 'gene'})
+        gene_selected = names.isin(suggested_genes["gene"])
+        print("number of genes selected:", sum(gene_selected))
+        data_array = data_array[:,gene_selected]
+        names = names[gene_selected]
+
+
     print("retriving symbols for genes")
     query_result = mg.querymany(names, fields = ['genomic_pos', 'symbol'], scopes='ensembl.gene', species='human', verbose = False, as_dataframe = True)
 
