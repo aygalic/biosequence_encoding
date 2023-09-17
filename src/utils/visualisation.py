@@ -151,8 +151,9 @@ def plot_dataset_processing(x_train, autoencoder):
 
 
 def plot_clusters(latent_Z, True_labels, TSNE_params = None):
-    True_labels = pd.DataFrame(True_labels)
-
+    #True_labels = pd.DataFrame(True_labels)
+    True_labels = True_labels.tolist()
+    #True_labels.reset_index()
     #### TSNE
     if (TSNE_params == None) :
         TSNE_params = {
@@ -168,8 +169,8 @@ def plot_clusters(latent_Z, True_labels, TSNE_params = None):
     tsne = tsne / (x_max - x_min)
 
     TSNE_result = pd.DataFrame(tsne, columns=['TSNE_Dim1', 'TSNE_Dim2'])
-    TSNE_result['Subtype'] = True_labels
 
+    TSNE_result['Subtype'] = True_labels
 
     # Map string labels to numeric values
     my_cmap = plt.get_cmap('viridis', len(TSNE_result['Subtype'].unique()))
@@ -181,8 +182,6 @@ def plot_clusters(latent_Z, True_labels, TSNE_params = None):
     #### PCA of learened feature
     pca = PCA(n_components=2)
     pca.fit(latent_Z)
-    print(pca.explained_variance_ratio_)
-    print(pca.explained_variance_)
     pca_result = pca.transform(latent_Z)
 
 
@@ -190,12 +189,12 @@ def plot_clusters(latent_Z, True_labels, TSNE_params = None):
     fig, axes = plt.subplots(1, 2, figsize = (12,6))
 
     # Plot the first subplot (tsne)
-    sns.scatterplot(data=TSNE_result, x='TSNE_Dim1', y='TSNE_Dim2', hue='Subtype', s=70, ax=axes[0])
+    sns.scatterplot(data=TSNE_result, x='TSNE_Dim1', y='TSNE_Dim2', hue='Subtype', ax=axes[0])
     axes[0].set_xlabel("TSNE_Dim1")
     axes[0].set_ylabel("TSNE_Dim2")
 
     # Plot the second subplot (PCA)
-    a = axes[1].scatter(pca_result[:, 0], pca_result[:, 1], marker='o', cmap=my_cmap, c=colors, s=20)
+    a = axes[1].scatter(pca_result[:, 0], pca_result[:, 1], marker='o', cmap=my_cmap, c=colors)
     axes[1].set_xlabel("PCA_dim1")
     axes[1].set_ylabel("PCA_dim2")
 
