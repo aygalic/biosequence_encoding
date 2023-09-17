@@ -181,8 +181,6 @@ def plot_clusters(latent_Z, True_labels, TSNE_params = None):
     #### PCA of learened feature
     pca = PCA(n_components=2)
     pca.fit(latent_Z)
-    print(pca.explained_variance_ratio_)
-    print(pca.explained_variance_)
     pca_result = pca.transform(latent_Z)
 
 
