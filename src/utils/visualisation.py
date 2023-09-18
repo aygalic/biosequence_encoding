@@ -7,7 +7,14 @@ import plotly.express as px
 import plotly.subplots as sp
 import plotly.graph_objs as go
 
+import sys
+sys.path.append('../src')
 
+
+# Silhouette score of original groups
+from sklearn.metrics import silhouette_score
+from utils.benchmark import dunn_index
+from utils.benchmark import davies_bouldin
 
 
 # from vq-vae
@@ -208,3 +215,6 @@ def plot_clusters(latent_Z, True_labels, TSNE_params = None):
     #### blobs 
     f = sns.jointplot(x=TSNE_result.TSNE_Dim1, y=TSNE_result.TSNE_Dim2, fill=True, kind='kde',hue=TSNE_result.Subtype,height=6,marginal_kws={"alpha":.2},thresh=0.05, alpha=.9)
     f.ax_joint.legend_._visible=False
+
+
+
