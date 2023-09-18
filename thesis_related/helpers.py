@@ -19,23 +19,28 @@ from utils.models import vanilla_autoencoder
 
 
 
-def auto_kMean(compressed_dataframe, force_k = None):
+def auto_kMean(compressed_dataframe):
     # Define a range of cluster numbers to consider
-    k_range = range(1, 5) 
+    k_range = range(2, 25) 
 
     # Create an empty list to store the within-cluster sum of squares (WCSS) for each K
     wcss = []
-
+    silhouette_scores = []
 
     # Iterate over each K and compute WCSS
     for k in k_range:
         kmeans = KMeans(n_clusters=k, random_state=0)
         kmeans.fit(compressed_dataframe)
         wcss.append(kmeans.inertia_)
+        cluster_labels = kmeans.fit_predict(compressed_dataframe)
 
+        silhouette_avg = silhouette_score(compressed_dataframe, cluster_labels)
+        silhouette_scores.append(silhouette_avg)
+
+      
     # Plot the WCSS for different values of K
     plt.figure(figsize=(8, 6))
-    plt.plot(k_range, wcss, marker='o', linestyle='-')
+    plt.plot(k_range, silhouette_scores, marker='o', linestyle='-')
     plt.xlabel('Number of Clusters (K)')
     plt.ylabel('Within-Cluster Sum of Squares (WCSS)')
     plt.title('Elbow Method for Optimal K')
@@ -44,14 +49,10 @@ def auto_kMean(compressed_dataframe, force_k = None):
 
 
     # Find the "elbow" point by looking for a change in the rate of decrease in WCSS
-    diffs = np.diff(wcss)
-    elbow_index = np.where(diffs < np.mean(diffs))[0][0]
 
     # Choose the optimal number of clusters based on the "elbow" point
-    optimal_k = elbow_index + 1  # Add 1 because K starts from 1, not 0
+    optimal_k = k_range[np.argmax(silhouette_scores)]
 
-    if(force_k is not None):
-        optimal_k = force_k
 
     # Choose the optimal number of clusters based on the elbow point
     #optimal_k = 3  # You can manually choose the point that looks like the "elbow" in the plot
