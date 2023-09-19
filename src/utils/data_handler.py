@@ -25,7 +25,6 @@ absolute_path = '/Users/aygalic/Thesis/data/quant/'
 absolute_path_cancer = '/Users/aygalic/Thesis/data/cancer'  
 
 metadata_path = '/Users/aygalic/Thesis/METADATA_200123.xlsx'  
-cancer_metadata_path = '/Users/aygalic/Thesis/data/cancer/clinical.cart.2023-09-11.json'
 
 
 
@@ -42,7 +41,7 @@ def get_names(filename, header = 0):
     return names.iloc[:, 0]
 
 
-### now we design a function that return a dataset of multivriate time series or the individual timestamps
+### now we design a function that return a dataset of multivriate time series or cell wise observations
 def generate_dataset(path = absolute_path, 
                      metadata_path = metadata_path,
                      feature_selection_threshold = None, 
@@ -62,7 +61,11 @@ def generate_dataset(path = absolute_path,
                      keep_only_symbols = False,
                      drop_ambiguous_pos = False,
                      sort_symbols = False,
-                     gene_selection_file = None):
+                     gene_selection_file = None,
+                     # for experiment purpose only :
+                     keep_only_BL = False,
+                     keep_only_genetic_pd = False
+                     ):
 
     dataset_of_interest = "genes"
 
@@ -156,6 +159,11 @@ def generate_dataset(path = absolute_path,
         entries = matchin_entries
 
 
+    #### FOR EXERIMENTATION
+    if(keep_only_BL):
+        entries = [e for e in entries if e.split(".")[2] == "BL"]
+
+
 
 
     # sanity check : are the patient numbers actually numeric ? 
@@ -164,6 +172,14 @@ def generate_dataset(path = absolute_path,
     # sanity check : don't load patient where some values are missing
     Na_s =  meta_data[meta_data.isna().any(axis=1)]["Patient Number"]
     entries = [e for e in entries if e.split(".")[1] not in str(Na_s) ]
+
+
+    #### FOR EXERIMENTATION
+    if(keep_only_genetic_pd):
+        GPD = [1 if ds == "Genetic PD" else 0 for ds in meta_data["Disease Status"] ]
+        entries = entries[GPD]
+
+
 
     ###########################################
     ############ loading patients  ############
@@ -198,7 +214,7 @@ def generate_dataset(path = absolute_path,
     meta_data = meta_data.reset_index()
 
 
-
+        
 
 
     ###########################################
@@ -368,7 +384,11 @@ def generate_dataset_transcripts(path = absolute_path,
                      MT_removal = False,
                      log1p = True,
                      min_max = True,
-                     gene_selection_file = None):
+                     gene_selection_file = None,
+                     # for experiment purpose only :
+                     keep_only_BL = False,
+                     keep_only_genetic_pd = False):
+
     dataset_of_interest = "transcripts"
 
 
@@ -471,6 +491,9 @@ def generate_dataset_transcripts(path = absolute_path,
         entries = matchin_entries
 
 
+    #### FOR EXERIMENTATION
+    if(keep_only_BL):
+        entries = [e for e in entries if e.split(".")[2] == "BL"]
 
 
     # sanity check : are the patient numbers actually numeric ? 
@@ -479,6 +502,14 @@ def generate_dataset_transcripts(path = absolute_path,
     # sanity check : don't load patient where some values are missing
     Na_s =  meta_data[meta_data.isna().any(axis=1)]["Patient Number"]
     entries = [e for e in entries if e.split(".")[1] not in str(Na_s) ]
+
+
+    #### FOR EXERIMENTATION
+    if(keep_only_genetic_pd):
+        GPD = [1 if ds == "Genetic PD" else 0 for ds in meta_data["Disease Status"] ]
+        entries = entries[GPD]
+
+
 
     ###########################################
     ############ loading patients  ############

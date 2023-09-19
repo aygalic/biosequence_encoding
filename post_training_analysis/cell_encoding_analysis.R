@@ -13,7 +13,8 @@ library(data.table)
 
 setwd("~/Thesis/genome_analysis_parkinson/src")
 
-table = fread("../workfiles/FC_ae_genes.csv", header = T)
+table = fread("../workfiles/baseline_analysis_genes.csv", header = T)
+
 
 
 # these are the file names for each encoded observation
@@ -181,6 +182,5 @@ plot <- ggplotly(plot)
 plot                         
 
 
-orca(plot, "../img/t-SNE_simple_ae_log1p.png") 
 
                          

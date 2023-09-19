@@ -7,7 +7,14 @@ import plotly.express as px
 import plotly.subplots as sp
 import plotly.graph_objs as go
 
+import sys
+sys.path.append('../src')
 
+
+# Silhouette score of original groups
+from sklearn.metrics import silhouette_score
+from utils.benchmark import dunn_index
+from utils.benchmark import davies_bouldin
 
 
 # from vq-vae
@@ -19,6 +26,7 @@ from sklearn.datasets import make_blobs
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import confusion_matrix
 
 # experimental
 import matplotlib.gridspec as gridspec
@@ -150,26 +158,27 @@ def plot_dataset_processing(x_train, autoencoder):
     plt.show()
 
 
-def plot_clusters(latent_Z, True_labels, TSNE_params = None):
-    True_labels = pd.DataFrame(True_labels)
-
-    #### TSNE
-    if (TSNE_params == None) :
-        TSNE_params = {
+TSNE_params_ = {
             "early_exaggeration" : 50,
             "learning_rate" : 500, 
-            "perplexity" : 15, 
+            "perplexity" : 50, 
             "min_grad_norm" : 1e-7, 
-            "n_iter" : 5000,
+            "n_iter" : 2000,
             "n_components" : 2
         }
+
+def plot_clusters(latent_Z, True_labels, TSNE_params = TSNE_params_):
+    #True_labels = pd.DataFrame(True_labels)
+    True_labels = True_labels.tolist()
+    #True_labels.reset_index()
+
     tsne = TSNE(**TSNE_params).fit_transform(latent_Z)
     x_min, x_max = np.min(tsne, 0), np.max(tsne, 0)
     tsne = tsne / (x_max - x_min)
 
     TSNE_result = pd.DataFrame(tsne, columns=['TSNE_Dim1', 'TSNE_Dim2'])
-    TSNE_result['Subtype'] = True_labels
 
+    TSNE_result['Subtype'] = True_labels
 
     # Map string labels to numeric values
     my_cmap = plt.get_cmap('viridis', len(TSNE_result['Subtype'].unique()))
@@ -188,12 +197,12 @@ def plot_clusters(latent_Z, True_labels, TSNE_params = None):
     fig, axes = plt.subplots(1, 2, figsize = (12,6))
 
     # Plot the first subplot (tsne)
-    sns.scatterplot(data=TSNE_result, x='TSNE_Dim1', y='TSNE_Dim2', hue='Subtype', s=70, ax=axes[0])
+    sns.scatterplot(data=TSNE_result, x='TSNE_Dim1', y='TSNE_Dim2', hue='Subtype', ax=axes[0])
     axes[0].set_xlabel("TSNE_Dim1")
     axes[0].set_ylabel("TSNE_Dim2")
 
     # Plot the second subplot (PCA)
-    a = axes[1].scatter(pca_result[:, 0], pca_result[:, 1], marker='o', cmap=my_cmap, c=colors, s=20)
+    a = axes[1].scatter(pca_result[:, 0], pca_result[:, 1], marker='o', cmap=my_cmap, c=colors)
     axes[1].set_xlabel("PCA_dim1")
     axes[1].set_ylabel("PCA_dim2")
 
@@ -207,3 +216,49 @@ def plot_clusters(latent_Z, True_labels, TSNE_params = None):
     #### blobs 
     f = sns.jointplot(x=TSNE_result.TSNE_Dim1, y=TSNE_result.TSNE_Dim2, fill=True, kind='kde',hue=TSNE_result.Subtype,height=6,marginal_kws={"alpha":.2},thresh=0.05, alpha=.9)
     f.ax_joint.legend_._visible=False
+
+
+
+def compare_cluser_vis(data, label_1, label_2, TSNE_params = TSNE_params_): 
+    # create a viz to compare the labels on
+    tsne = TSNE(**TSNE_params).fit_transform(data)
+    x_min, x_max = np.min(tsne, 0), np.max(tsne, 0)
+    tsne = tsne / (x_max - x_min)
+
+    TSNE_result = pd.DataFrame(tsne, columns=['TSNE_Dim1', 'TSNE_Dim2'])
+
+    TSNE_result['label_1'] = label_1
+    TSNE_result['label_2'] = label_2
+
+
+    # Plot the first subplot (tsne)
+    
+
+        # Create a single figure with two subplots
+    plt.figure(figsize=(12, 12))
+
+
+    plt.subplot(2, 2, 1)
+    sns.scatterplot(data=TSNE_result, x='TSNE_Dim1', y='TSNE_Dim2', hue='label_1' )
+    plt.title('True Labels')
+
+
+    # Create the KDE plot in the second subplot
+    plt.subplot(2, 2, 2)  # Create a new subplot for the KDE plot
+    sns.scatterplot(data=TSNE_result, x='TSNE_Dim1', y='TSNE_Dim2', hue='label_2')
+    plt.title('Discovered Labels')
+
+    label_mapping = 1:len(label_1)
+    mapped_ground_truth = [label_mapping[label_1] for label in label_1]
+
+    conf_matrix = confusion_matrix(mapped_ground_truth, label_2)
+
+    plt.subplot(2, 2, 3)  # Create a new subplot for the KDE plot
+    sns.heatmap(conf_matrix, annot=True, cmap='Blues', fmt='d', xticklabels=pd.Series(mapped_ground_truth).unique(), yticklabels=pd.Series(label_1).unique())
+    plt.title('Confusion Matrix')
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+
+    plt.show()
+
+
