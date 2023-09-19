@@ -26,6 +26,7 @@ from sklearn.datasets import make_blobs
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import confusion_matrix
 
 # experimental
 import matplotlib.gridspec as gridspec
@@ -157,20 +158,20 @@ def plot_dataset_processing(x_train, autoencoder):
     plt.show()
 
 
-def plot_clusters(latent_Z, True_labels, TSNE_params = None):
+TSNE_params_ = {
+            "early_exaggeration" : 50,
+            "learning_rate" : 500, 
+            "perplexity" : 50, 
+            "min_grad_norm" : 1e-7, 
+            "n_iter" : 2000,
+            "n_components" : 2
+        }
+
+def plot_clusters(latent_Z, True_labels, TSNE_params = TSNE_params_):
     #True_labels = pd.DataFrame(True_labels)
     True_labels = True_labels.tolist()
     #True_labels.reset_index()
-    #### TSNE
-    if (TSNE_params == None) :
-        TSNE_params = {
-            "early_exaggeration" : 50,
-            "learning_rate" : 500, 
-            "perplexity" : 15, 
-            "min_grad_norm" : 1e-7, 
-            "n_iter" : 5000,
-            "n_components" : 2
-        }
+
     tsne = TSNE(**TSNE_params).fit_transform(latent_Z)
     x_min, x_max = np.min(tsne, 0), np.max(tsne, 0)
     tsne = tsne / (x_max - x_min)
@@ -216,5 +217,48 @@ def plot_clusters(latent_Z, True_labels, TSNE_params = None):
     f = sns.jointplot(x=TSNE_result.TSNE_Dim1, y=TSNE_result.TSNE_Dim2, fill=True, kind='kde',hue=TSNE_result.Subtype,height=6,marginal_kws={"alpha":.2},thresh=0.05, alpha=.9)
     f.ax_joint.legend_._visible=False
 
+
+
+def compare_cluser_vis(data, label_1, label_2, TSNE_params = TSNE_params_): 
+    # create a viz to compare the labels on
+    tsne = TSNE(**TSNE_params).fit_transform(data)
+    x_min, x_max = np.min(tsne, 0), np.max(tsne, 0)
+    tsne = tsne / (x_max - x_min)
+
+    TSNE_result = pd.DataFrame(tsne, columns=['TSNE_Dim1', 'TSNE_Dim2'])
+
+    TSNE_result['label_1'] = label_1
+    TSNE_result['label_2'] = label_2
+
+
+    # Plot the first subplot (tsne)
+    
+
+        # Create a single figure with two subplots
+    plt.figure(figsize=(12, 12))
+
+
+    plt.subplot(2, 2, 1)
+    sns.scatterplot(data=TSNE_result, x='TSNE_Dim1', y='TSNE_Dim2', hue='label_1' )
+    plt.title('True Labels')
+
+
+    # Create the KDE plot in the second subplot
+    plt.subplot(2, 2, 2)  # Create a new subplot for the KDE plot
+    sns.scatterplot(data=TSNE_result, x='TSNE_Dim1', y='TSNE_Dim2', hue='label_2')
+    plt.title('Discovered Labels')
+
+    label_mapping = 1:len(label_1)
+    mapped_ground_truth = [label_mapping[label_1] for label in label_1]
+
+    conf_matrix = confusion_matrix(mapped_ground_truth, label_2)
+
+    plt.subplot(2, 2, 3)  # Create a new subplot for the KDE plot
+    sns.heatmap(conf_matrix, annot=True, cmap='Blues', fmt='d', xticklabels=pd.Series(mapped_ground_truth).unique(), yticklabels=pd.Series(label_1).unique())
+    plt.title('Confusion Matrix')
+    plt.xlabel('Predicted')
+    plt.ylabel('Actual')
+
+    plt.show()
 
 
