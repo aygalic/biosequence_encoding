@@ -248,10 +248,10 @@ def compare_cluser_vis(data, label_1, label_2, TSNE_params = TSNE_params_):
     sns.scatterplot(data=TSNE_result, x='TSNE_Dim1', y='TSNE_Dim2', hue='label_2')
     plt.title('Discovered Labels')
 
-    label_mapping = 1:len(label_1)
-    mapped_ground_truth = [label_mapping[label_1] for label in label_1]
+ 
+    
 
-    conf_matrix = confusion_matrix(mapped_ground_truth, label_2)
+    conf_matrix = confusion_matrix(label_1, label_2)
 
     plt.subplot(2, 2, 3)  # Create a new subplot for the KDE plot
     sns.heatmap(conf_matrix, annot=True, cmap='Blues', fmt='d', xticklabels=pd.Series(mapped_ground_truth).unique(), yticklabels=pd.Series(label_1).unique())
