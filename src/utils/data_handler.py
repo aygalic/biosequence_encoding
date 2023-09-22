@@ -42,30 +42,27 @@ def get_names(filename, header = 0):
 
 
 ### now we design a function that return a dataset of multivriate time series or cell wise observations
-def generate_dataset(path = absolute_path, 
-                     metadata_path = metadata_path,
-                     feature_selection_threshold = None, 
-                     batch_size = 64, 
-                     subsample = None, 
-                     retain_phases = None,
-                     feature_selection_proceedure = None,
-                     sgdc_params = None,
-                     class_balancing = None,
-                     normalization = False,
-                     minimum_time_point = "BL",
-                     as_time_series = False,
-                     transpose = False,
-                     MT_removal = False,
-                     log1p = True,
-                     min_max = True,
-                     keep_only_symbols = False,
-                     drop_ambiguous_pos = False,
-                     sort_symbols = False,
-                     gene_selection_file = None,
-                     # for experiment purpose only :
-                     keep_only_BL = False,
-                     keep_only_genetic_pd = False
-                     ):
+def generate_dataset_genes(
+        path = absolute_path, 
+        metadata_path = metadata_path,
+        feature_selection_threshold = None, 
+        batch_size = 64, 
+        subsample = None, 
+        retain_phases = None,
+        feature_selection_proceedure = None,
+        sgdc_params = None,
+        class_balancing = None,
+        normalization = False,
+        minimum_time_point = "BL",
+        as_time_series = False,
+        transpose = False,
+        MT_removal = False,
+        log1p = True,
+        min_max = True,
+        keep_only_symbols = False,
+        drop_ambiguous_pos = False,
+        sort_symbols = False,
+        gene_selection_file = None):
 
     dataset_of_interest = "genes"
 
@@ -86,8 +83,6 @@ def generate_dataset(path = absolute_path,
 
     # To avoid the natural tendency of the model to base its response to different phases
     # we provide the option to focus our analysis on either or both phases of the study.
-    
-
     if(retain_phases == "1"):
         entries = [e for e in entries if "Phase1" in e ]
         print("retained phase 1")
@@ -145,7 +140,6 @@ def generate_dataset(path = absolute_path,
         common_ids = set(BL_ids) & set(V02_ids) & set(V04_ids) & set(V06_ids) 
         matchin_entries = [entry for entry in entries if entry.split(".")[1] in common_ids]
         entries = matchin_entries
-    
     # if we want time series, we constrain them to only patients that went through every visits.
     elif(minimum_time_point == "V08" or as_time_series == True):
         print("retaining all patient who have passed all visits...")
@@ -159,25 +153,12 @@ def generate_dataset(path = absolute_path,
         entries = matchin_entries
 
 
-    #### FOR EXERIMENTATION
-    if(keep_only_BL):
-        entries = [e for e in entries if e.split(".")[2] == "BL"]
-
-
-
-
     # sanity check : are the patient numbers actually numeric ? 
     entries = [e for e in entries if e.split(".")[1].isnumeric() ]
 
     # sanity check : don't load patient where some values are missing
     Na_s =  meta_data[meta_data.isna().any(axis=1)]["Patient Number"]
     entries = [e for e in entries if e.split(".")[1] not in str(Na_s) ]
-
-
-    #### FOR EXERIMENTATION
-    if(keep_only_genetic_pd):
-        GPD = [1 if ds == "Genetic PD" else 0 for ds in meta_data["Disease Status"] ]
-        entries = entries[GPD]
 
 
 
@@ -196,15 +177,11 @@ def generate_dataset(path = absolute_path,
     names = [n.split(".")[0] for n in names]
     
     # remove artifacts by keeping samples of correct length
-
     samples_to_keep = [1 if s.shape == (34569,) else 0 for s in data]
-        
-
+    
     print("loaded",sum(samples_to_keep), "samples")
     
-    train_ds = [sample for (sample, test) in  zip(data, samples_to_keep) if test]
-    data_array = np.array(train_ds)
-
+    data_array = np.array([sample for (sample, test) in  zip(data, samples_to_keep) if test])
 
     patient_id = [int(p.split(".")[1]) for (p, test) in  zip(entries, samples_to_keep) if test]
 
@@ -213,14 +190,9 @@ def generate_dataset(path = absolute_path,
     meta_data = meta_data.reindex(index=patient_id)
     meta_data = meta_data.reset_index()
 
-
-        
-
-
     ###########################################
     ############ feature selection  ###########
     ###########################################
-    
 
     if(gene_selection_file is not None):
         names = pd.Series(names)
@@ -352,7 +324,8 @@ def generate_dataset(path = absolute_path,
                 "is_time_series" : as_time_series,
                 "feature_names" : query_result,
                 "sequence_names" : sequence_names,
-                "n_features" : len(data_array[0])} 
+                "n_features" : len(data_array[0]),
+                "n_seq" : len(sequence_names)} 
 
     return dataset, metadata
     
@@ -382,10 +355,7 @@ def generate_dataset_transcripts(path = absolute_path,
                      MT_removal = False,
                      log1p = True,
                      min_max = True,
-                     gene_selection_file = None,
-                     # for experiment purpose only :
-                     keep_only_BL = False,
-                     keep_only_genetic_pd = False):
+                     gene_selection_file = None):
 
     dataset_of_interest = "transcripts"
 
@@ -488,12 +458,6 @@ def generate_dataset_transcripts(path = absolute_path,
         matchin_entries = [entry for entry in entries if entry.split(".")[1] in common_ids]
         entries = matchin_entries
 
-
-    #### FOR EXERIMENTATION
-    if(keep_only_BL):
-        entries = [e for e in entries if e.split(".")[2] == "BL"]
-
-
     # sanity check : are the patient numbers actually numeric ? 
     entries = [e for e in entries if e.split(".")[1].isnumeric() ]
 
@@ -502,10 +466,6 @@ def generate_dataset_transcripts(path = absolute_path,
     entries = [e for e in entries if e.split(".")[1] not in str(Na_s) ]
 
 
-    #### FOR EXERIMENTATION
-    if(keep_only_genetic_pd):
-        GPD = [1 if ds == "Genetic PD" else 0 for ds in meta_data["Disease Status"] ]
-        entries = entries[GPD]
 
 
 

@@ -18,6 +18,19 @@ import matplotlib.pyplot as plt
 from scipy import signal
 from scipy.fft import fftshift
 
+from einops import rearrange, repeat
+from einops.layers.torch import Rearrange
+from torch import nn, einsum
+import logging
+from functools import partial
+from collections import OrderedDict
+import seaborn as sns
+import matplotlib as mp
+import time
+from scipy.signal import savgol_filter
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.patches import Patch
+from matplotlib.colors import ListedColormap
 
 class VectorQuantizer(nn.Module):
     def __init__(self, num_embeddings, embedding_dim, commitment_cost):

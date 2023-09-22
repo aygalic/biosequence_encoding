@@ -36,10 +36,6 @@ import matplotlib.gridspec as gridspec
 # as well as the density of total expression of genes
 def dataset_plot(data):
 
-    # get everything out of TensorFlow back to numpy/pandas
-    data = np.concatenate(list(data.as_numpy_iterator()), axis=0)
-
-
     # Create a single figure with two subplots
     plt.figure(figsize=(12, 6))
 
@@ -58,15 +54,13 @@ def dataset_plot(data):
     plt.xlabel('Sum of Expression')
     plt.ylabel('Density')
 
-
-
     plt.tight_layout()  # Ensure plots don't overlap
     plt.show()
 
 # plot a single observation, its latent space as well as its reconstruction
-def plot_single_obs_processing(x_train, autoencoder):
+def plot_single_obs_processing(dataset, autoencoder, dataset_metadata):
     
-    e = iter(x_train).next()
+    e = dataset[0]
     
     if(autoencoder._is_variational == True):
         _,__, z = autoencoder.encoder(e)
@@ -76,7 +70,7 @@ def plot_single_obs_processing(x_train, autoencoder):
     decoded = autoencoder.decoder(z)
 
 
-    if(x_train._is_time_series):
+    if(dataset_metadata["is_time_series"]):
         e_ = e[0]  
         z_ = z[0].reshape(1, -1) 
         decoded_ = decoded[0]  
@@ -110,10 +104,9 @@ def plot_single_obs_processing(x_train, autoencoder):
 
 
 # plot the whole , its latent representation as well as its reconstruction
-def plot_dataset_processing(x_train, autoencoder):
+def plot_dataset_processing(data, autoencoder, dataset_metadata):
 
-    # get everything out of TensorFlow back to numpy/pandas
-    data = np.concatenate(list(x_train.as_numpy_iterator()), axis=0)
+
 
     if(autoencoder._is_variational == True):
         _,__, z = autoencoder.encoder(data)
@@ -125,7 +118,7 @@ def plot_dataset_processing(x_train, autoencoder):
     reconstruction = autoencoder.decoder.predict(z)
 
 
-    if(x_train._is_time_series):
+    if(dataset_metadata["is_time_series"]):
         data = data.reshape(data.shape[0], data.shape[2]*data.shape[1])
         reconstruction = reconstruction.reshape(reconstruction.shape[0], reconstruction.shape[2]*reconstruction.shape[1])
  

@@ -14,13 +14,13 @@ from sklearn.metrics import silhouette_score
 
 
 
-def benchmark(model, dataset):
+def benchmark(model, dataset, dataset_metadata):
 
     ############
     ###### GATHER INFO
     ############
     # basic informations about model 
-    name = model._name
+    name = dataset_metadata["name"]
     print("benchmarking model :", name)
 
     # get the total number of parametter
@@ -28,27 +28,16 @@ def benchmark(model, dataset):
     print("number of parametters of the model:", n)
 
     # compute the reconstruction err on the whole dataset
-    data = np.concatenate(list(dataset.as_numpy_iterator()), axis=0)
+    data = dataset
     
     # we want some basic info about the data:
     print("shape of the dataset:", data.shape)
 
 
-    if(~dataset._is_transpose and ~dataset._is_time_series):
-        obs_count = data.shape[0]
-        gene_count = data.shape[1]
-    elif(~dataset._is_transpose and dataset._is_time_series):
-        obs_count = data.shape[0]
-        gene_count = data.shape[2]
-        n_time_stamps = data.shape[1]
-    elif(dataset._is_transpose and dataset._is_time_series):
-        obs_count = data.shape[0]
-        gene_count = data.shape[1]
-        n_time_stamps = data.shape[2]
 
-    else:
-        print("wrong data format")
-        return None
+    obs_count = dataset_metadata["n_seq"]
+    gene_count = dataset_metadata["n_features"]
+
 
     # check if the dataset has the correct range : 
     if(np.amin(data) < 0):
