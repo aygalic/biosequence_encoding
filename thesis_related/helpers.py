@@ -15,7 +15,6 @@ sys.path.append('../src')
 
 from utils import benchmark
 from utils import visualisation
-from utils.models import vanilla_autoencoder
 
 
 

@@ -6,6 +6,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 import scipy
+import scipy.cluster.hierarchy as sch
 
 from sklearn.preprocessing import normalize, MinMaxScaler
 
@@ -26,6 +27,7 @@ absolute_path_cancer = '/Users/aygalic/Thesis/data/cancer'
 
 metadata_path = '/Users/aygalic/Thesis/METADATA_200123.xlsx'  
 
+absolute_path_BRCA = '/Users/aygalic/Thesis/data/BRCA'  
 
 
 
@@ -323,7 +325,7 @@ def generate_dataset_genes(
                 "is_transpose": transpose,
                 "is_time_series" : as_time_series,
                 "feature_names" : query_result,
-                "sequence_names" : sequence_names,
+                "seq_names" : sequence_names,
                 "n_features" : len(data_array[0]),
                 "n_seq" : len(sequence_names)} 
 
@@ -357,15 +359,11 @@ def generate_dataset_transcripts(path = absolute_path,
                      min_max = True,
                      gene_selection_file = None):
 
-    dataset_of_interest = "transcripts"
-
-
-
     # getting entries ready
     # each couple of entries correspond to one patient, we are only interested in the "transcript" files
     entries = os.listdir(path)
     #entries_transcripts = [e for e in entries if "transcripts" in e ]
-    entries = [e for e in entries if dataset_of_interest in e ]
+    entries = [e for e in entries if "transcripts" in e ]
     entries.sort()
 
     # we load metadata, so we can have access to additional information not included in the filename
@@ -488,8 +486,8 @@ def generate_dataset_transcripts(path = absolute_path,
         
     print("loaded",sum(samples_to_keep), "samples")
     
-    train_ds = [sample for (sample, test) in  zip(data, samples_to_keep) if test]
-    data_array = np.array(train_ds)
+    data = [sample for (sample, test) in  zip(data, samples_to_keep) if test]
+    data = np.array(data)
 
     patient_id = [int(p.split(".")[1]) for (p, test) in  zip(entries, samples_to_keep) if test]
 
@@ -524,7 +522,7 @@ def generate_dataset_transcripts(path = absolute_path,
         mask_gene_name = name_df["symbol"].isin(suggested_genes["name"])
         mask_gene_id = pd.Series([id.split(".")[0] for id in name_df["gene_id"]]).isin(suggested_genes["gene_id"])
         gene_selected = mask_gene_name | mask_gene_id
-        data_array = data_array[:,gene_selected]
+        data = data[:,gene_selected]
         names = names[gene_selected]
 
 
@@ -532,14 +530,14 @@ def generate_dataset_transcripts(path = absolute_path,
 
     if(feature_selection_threshold is not None):
         print("selecting genes based on median absolute deviation threshold: ",feature_selection_threshold, "...")
-        gene_selected = feature_selection.MAD_selection(data_array, feature_selection_threshold)
+        gene_selected = feature_selection.MAD_selection(data, feature_selection_threshold)
         print("removing", len(gene_selected) - sum(gene_selected), "genes under the MAD threshold from the dataset")
-        data_array = data_array[:,gene_selected]
+        data = data[:,gene_selected]
         names = names[gene_selected]
 
 
     
-    print("number of genes selected : ", len(data_array[0]))
+    print("number of genes selected : ", len(data[0]))
 
     ###########################################
     ############## normalisation  #############
@@ -548,28 +546,28 @@ def generate_dataset_transcripts(path = absolute_path,
     
     if(normalization == True): 
         print("normalizing data...")
-        data_array = normalize(data_array)
+        data = normalize(data)
 
     if(log1p == True): 
         print("log(1 + x) transformation...")
-        data_array = np.log1p(data_array)
+        data = np.log1p(data)
 
     # after log1p transform because it already provide us with a very good dataset 
     if(min_max == True):
         print("scaling to [0, 1]...")
         scaler = MinMaxScaler(feature_range=(0, 1), clip = True)
-        data_array = scaler.fit_transform(data_array)
+        data = scaler.fit_transform(data)
 
     
 
     ##########################################
     ######## Building the time series ########
     ##########################################
-    print("number of seq in the dataset :", len(data_array))
+    print("number of seq in the dataset :", len(data))
 
     if as_time_series:
         print("converting samples to time series")
-        time_series_dict = {key: [sample for (sample, name) in zip(data_array, entries) if int(name.split(".")[1]) == key] for key in patient_id}
+        time_series_dict = {key: [sample for (sample, name) in zip(data, entries) if int(name.split(".")[1]) == key] for key in patient_id}
 
         print("number of actual individuals to be studied:", len(time_series_dict))
 
@@ -584,14 +582,13 @@ def generate_dataset_transcripts(path = absolute_path,
                 return np.transpose(sequence, axes=[1, 0])
 
             # Transpose each element in the sequences array
-            dataset = np.array([transpose_sequence(sequence) for sequence in sequences], dtype=np.float32)
+            data = np.array([transpose_sequence(sequence) for sequence in sequences], dtype=np.float32)
 
         # To keep track of which time series correspond to which identifier
         sequence_names = list(time_series_dict.keys())
     else:
         # we don't assemble the files into timeseries and simply return the TPM values and the corresponding filename
         print("keeping sample as is, no conversion to time series")
-        dataset = data_array
         sequence_names = [f for (f, test) in  zip(entries, samples_to_keep) if test]
 
 
@@ -601,9 +598,9 @@ def generate_dataset_transcripts(path = absolute_path,
                 "is_time_series" : as_time_series,
                 "feature_names" : names,
                 "sequence_names" : sequence_names,
-                "n_features" : len(data_array[0])} 
+                "n_features" : len(data[0])} 
 
-    return dataset, metadata
+    return data, metadata
     
 
 
@@ -743,6 +740,173 @@ def generate_dataset_cancer(
                 "feature_names" : names,
                 "sequence_names" : sequence_names,
                 "n_features" : len(data_array[0])} 
+
+    return dataset, metadata
+
+
+
+### now we design a function that return a dataset of multivriate time series or the individual timestamps
+def generate_dataset_BRCA(
+        path = absolute_path_BRCA, 
+        feature_selection_threshold = None, 
+        subsample = None, 
+        normalization = False,
+        transpose = False,
+        MT_removal = False,
+        log1p = True,
+        min_max = True,
+        PAM50 = True):
+
+    # list of PAM50 genes:
+    PAM50_genes = [
+        'ENSG00000054598', 'ENSG00000261857', 'ENSG00000080986', 'ENSG00000138180', 'ENSG00000011426',
+        'ENSG00000165304', 'ENSG00000173890', 'ENSG00000151715', 'ENSG00000091831', 'ENSG00000129514',
+        'ENSG00000141736', 'ENSG00000141738', 'ENSG00000160867', 'ENSG00000106605', 'ENSG00000107262',
+        'ENSG00000117399', 'ENSG00000105173', 'ENSG00000133627', 'ENSG00000136997', 'ENSG00000104332',
+        'ENSG00000186847', 'ENSG00000128422', 'ENSG00000186081', 'ENSG00000115648', 'ENSG00000134057',
+        'ENSG00000094804', 'ENSG00000176890', 'ENSG00000077152', 'ENSG00000171848', 'ENSG00000099953',
+        'ENSG00000171604', 'ENSG00000091651', 'ENSG00000135679', 'ENSG00000142945', 'ENSG00000082175',
+        'ENSG00000148773', 'ENSG00000171791', 'ENSG00000146648', 'ENSG00000092621', 'ENSG00000062038',
+        'ENSG00000171428', 'ENSG00000141424', 'ENSG00000186868', 'ENSG00000175063', 'ENSG00000164611',
+        'ENSG00000174371', 'ENSG00000117724', 'ENSG00000143228', 'ENSG00000101057', 'ENSG00000089685']
+
+
+    # getting entries ready
+
+    entries = os.listdir(path)
+    # entries are contained into their own subdir
+    entries = [[path+"/"+entry+"/"+file for file in os.listdir(path+"/"+entry)] for entry in entries if os.path.isdir(path+"/"+entry)]
+    entries = [[e for e in entries if ".tsv" in e ][0] for entries in entries]
+    entries = [e for e in entries if "augmented_star_gene_counts" in e ]
+
+
+
+    # we load metadata, so we can have access to additional information not included in the filename
+    #meta_data = pd.read_excel(metadata_path, header = 1, usecols = range(1,10) )
+
+    ###########################################
+    ###### pre-loading patient selection ######
+    ###########################################
+    # selecting which entires to include in our analysis
+
+
+    # if we want a smaller dataset for testing purposes
+    if(subsample is not None):
+        entries = entries[0:subsample]
+
+    # sanity check : don't load patient where some values are missing
+    #Na_s =  meta_data[meta_data.isna().any(axis=1)]["Patient Number"]
+    #entries = [e for e in entries if e.split(".")[1] not in str(Na_s) ]
+
+
+    ###########################################
+    ############ loading patients  ############
+    ###########################################
+
+    # load the dataset into an array 
+    print("loading samples...")
+    data = [load_patient_data(e, header = 5) for e in entries]
+
+    # get the entry name list
+    names = get_names(entries[0], header = 5)
+    
+
+    print(data[0].shape)
+    # remove artifacts by keeping samples of correct length
+    samples_to_keep = [1 if s.shape == (60660,) else 0 for s in data]   
+    print("loaded",sum(samples_to_keep), "/",len(samples_to_keep), "samples")
+    
+    train_ds = [sample for (sample, test) in  zip(data, samples_to_keep) if test]
+    data_array = np.array(train_ds)
+
+    #patient_id = [int(p.split(".")[1]) for (p, test) in  zip(entries, samples_to_keep) if test]
+
+    # only keep metadata for selected patients
+    #meta_data = meta_data.set_index('Patient Number')
+    #meta_data = meta_data.reindex(index=patient_id)
+    #meta_data = meta_data.reset_index()
+
+
+    ###########################################
+    ################# PAM50  ##################
+    ###########################################
+    
+    if(PAM50):
+        # Now let's reproduce the PAM50 algorihtm
+        PAM50_mask = [True if name.split(".")[0] in PAM50_genes else False for name in names]
+        print(len(PAM50_mask))
+        print(sum(PAM50_mask))
+        X = data_array[:,PAM50_mask]
+
+        median_centered_data = X - np.median(X, axis=1)[:, np.newaxis]
+        correlation_matrix = np.corrcoef(median_centered_data)
+
+        # Step 3: Perform Hierarchical Clustering with Average Linkage
+        linkage_matrix = sch.linkage(correlation_matrix, method='average')
+
+        # Step 4: Cut the Dendrogram into 5 Clusters
+        k = 5  # Number of clusters
+        cluster_labels = sch.fcluster(linkage_matrix, k, criterion='maxclust')
+
+
+
+
+    ###########################################
+    ############ feature selection  ###########
+    ###########################################
+ 
+    if(feature_selection_threshold is not None):
+        print("selecting genes based on median absolute deviation threshold: ",feature_selection_threshold, "...")
+        gene_selected = feature_selection.MAD_selection(data_array, feature_selection_threshold)
+        print("removing", len(gene_selected) - sum(gene_selected), "genes under the MAD threshold from the dataset")
+        data_array = data_array[:,gene_selected]
+        names = names[gene_selected]
+
+
+    
+    print("number of genes selected : ", len(data_array[0]))
+    print("number of genes selected : ", len(names))
+
+    ###########################################
+    ############## normalisation  #############
+    ###########################################
+
+    
+    if(normalization == True): 
+        print("normalizing data...")
+        data_array = normalize(data_array)
+
+    if(log1p == True): 
+        print("log(1 + x) transformation...")
+        data_array = np.log1p(data_array)
+
+    # after log1p transform because it already provide us with a very good dataset 
+    if(min_max == True):
+        print("scaling to [0, 1]...")
+        scaler = MinMaxScaler(feature_range=(0, 1), clip = True)
+        data_array = scaler.fit_transform(data_array)
+
+    
+
+
+    print("shape of the dataset :", data_array.shape)
+
+    print("number of seq in the dataset :", len(data_array))
+
+    sequence_names = [f for (f, test) in  zip(entries, samples_to_keep) if test]
+
+
+    dataset = data_array
+
+    metadata = {"name" : "cancer",
+                "is_transpose": transpose,
+                "is_time_series" : False,
+                "feature_names" : names,
+                "sequence_names" : sequence_names,
+                "n_features" : len(data_array[0])} 
+    
+    if(PAM50):
+        metadata["PAM50_labels"] = cluster_labels
 
     return dataset, metadata
 

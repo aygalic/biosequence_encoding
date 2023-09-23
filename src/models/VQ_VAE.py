@@ -49,7 +49,6 @@ sys.path.append('../src')
 from utils import data_handler
 from utils import benchmark
 from utils import visualisation
-from utils.models import vanilla_autoencoder
 importlib.reload(data_handler) # to allow modification of the script without restarting the whole session
 
 import json
