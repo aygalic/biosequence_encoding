@@ -8,7 +8,7 @@ class Autoencoder(nn.Module):
         self.is_variational = is_variational
         
         # Encoder
-        self._encoder = nn.Sequential(
+        self.encoder = nn.Sequential(
             nn.Linear(shape, 1024),
             nn.LeakyReLU(0.05),
             nn.Dropout(dropout),
@@ -27,11 +27,16 @@ class Autoencoder(nn.Module):
         
         if is_variational:
             # For VAE, create additional layers to learn log_var
-            self.mu_layer = nn.Linear(256, latent_dim)
-            self.logvar_layer = nn.Linear(256, latent_dim)
-        
-        # Decoder
-        self._decoder = nn.Sequential(
+            self.mu_layer = nn.Linear(latent_dim, 2)
+            self.logvar_layer = nn.Linear(latent_dim, 2)
+            self.pre_decoder = nn.Sequential(
+                nn.Linear(2, latent_dim),
+                nn.LeakyReLU(0.05),
+
+            )
+
+        # Decoder        
+        self.decoder = nn.Sequential(
             nn.Linear(latent_dim, 256),
             nn.LeakyReLU(0.05),
             nn.Dropout(dropout),
@@ -47,6 +52,17 @@ class Autoencoder(nn.Module):
             nn.Linear(1024, shape),
             nn.Sigmoid()
         )
+    
+    def encode(self, x):
+        x = self.encoder(x)
+        if self.is_variational:
+            mean, logvar = self.mu_layer(x), self.logvar_layer(x)
+            return mean, logvar
+        else:
+            return x
+        
+    def decode(self, x):
+        return self.decoder(x)
 
     def reparameterize(self, mu, log_var):
         std = torch.exp(0.5*log_var)
@@ -55,15 +71,16 @@ class Autoencoder(nn.Module):
         
     def forward(self, x):
         if self.is_variational:
-            x = self._encoder(x)
-            mu = self.mu_layer(x)
-            log_var = self.logvar_layer(x)
+            mu, log_var = self.encode(x)
             z = self.reparameterize(mu, log_var)
+            z = self.pre_decoder(z)
+            x_reconstructed = self.decoder(z)
+            return x_reconstructed, mu, log_var
+
         else:
-            z = self._encoder(x)
-            
-        x_reconstructed = self._decoder(z)
-        return x_reconstructed
+            z = self.encode(x)
+            x_reconstructed = self.decode(z)
+            return x_reconstructed
     
     # Optionally: If you wish to return mu and log_var during training for loss calculation
     # (e.g., for the Kullback-Leibler divergence term), you might adjust the forward function 
