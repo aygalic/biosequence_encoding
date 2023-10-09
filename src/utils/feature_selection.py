@@ -26,26 +26,50 @@ from collections import Counter
 
 from sklearn.preprocessing import StandardScaler
 
-def MAD_selection(data_array, threshold):
+def MAD_selection(data_array, threshold, verbose = 0):
     MAD = scipy.stats.median_abs_deviation(data_array)
-
-    print("min MAD",min(MAD))
-    print("max MAD",max(MAD))
+    
+    if(verbose):
+        print("min MAD",min(MAD))
+        print("max MAD",max(MAD))
 
     # we also use a cieling to get rid of outliers.
     gene_selected = [True if val > threshold and val < 100 else False for val in MAD]
     
-    # Plot the distribution of MAD
-    plt.figure(figsize=(10, 5))
-    plt.hist(MAD, bins=200, color='blue', range = [0,50])
-    plt.axvline(threshold, color='red', linestyle='--', label='Threshold')
-    plt.title('Distribution of Median Absolute Deviation (MAD)')
-    plt.xlabel('MAD Value')
-    plt.ylabel('Frequency')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+    if(verbose):
+        # Plot the distribution of MAD
+        plt.figure(figsize=(10, 5))
+        plt.hist(MAD, bins=200, color='blue', range = [0,50])
+        plt.axvline(threshold, color='red', linestyle='--', label='Threshold')
+        plt.title('Distribution of Median Absolute Deviation (MAD)')
+        plt.xlabel('MAD Value')
+        plt.ylabel('Frequency')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+    return gene_selected
 
+
+def expression_selection(data_array, threshold, verbose = 0):
+    expr = np.count_nonzero(data_array, axis = 0)/data_array.shape[0]    
+    if(verbose):
+        print("min expression level",min(expr))
+        print("max expression level",max(expr))
+
+    # we also use a cieling to get rid of outliers.
+    gene_selected = [True if val > (1-threshold) else False for val in expr]
+    
+    if(verbose):
+        # Plot the distribution of MAD
+        plt.figure(figsize=(10, 5))
+        plt.hist(expr, bins=100, color='blue', range = [0,1])
+        plt.axvline(threshold, color='red', linestyle='--', label='Threshold')
+        plt.title('Distribution of zero values')
+        plt.xlabel('Counts of zero Values')
+        plt.ylabel('Frequency')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
     return gene_selected
 
 def LASSO_selection(data_array, labels, sgdc_params = None, class_balancing = None):

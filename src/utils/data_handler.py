@@ -8,7 +8,7 @@ from tensorflow import keras
 import scipy
 import scipy.cluster.hierarchy as sch
 
-from sklearn.preprocessing import normalize, MinMaxScaler
+from sklearn.preprocessing import normalize, MinMaxScaler, StandardScaler
 
 
 from tensorflow import keras
@@ -38,16 +38,16 @@ def load_patient_data(filename, header = 0):
     return data.iloc[:, 3]
 
 # here we open a single file passed as "filename" we return a lit of the values names.
-def get_names(filename, header = 0):
-    names = pd.read_table(filename, header = header)
-    return names.iloc[:, 0]
+def get_names(filename, header = 0, skiprows= None):
+    names = pd.read_table(filename, header = header, skiprows = skiprows)
+    return names#.iloc[:, 0]
 
 
 ### now we design a function that return a dataset of multivriate time series or cell wise observations
 def generate_dataset_genes(
         path = absolute_path, 
         metadata_path = metadata_path,
-        feature_selection_threshold = None, 
+        MAD_threshold = None, 
         batch_size = 64, 
         subsample = None, 
         retain_phases = None,
@@ -234,9 +234,9 @@ def generate_dataset_genes(
         data_array = data_array[:,gene_selected]
         query_result = query_result[gene_selected]
 
-    if(feature_selection_threshold is not None):
-        print("selecting genes based on median absolute deviation threshold: ",feature_selection_threshold, "...")
-        gene_selected = feature_selection.MAD_selection(data_array, feature_selection_threshold)
+    if(MAD_threshold is not None):
+        print("selecting genes based on median absolute deviation threshold: ",MAD_threshold, "...")
+        gene_selected = feature_selection.MAD_selection(data_array, MAD_threshold)
         print("removing", len(gene_selected) - sum(gene_selected), "genes under the MAD threshold from the dataset")
         data_array = data_array[:,gene_selected]
         query_result = query_result[gene_selected]
@@ -346,7 +346,7 @@ def generate_dataset_genes(
 ### now we design a function that return a dataset of multivriate time series or the individual timestamps
 def generate_dataset_transcripts(path = absolute_path, 
                      metadata_path = metadata_path,
-                     feature_selection_threshold = None, 
+                     MAD_threshold = None, 
                      batch_size = 64, 
                      subsample = None, 
                      retain_phases = None,
@@ -528,9 +528,9 @@ def generate_dataset_transcripts(path = absolute_path,
 
     
 
-    if(feature_selection_threshold is not None):
-        print("selecting genes based on median absolute deviation threshold: ",feature_selection_threshold, "...")
-        gene_selected = feature_selection.MAD_selection(data, feature_selection_threshold)
+    if(MAD_threshold is not None):
+        print("selecting genes based on median absolute deviation threshold: ",MAD_threshold, "...")
+        gene_selected = feature_selection.MAD_selection(data, MAD_threshold)
         print("removing", len(gene_selected) - sum(gene_selected), "genes under the MAD threshold from the dataset")
         data = data[:,gene_selected]
         names = names[gene_selected]
@@ -618,7 +618,7 @@ def generate_dataset_transcripts(path = absolute_path,
 ### now we design a function that return a dataset of multivriate time series or the individual timestamps
 def generate_dataset_cancer(
         path = absolute_path_cancer, 
-        feature_selection_threshold = None, 
+        MAD_threshold = None, 
         batch_size = 64, 
         subsample = None, 
         normalization = False,
@@ -691,9 +691,9 @@ def generate_dataset_cancer(
     ############ feature selection  ###########
     ###########################################
  
-    if(feature_selection_threshold is not None):
-        print("selecting genes based on median absolute deviation threshold: ",feature_selection_threshold, "...")
-        gene_selected = feature_selection.MAD_selection(data_array, feature_selection_threshold)
+    if(MAD_threshold is not None):
+        print("selecting genes based on median absolute deviation threshold: ",MAD_threshold, "...")
+        gene_selected = feature_selection.MAD_selection(data_array, MAD_threshold)
         print("removing", len(gene_selected) - sum(gene_selected), "genes under the MAD threshold from the dataset")
         data_array = data_array[:,gene_selected]
         names = names[gene_selected]
@@ -748,28 +748,26 @@ def generate_dataset_cancer(
 ### now we design a function that return a dataset of multivriate time series or the individual timestamps
 def generate_dataset_BRCA(
         path = absolute_path_BRCA, 
-        feature_selection_threshold = None, 
+        MAD_threshold = None, 
+        var_threshold = None, 
+        expression_threshold = None, 
         subsample = None, 
         normalization = False,
         transpose = False,
         MT_removal = False,
         log1p = True,
         min_max = True,
-        PAM50 = True):
+        PAM50 = True,
+        keep_only_protein_coding = False,
+        verbose = 0):
 
     # list of PAM50 genes:
     PAM50_genes = [
-        'ENSG00000054598', 'ENSG00000261857', 'ENSG00000080986', 'ENSG00000138180', 'ENSG00000011426',
-        'ENSG00000165304', 'ENSG00000173890', 'ENSG00000151715', 'ENSG00000091831', 'ENSG00000129514',
-        'ENSG00000141736', 'ENSG00000141738', 'ENSG00000160867', 'ENSG00000106605', 'ENSG00000107262',
-        'ENSG00000117399', 'ENSG00000105173', 'ENSG00000133627', 'ENSG00000136997', 'ENSG00000104332',
-        'ENSG00000186847', 'ENSG00000128422', 'ENSG00000186081', 'ENSG00000115648', 'ENSG00000134057',
-        'ENSG00000094804', 'ENSG00000176890', 'ENSG00000077152', 'ENSG00000171848', 'ENSG00000099953',
-        'ENSG00000171604', 'ENSG00000091651', 'ENSG00000135679', 'ENSG00000142945', 'ENSG00000082175',
-        'ENSG00000148773', 'ENSG00000171791', 'ENSG00000146648', 'ENSG00000092621', 'ENSG00000062038',
-        'ENSG00000171428', 'ENSG00000141424', 'ENSG00000186868', 'ENSG00000175063', 'ENSG00000164611',
-        'ENSG00000174371', 'ENSG00000117724', 'ENSG00000143228', 'ENSG00000101057', 'ENSG00000089685']
-
+        "FOXC1", "MIA", "NDC80", "CEP55", "ANLN", "MELK", "GPR160", "TMEM45B", "ESR1", "FOXA1",
+        "ERBB2", "GRB7", "FGFR4", "BLVRA", "BAG1", "CDC20", "CCNE1", "ACTR3B", "MYC", "SFRP1",
+        "KRT14", "KRT17", "KRT5", "MLPH", "CCNB1", "CDC6", "TYMS", "UBE2T", "RRM2", "MMP11", 
+        "CXXC5", "ORC6", "MDM2", "KIF2C",  "PGR", "MKI67", "BCL2", "EGFR", "PHGDH", "CDH3",
+        "NAT1", "SLC39A6", "MAPT", "UBE2C", "PTTG1", "EXO1", "CENPF", "NUF2", "MYBL2", "BIRC5"]
 
     # getting entries ready
 
@@ -807,11 +805,11 @@ def generate_dataset_BRCA(
     print("loading samples...")
     data = [load_patient_data(e, header = 5) for e in entries]
 
-    # get the entry name list
-    names = get_names(entries[0], header = 5)
-    
+    # get the entry name list    
+    names = pd.DataFrame(get_names(entries[0], header = 1, skiprows = [2,3,4,5]))
 
-    print(data[0].shape)
+
+
     # remove artifacts by keeping samples of correct length
     samples_to_keep = [1 if s.shape == (60660,) else 0 for s in data]   
     print("loaded",sum(samples_to_keep), "/",len(samples_to_keep), "samples")
@@ -833,7 +831,7 @@ def generate_dataset_BRCA(
     
     if(PAM50):
         # Now let's reproduce the PAM50 algorihtm
-        PAM50_mask = [True if name.split(".")[0] in PAM50_genes else False for name in names]
+        PAM50_mask = [True if name.split(".")[0] in PAM50_genes else False for name in names["gene_name"]]
         print(len(PAM50_mask))
         print(sum(PAM50_mask))
         X = data_array[:,PAM50_mask]
@@ -854,27 +852,46 @@ def generate_dataset_BRCA(
     ###########################################
     ############ feature selection  ###########
     ###########################################
- 
-    if(feature_selection_threshold is not None):
-        print("selecting genes based on median absolute deviation threshold: ",feature_selection_threshold, "...")
-        gene_selected = feature_selection.MAD_selection(data_array, feature_selection_threshold)
+
+    if(MT_removal):
+        gene_selected =  [False if name.startswith("MT-") else True for name in names["gene_name"]]
+        print("removing", len(gene_selected) - sum(gene_selected), "mithocondrial genes from the dataset")
+        data_array = data_array[:,gene_selected]
+        names = names[gene_selected]
+
+    if(keep_only_protein_coding):
+        gene_selected = names["gene_type"] == "protein_coding"
+        print("removing", len(gene_selected) - sum(gene_selected), "Non coding genes from dataset")
+        data_array = data_array[:,gene_selected]
+        names = names[gene_selected]
+
+    if(expression_threshold is not None):
+        print("selecting genes based on expression threshold: ",expression_threshold, "...")
+        gene_selected = feature_selection.expression_selection(data_array, expression_threshold, verbose)
+        print("removing", len(gene_selected) - sum(gene_selected), "genes under the expression threshold from the dataset")
+        data_array = data_array[:,gene_selected]
+        names = names[gene_selected]
+
+    if(MAD_threshold is not None):
+        print("selecting genes based on median absolute deviation threshold: ",MAD_threshold, "...")
+        gene_selected = feature_selection.MAD_selection(data_array, MAD_threshold, verbose)
         print("removing", len(gene_selected) - sum(gene_selected), "genes under the MAD threshold from the dataset")
         data_array = data_array[:,gene_selected]
         names = names[gene_selected]
 
 
+
+
     
     print("number of genes selected : ", len(data_array[0]))
-    print("number of genes selected : ", len(names))
+    print("matching : ", len(names))
 
     ###########################################
     ############## normalisation  #############
     ###########################################
 
     
-    if(normalization == True): 
-        print("normalizing data...")
-        data_array = normalize(data_array)
+
 
     if(log1p == True): 
         print("log(1 + x) transformation...")
@@ -886,7 +903,10 @@ def generate_dataset_BRCA(
         scaler = MinMaxScaler(feature_range=(0, 1), clip = True)
         data_array = scaler.fit_transform(data_array)
 
-    
+    if(normalization == True): 
+        print("normalizing data...")
+        scaler = StandardScaler()
+        data_array = scaler.fit_transform(data_array)
 
 
     print("shape of the dataset :", data_array.shape)

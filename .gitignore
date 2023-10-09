@@ -9,3 +9,4 @@ __pycache__
 external_aproach/VQ_VAE_disc
 *.csv
 external_aproach/VQ_2_disc
+*.mp4

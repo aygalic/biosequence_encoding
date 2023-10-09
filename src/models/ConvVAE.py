@@ -121,7 +121,7 @@ def generate_model(shape, latent_dim = 64):
 
     vae = ConvVAE(encoder, decoder)
     vae._name = "ConvVAE"
-    model._is_variational = True
+    vae._is_variational = True
 
     return vae
 
