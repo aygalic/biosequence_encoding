@@ -27,30 +27,26 @@ class Autoencoder(nn.Module):
         
         if is_variational:
             # For VAE, create additional layers to learn log_var
-            self.mu_layer = nn.Linear(latent_dim, 2)
-            self.logvar_layer = nn.Linear(latent_dim, 2)
-            self.pre_decoder = nn.Sequential(
-                nn.Linear(2, latent_dim),
-                nn.LeakyReLU(0.05),
+            self.mu_layer = nn.Linear(latent_dim, latent_dim)
+            self.logvar_layer = nn.Linear(latent_dim, latent_dim)
 
-            )
 
         # Decoder        
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, 256),
-            nn.LeakyReLU(0.05),
-            nn.Dropout(dropout),
+            #nn.LeakyReLU(0.05),
+            #nn.Dropout(dropout),
             
             nn.Linear(256, 512),
-            nn.LeakyReLU(0.05),
-            nn.Dropout(dropout),
+            #nn.LeakyReLU(0.05),
+            #nn.Dropout(dropout),
             
             nn.Linear(512, 1024),
-            nn.LeakyReLU(0.05),
-            nn.Dropout(dropout),
+            #nn.LeakyReLU(0.05),
+            #nn.Dropout(dropout),
             
             nn.Linear(1024, shape),
-            nn.Sigmoid()
+            #nn.Sigmoid()
         )
     
     def encode(self, x):
@@ -73,7 +69,6 @@ class Autoencoder(nn.Module):
         if self.is_variational:
             mu, log_var = self.encode(x)
             z = self.reparameterize(mu, log_var)
-            z = self.pre_decoder(z)
             x_reconstructed = self.decoder(z)
             return x_reconstructed, mu, log_var
 
