@@ -34,19 +34,19 @@ class Autoencoder(nn.Module):
         # Decoder        
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, 256),
-            #nn.LeakyReLU(0.05),
-            #nn.Dropout(dropout),
+            nn.LeakyReLU(0.05),
+            nn.Dropout(dropout),
             
             nn.Linear(256, 512),
-            #nn.LeakyReLU(0.05),
-            #nn.Dropout(dropout),
+            nn.LeakyReLU(0.05),
+            nn.Dropout(dropout),
             
             nn.Linear(512, 1024),
-            #nn.LeakyReLU(0.05),
-            #nn.Dropout(dropout),
+            nn.LeakyReLU(0.05),
+            nn.Dropout(dropout),
             
             nn.Linear(1024, shape),
-            #nn.Sigmoid()
+            nn.Sigmoid()
         )
     
     def encode(self, x):
