@@ -1,0 +1,9 @@
+{
+    "PPMI_DATA_PATH" : "/Users/aygalic/Thesis/data/quant/",
+    "PPMI_METADATA_PATH" : "/Users/aygalic/Thesis/METADATA_200123.xlsx",
+    "CANCER_DATA_PATH" : "/Users/aygalic/Thesis/data/cancer",
+    "BRCA_DATA_PATH" : "/Users/aygalic/Thesis/data/BRCA", 
+    "BRCA_METADATA_PATH" : "/Users/aygalic/Thesis/data/BRCA/metadata.cart.2023-09-22.json",
+    
+    "DEVICE" : "mps"
+}

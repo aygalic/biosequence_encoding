@@ -1,3 +1,7 @@
+from .. import config
+from . import feature_selection
+
+
 import os
 import pandas as pd
 import pathlib
@@ -7,27 +11,31 @@ import tensorflow as tf
 from tensorflow import keras
 import scipy
 import scipy.cluster.hierarchy as sch
+import json
 
 from sklearn.preprocessing import normalize, MinMaxScaler, StandardScaler
 
 
 from tensorflow import keras
 
-from utils import feature_selection
 
 # for translation of gene symbols
 import mygene
 mg = mygene.MyGeneInfo()
 
-# datasets
+
+
+
 
 # default path of the folder containing the salmon files
-absolute_path = '/Users/aygalic/Thesis/data/quant/'  
-absolute_path_cancer = '/Users/aygalic/Thesis/data/cancer'  
+PPMI_DATA_PATH      = config["PPMI_DATA_PATH"]
+PPMI_METADATA_PATH  = config["PPMI_METADATA_PATH"]
 
-metadata_path = '/Users/aygalic/Thesis/METADATA_200123.xlsx'  
+CANCER_DATA_PATH    = config["CANCER_DATA_PATH"]
 
-absolute_path_BRCA = '/Users/aygalic/Thesis/data/BRCA'  
+BRCA_DATA_PATH      = config["BRCA_DATA_PATH"]
+BRCA_METADATA_PATH  = config["BRCA_METADATA_PATH"]
+
 
 
 
@@ -45,10 +53,9 @@ def get_names(filename, header = 0, skiprows= None):
 
 ### now we design a function that return a dataset of multivriate time series or cell wise observations
 def generate_dataset_genes(
-        path = absolute_path, 
-        metadata_path = metadata_path,
+        path = PPMI_DATA_PATH, 
+        metadata_path = PPMI_METADATA_PATH,
         MAD_threshold = None, 
-        batch_size = 64, 
         subsample = None, 
         retain_phases = None,
         feature_selection_proceedure = None,
@@ -344,20 +351,21 @@ def generate_dataset_genes(
 
 
 ### now we design a function that return a dataset of multivriate time series or the individual timestamps
-def generate_dataset_transcripts(path = absolute_path, 
-                     metadata_path = metadata_path,
-                     MAD_threshold = None, 
-                     batch_size = 64, 
-                     subsample = None, 
-                     retain_phases = None,
-                     normalization = False,
-                     minimum_time_point = "BL",
-                     as_time_series = False,
-                     transpose = False,
-                     MT_removal = False,
-                     log1p = True,
-                     min_max = True,
-                     gene_selection_file = None):
+def generate_dataset_transcripts(
+        path = PPMI_DATA_PATH, 
+        metadata_path = PPMI_METADATA_PATH,
+        MAD_threshold = None, 
+        batch_size = 64, 
+        subsample = None, 
+        retain_phases = None,
+        normalization = False,
+        minimum_time_point = "BL",
+        as_time_series = False,
+        transpose = False,
+        MT_removal = False,
+        log1p = True,
+        min_max = True,
+        gene_selection_file = None):
 
     # getting entries ready
     # each couple of entries correspond to one patient, we are only interested in the "transcript" files
@@ -617,13 +625,11 @@ def generate_dataset_transcripts(path = absolute_path,
 
 ### now we design a function that return a dataset of multivriate time series or the individual timestamps
 def generate_dataset_cancer(
-        path = absolute_path_cancer, 
+        path = CANCER_DATA_PATH, 
         MAD_threshold = None, 
-        batch_size = 64, 
         subsample = None, 
         normalization = False,
         transpose = False,
-        MT_removal = False,
         log1p = True,
         min_max = True):
 
@@ -747,9 +753,9 @@ def generate_dataset_cancer(
 
 ### now we design a function that return a dataset of multivriate time series or the individual timestamps
 def generate_dataset_BRCA(
-        path = absolute_path_BRCA, 
+        path = BRCA_DATA_PATH, 
+        metadata_path = BRCA_METADATA_PATH,
         MAD_threshold = None, 
-        var_threshold = None, 
         expression_threshold = None, 
         subsample = None, 
         normalization = False,
@@ -757,17 +763,8 @@ def generate_dataset_BRCA(
         MT_removal = False,
         log1p = True,
         min_max = True,
-        PAM50 = True,
         keep_only_protein_coding = False,
         verbose = 0):
-
-    # list of PAM50 genes:
-    PAM50_genes = [
-        "FOXC1", "MIA", "NDC80", "CEP55", "ANLN", "MELK", "GPR160", "TMEM45B", "ESR1", "FOXA1",
-        "ERBB2", "GRB7", "FGFR4", "BLVRA", "BAG1", "CDC20", "CCNE1", "ACTR3B", "MYC", "SFRP1",
-        "KRT14", "KRT17", "KRT5", "MLPH", "CCNB1", "CDC6", "TYMS", "UBE2T", "RRM2", "MMP11", 
-        "CXXC5", "ORC6", "MDM2", "KIF2C",  "PGR", "MKI67", "BCL2", "EGFR", "PHGDH", "CDH3",
-        "NAT1", "SLC39A6", "MAPT", "UBE2C", "PTTG1", "EXO1", "CENPF", "NUF2", "MYBL2", "BIRC5"]
 
     # getting entries ready
 
@@ -780,8 +777,9 @@ def generate_dataset_BRCA(
 
 
     # we load metadata, so we can have access to additional information not included in the filename
-    #meta_data = pd.read_excel(metadata_path, header = 1, usecols = range(1,10) )
-
+    f = open(metadata_path)
+    meta_data = json.load(f)
+    
     ###########################################
     ###### pre-loading patient selection ######
     ###########################################
@@ -792,9 +790,7 @@ def generate_dataset_BRCA(
     if(subsample is not None):
         entries = entries[0:subsample]
 
-    # sanity check : don't load patient where some values are missing
-    #Na_s =  meta_data[meta_data.isna().any(axis=1)]["Patient Number"]
-    #entries = [e for e in entries if e.split(".")[1] not in str(Na_s) ]
+
 
 
     ###########################################
@@ -808,45 +804,43 @@ def generate_dataset_BRCA(
     # get the entry name list    
     names = pd.DataFrame(get_names(entries[0], header = 1, skiprows = [2,3,4,5]))
 
+    data_array = np.array(data)
 
 
-    # remove artifacts by keeping samples of correct length
-    samples_to_keep = [1 if s.shape == (60660,) else 0 for s in data]   
-    print("loaded",sum(samples_to_keep), "/",len(samples_to_keep), "samples")
-    
-    train_ds = [sample for (sample, test) in  zip(data, samples_to_keep) if test]
-    data_array = np.array(train_ds)
-
-    #patient_id = [int(p.split(".")[1]) for (p, test) in  zip(entries, samples_to_keep) if test]
-
-    # only keep metadata for selected patients
-    #meta_data = meta_data.set_index('Patient Number')
-    #meta_data = meta_data.reindex(index=patient_id)
-    #meta_data = meta_data.reset_index()
 
 
     ###########################################
-    ################# PAM50  ##################
+    ################ subtypes  ################
     ###########################################
+
+
     
-    if(PAM50):
-        # Now let's reproduce the PAM50 algorihtm
-        PAM50_mask = [True if name.split(".")[0] in PAM50_genes else False for name in names["gene_name"]]
-        print(len(PAM50_mask))
-        print(sum(PAM50_mask))
-        X = data_array[:,PAM50_mask]
 
-        median_centered_data = X - np.median(X, axis=1)[:, np.newaxis]
-        correlation_matrix = np.corrcoef(median_centered_data)
-
-        # Step 3: Perform Hierarchical Clustering with Average Linkage
-        linkage_matrix = sch.linkage(correlation_matrix, method='average')
-
-        # Step 4: Cut the Dendrogram into 5 Clusters
-        k = 5  # Number of clusters
-        cluster_labels = sch.fcluster(linkage_matrix, k, criterion='maxclust')
+    # using chatGPT overlord to solve this 
 
 
+    # Step 1: Construct a mapping from file_name to entity_submitter_id
+    file_to_id = {}
+    for item in meta_data:
+        file_name = item["file_name"]
+        entity_id = item["associated_entities"][0]["entity_submitter_id"]
+        file_to_id[file_name] = entity_id
+
+    # Step 2: For each file name in metadata["sequence_names"], find its corresponding entity_submitter_id
+    ids = []
+    for file_name in entries:
+        # Extract the last part of the path which corresponds to the file name
+        last_part = file_name.split('/')[-1]
+        if last_part in file_to_id:
+            ids.append(file_to_id[last_part])
+        else:
+            ids.append(None)  # or some default value indicating no match found
+
+
+    subtypes_table = pd.read_csv("../../data/BRCA/patient_subtype.tsv", index_col= 0)
+
+    subtypes_dict = {str(index)[:12]: subtype for index, subtype in subtypes_table.itertuples()}
+    subtypes = [subtypes_dict.get(identifier[:12], None) for identifier in ids]
 
 
     ###########################################
@@ -913,20 +907,16 @@ def generate_dataset_BRCA(
 
     print("number of seq in the dataset :", len(data_array))
 
-    sequence_names = [f for (f, test) in  zip(entries, samples_to_keep) if test]
 
-
-    dataset = data_array
-
-    metadata = {"name" : "cancer",
-                "is_transpose": transpose,
+    metadata = {"name"           : "cancer",
+                "is_transpose"   : transpose,
                 "is_time_series" : False,
-                "feature_names" : names,
-                "sequence_names" : sequence_names,
-                "n_features" : len(data_array[0])} 
+                "feature_names"  : names,
+                "sequence_names" : entries,
+                "n_features"     : len(data_array[0]),
+                "subtypes"       : subtypes}
     
-    if(PAM50):
-        metadata["PAM50_labels"] = cluster_labels
+        
 
-    return dataset, metadata
+    return data_array, metadata
 

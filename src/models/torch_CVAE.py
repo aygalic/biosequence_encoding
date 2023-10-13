@@ -11,15 +11,15 @@ class Autoencoder(nn.Module):
         if use_convolution:
             # Define the convolutional layers for the encoder and decoder
             self.encoder = nn.Sequential(
-                nn.Conv1d(1, 32, kernel_size=3, stride=2, padding=0),
+                nn.Conv1d(1, 32, kernel_size=3, stride=2),
                 nn.LeakyReLU(slope),
                 nn.Dropout(dropout),
                 
-                nn.Conv1d(32, 64, kernel_size=3, stride=2, padding=0),
+                nn.Conv1d(32, 64, kernel_size=3, stride=2),
                 nn.LeakyReLU(slope),
                 nn.Dropout(dropout),
                 
-                nn.Conv1d(64, 128, kernel_size=3, stride=2, padding=0),
+                nn.Conv1d(64, 128, kernel_size=3, stride=2),
                 nn.LeakyReLU(slope),
                 nn.Dropout(dropout),
                 
@@ -32,15 +32,15 @@ class Autoencoder(nn.Module):
                 nn.Linear(latent_dim, 128 * (shape // 8)),
                 nn.Unflatten(1, (128, shape // 8)),
                 
-                nn.ConvTranspose1d(128, 64, kernel_size=3, stride=2, padding=0, output_padding=0),
+                nn.ConvTranspose1d(128, 64, kernel_size=3, stride=2),
                 nn.LeakyReLU(slope),
                 nn.Dropout(dropout),
                 
-                nn.ConvTranspose1d(64, 32, kernel_size=3, stride=2, padding=0, output_padding=0),
+                nn.ConvTranspose1d(64, 32, kernel_size=3, stride=2),
                 nn.LeakyReLU(slope),
                 nn.Dropout(dropout),
                 
-                nn.ConvTranspose1d(32, 1, kernel_size=1, stride=2, padding=0, output_padding=0),
+                nn.ConvTranspose1d(32, 1, kernel_size=1, stride=2),
                 nn.Sigmoid()
             )
         else:
