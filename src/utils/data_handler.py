@@ -35,6 +35,7 @@ CANCER_DATA_PATH    = config["CANCER_DATA_PATH"]
 
 BRCA_DATA_PATH      = config["BRCA_DATA_PATH"]
 BRCA_METADATA_PATH  = config["BRCA_METADATA_PATH"]
+BRCA_SUBTYPES_PATH  = config["BRCA_SUBTYPES_PATH"]
 
 
 
@@ -755,6 +756,7 @@ def generate_dataset_cancer(
 def generate_dataset_BRCA(
         path = BRCA_DATA_PATH, 
         metadata_path = BRCA_METADATA_PATH,
+        subtypes_table = BRCA_SUBTYPES_PATH,
         MAD_threshold = None, 
         expression_threshold = None, 
         subsample = None, 

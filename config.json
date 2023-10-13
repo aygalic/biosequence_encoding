@@ -4,6 +4,7 @@
     "CANCER_DATA_PATH" : "/Users/aygalic/Thesis/data/cancer",
     "BRCA_DATA_PATH" : "/Users/aygalic/Thesis/data/BRCA", 
     "BRCA_METADATA_PATH" : "/Users/aygalic/Thesis/data/BRCA/metadata.cart.2023-09-22.json",
+    "BRCA_SUBTYPES_PATH" : "/Users/aygalic/Thesis/data/BRCA/patient_subtype.tsv",
     
     "DEVICE" : "mps"
 }
