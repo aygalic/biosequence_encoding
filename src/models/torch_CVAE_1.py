@@ -2,11 +2,27 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+class AttentionModule(nn.Module):
+    def __init__(self, in_features):
+        super(AttentionModule, self).__init__()
+        self.attention = nn.Sequential(
+            nn.Linear(in_features, in_features),
+            nn.Tanh(),
+            nn.Linear(in_features, 1),
+            nn.Softmax(dim=1)  # Softmax over the sequence dimension.
+        )
+
+    def forward(self, x):
+        attention_weights = self.attention(x)
+        return attention_weights * x
+    
 class Autoencoder(nn.Module):
     def __init__(self, shape, latent_dim=64, dropout = 0.1, slope = 0.05, is_variational=False, use_convolution = False):
         super(Autoencoder, self).__init__()
+        self.latent_dim = latent_dim
         self.is_variational = is_variational
         self.use_convolution = use_convolution
+        self.use_attention = False
 
         if use_convolution:
             # Define the convolutional layers for the encoder and decoder
@@ -35,19 +51,19 @@ class Autoencoder(nn.Module):
                 nn.Linear(latent_dim, 128 * (shape // 64)),  # Adjusted due to pooling layers
                 nn.Unflatten(1, (128, shape // 64)),
                 
-                nn.ConvTranspose1d(128, 64, kernel_size=3, stride=2),
-                nn.LeakyReLU(slope),
-                nn.Dropout(dropout),
                 nn.Upsample(scale_factor=2),  # Upsampling layer
-                
-                nn.ConvTranspose1d(64, 32, kernel_size=3, stride=2),
+                nn.ConvTranspose1d(128, 64, kernel_size=7, stride=2, padding=2),
                 nn.LeakyReLU(slope),
                 nn.Dropout(dropout),
-                nn.Upsample(scale_factor=4),  # Upsampling layer
                 
-                nn.ConvTranspose1d(32, 1, kernel_size=3, stride=2, padding=2),  # Adjusted kernel size
-                nn.LeakyReLU(slope),  # Preserved the non-linearity
-                #nn.Upsample(scale_factor=2),  # Upsampling layer
+                nn.Upsample(scale_factor=2),  # Upsampling layer
+                nn.ConvTranspose1d(64, 32, kernel_size=7, stride=2, padding=0),
+                nn.LeakyReLU(slope),
+                nn.Dropout(dropout),
+                
+                nn.Upsample(scale_factor=2),  # Upsampling layer
+                nn.ConvTranspose1d(32, 1, kernel_size=7, stride=2, padding=2),  # Adjusted kernel size
+                #nn.LeakyReLU(slope),  # Preserved the non-linearity
 
                 nn.Sigmoid()
             )
@@ -95,8 +111,21 @@ class Autoencoder(nn.Module):
                 self.mu_layer = nn.Linear(latent_dim, latent_dim)
                 self.logvar_layer = nn.Linear(latent_dim, latent_dim)
     
+    def add_attention(self):
+        """Integrate the attention module after the encoder and before the decoder."""
+        self.use_attention = True
+        # Attention for the convolutional path
+
+        self.conv_attention = AttentionModule(in_features = self.latent_dim)  
+        
+
     def encode(self, x):
         x = self.encoder(x)
+
+        # Apply attention here if using convolution
+        if self.use_attention:
+            x = self.conv_attention(x)
+
         if self.is_variational:
             mean, logvar = self.mu_layer(x), self.logvar_layer(x)
             return mean, logvar
