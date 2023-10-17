@@ -839,7 +839,7 @@ def generate_dataset_BRCA(
             ids.append(None)  # or some default value indicating no match found
 
 
-    subtypes_table = pd.read_csv("../../data/BRCA/patient_subtype.tsv", index_col= 0)
+    subtypes_table = pd.read_csv(subtypes_table, index_col= 0)
 
     subtypes_dict = {str(index)[:12]: subtype for index, subtype in subtypes_table.itertuples()}
     subtypes = [subtypes_dict.get(identifier[:12], None) for identifier in ids]
