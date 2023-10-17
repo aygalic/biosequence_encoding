@@ -33,7 +33,7 @@ def format_dataset(data, metadata, test_size = 0):
 
     print('train data:',len(data))
     data_set = Mydatasets(data1 = data)
-    dataloader = torch.utils.data.DataLoader(data_set, batch_size = batch_size, shuffle=True)
+    dataloader = torch.utils.data.DataLoader(data_set, batch_size = batch_size, shuffle=False)
 
     return data_set, dataloader
 

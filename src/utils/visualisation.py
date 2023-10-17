@@ -74,8 +74,8 @@ def post_training_viz(data, dataloader, model, DEVICE, loss_hist, labels):
     pca.fit(encode_out)
     pca_result = pca.transform(encode_out)
 
+    x = iter(dataloader).__next__()
 
-    x = iter(dataloader).__next__()[0] 
     if model.is_variational:
             x_reconstructed, _, _ = model.forward(x.to(DEVICE)).cpu().detach().numpy()
 
@@ -84,7 +84,9 @@ def post_training_viz(data, dataloader, model, DEVICE, loss_hist, labels):
 
 
     # stacking a single observation as well as its reconstruction in order to evaluate the results
-    stack = np.vstack([x, x_reconstructed])
+    stack = np.vstack([x[0], x_reconstructed[0]])
+
+
 
     # prepping a 1x4 plot to monitor the model through training
     fig, axs = plt.subplots(2, 3, figsize=(12, 6))
