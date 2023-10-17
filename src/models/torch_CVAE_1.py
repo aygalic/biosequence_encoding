@@ -18,10 +18,11 @@ class AttentionModule(nn.Module):
         return attention_weights * x
     
 class SelfAttention(nn.Module):
-    def __init__(self, sequence_length, attention_size):
+    def __init__(self, sequence_length, attention_size, attention_dropout = 0.2):
         super(SelfAttention, self).__init__()
         self.sequence_length = sequence_length
         self.attention_size = attention_size
+        self.attention_dropout = attention_dropout
         
         self.query_layer = nn.Linear(sequence_length, attention_size, bias=False)
         self.key_layer = nn.Linear(sequence_length, attention_size, bias=False)
@@ -36,7 +37,7 @@ class SelfAttention(nn.Module):
         # Calculate attention scores
         scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(self.attention_size)
         attention = F.softmax(scores, dim=-1)
-        
+        attention = F.dropout(attention, self.attention_dropout)
         # Multiply scores with value layer
         attended_values = torch.matmul(attention, value)
         return attended_values
@@ -145,9 +146,9 @@ class Autoencoder(nn.Module):
 
         self.attention_module = AttentionModule(in_features = self.latent_dim)  
         
-    def add_self_attention(self):
+    def add_self_attention(self, attention_dropout = 0.2):
         self.use_self_attention = True
-        self.attention_module = SelfAttention(self.input_shape, self.attention_size)
+        self.attention_module = SelfAttention(self.input_shape, self.attention_size, attention_dropout)
 
 
     def encode(self, x):
