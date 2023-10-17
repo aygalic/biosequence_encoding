@@ -1,4 +1,4 @@
-from .monitoring import encode_recon_dataset
+from .helpers import encode_recon_dataset
 
 import matplotlib.pyplot as plt
 import seaborn as sns
