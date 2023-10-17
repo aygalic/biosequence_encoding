@@ -21,6 +21,8 @@ class Monitor():
         self.dataloader = dataloader
         self.label = label
         
+    def set_device(self, device):
+        self.DEVICE = device
     def append_loss(self, value):
         self.train_res_recon_error.append(value)
 
@@ -50,7 +52,7 @@ class Monitor():
 
             if (epoch + 1) in self.checkpoints:
 
-                x = iter(self.dataloader).__next__()[0] 
+                x = iter(self.dataloader).__next__()
 
                 if self.model.is_variational:
                      x_reconstructed, _, _ = self.model.forward(x.to(self.DEVICE)).cpu().detach().numpy()
@@ -60,7 +62,7 @@ class Monitor():
 
 
                 # stacking a single observation as well as its reconstruction in order to evaluate the results
-                stack = np.vstack([x, x_reconstructed])
+                stack = np.vstack([x[0], x_reconstructed[0]])
                 
 
                 callback_viz(pca_result, encode_out, stack, self.train_res_recon_error, self.label)

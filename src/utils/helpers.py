@@ -58,7 +58,9 @@ def encode_recon_dataset(dataloader, model, DEVICE):
             en_reconstruction.append(elem)
 
         
-    encode_out = np.array(en_lat).squeeze(axis=1)
+    encode_out = np.array(en_lat)
+    if(not model.use_convolution):
+        encode_out = encode_out.squeeze(axis=1)
     reconstruction_out = np.array(en_reconstruction).squeeze(axis=1)
 
     return encode_out, reconstruction_out
