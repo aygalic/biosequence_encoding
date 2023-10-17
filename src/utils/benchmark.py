@@ -14,6 +14,14 @@ from sklearn.metrics import silhouette_score
 
 
 
+def count_parameters(model):
+    ''' for torch models, print number of param. '''
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    
+    print(f"Total parameters: {total_params}")
+    print(f"Trainable parameters: {trainable_params}")
+
 def benchmark(model, dataset, dataset_metadata):
 
     ############

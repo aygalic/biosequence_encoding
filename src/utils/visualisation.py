@@ -1,3 +1,5 @@
+from .monitoring import encode_recon_dataset
+
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
@@ -28,8 +30,112 @@ from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import confusion_matrix
 
-# experimental
-import matplotlib.gridspec as gridspec
+
+# new plots for the pytorch refacto
+def callback_viz(pca_result, encoded_set, stack, loss_hist, labels):
+
+    # prepping a 1x4 plot to monitor the model through training
+    fig, axs = plt.subplots(1, 4, figsize=(12, 3))
+
+
+    # Plot the line plot in the second subplot
+    axs[0].plot(loss_hist, label='Training Loss')
+    axs[0].set_title('Training Loss Plot')
+    #axs[0].set_xticks([])
+
+    sns.heatmap(stack, ax=axs[1], cbar=False)
+    axs[1].set_title('Stacked heatmap of two samples')
+    axs[1].set_xticks([])
+    axs[1].set_yticks([])
+
+
+    sns.heatmap(encoded_set, ax = axs[2], cbar=False)
+    axs[2].set_title('Heatmap of hole quantized dataset')
+    axs[2].set_xticks([])
+    axs[2].set_yticks([])
+
+
+    sns.scatterplot(x = pca_result[:, 0], y = pca_result[:, 1], hue=labels, ax=axs[3])
+    axs[3].set_title('PCA')
+    #axs[3].set_xticks([])
+    axs[3].set_yticks([])
+
+    plt.subplots_adjust(wspace=0)  
+    plt.tight_layout()
+    plt.show()
+
+
+def post_training_viz(data, dataloader, model, DEVICE, loss_hist, labels):
+
+    encode_out, reconstruction_out = encode_recon_dataset(dataloader, model, DEVICE)
+
+    # PCA of the latent space
+    pca = PCA(n_components=2)
+    pca.fit(encode_out)
+    pca_result = pca.transform(encode_out)
+
+
+    x = iter(dataloader).__next__()[0] 
+    if model.is_variational:
+            x_reconstructed, _, _ = model.forward(x.to(DEVICE)).cpu().detach().numpy()
+
+    else:
+        x_reconstructed = model.forward(x.to(DEVICE)).cpu().detach().numpy()
+
+
+    # stacking a single observation as well as its reconstruction in order to evaluate the results
+    stack = np.vstack([x, x_reconstructed])
+
+    # prepping a 1x4 plot to monitor the model through training
+    fig, axs = plt.subplots(2, 3, figsize=(12, 6))
+
+
+    # Plot the line plot in the second subplot
+    axs[0,0].plot(loss_hist, label='Training Loss')
+    axs[0,0].set_title('Training Loss Plot')
+
+
+    sns.heatmap(stack, ax=axs[0,1], cbar=False)
+    axs[0,1].set_title('Stacked heatmap of two samples')
+    axs[0,1].set_xticks([])
+    axs[0,1].set_yticks([])
+
+    sns.scatterplot(x=pca_result[:, 0], y=pca_result[:, 1], hue=labels, ax = axs[0,2])
+    axs[0,2].set_title('PCA of the latent space')
+    axs[0,2].set_xticks([])
+    axs[0,2].set_yticks([])
+
+
+    sns.heatmap(data, ax = axs[1,0], cbar=False)
+    axs[1,0].set_title('Heatmap of the hole dataset')
+    axs[1,0].set_xticks([])
+    axs[1,0].set_yticks([])
+
+    sns.heatmap(encode_out, ax = axs[1,1], cbar=False)
+    axs[1,1].set_title('Heatmap of the hole latent space')
+    axs[1,1].set_xticks([])
+    axs[1,1].set_yticks([])
+
+    sns.heatmap(reconstruction_out, ax = axs[1,2], cbar=False)
+    axs[1,2].set_title('Heatmap of the hole recontruction')
+    axs[1,2].set_xticks([])
+    axs[1,2].set_yticks([])
+
+    plt.subplots_adjust(wspace=0)  
+    plt.tight_layout()
+    plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # this function is used in the dataset analysis. it plots the whole dataset as a heatmap, 
