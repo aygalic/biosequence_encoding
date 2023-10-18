@@ -758,6 +758,7 @@ def generate_dataset_BRCA(
         metadata_path = BRCA_METADATA_PATH,
         subtypes_table = BRCA_SUBTYPES_PATH,
         MAD_threshold = None, 
+        LS_threshold = None, 
         expression_threshold = None, 
         subsample = None, 
         normalization = False,
@@ -869,9 +870,16 @@ def generate_dataset_BRCA(
         names = names[gene_selected]
 
     if(MAD_threshold is not None):
-        print("selecting genes based on median absolute deviation threshold: ",MAD_threshold, "...")
+        print("selecting genes based on median absolute deviation (MAD) threshold: ",MAD_threshold, "...")
         gene_selected = feature_selection.MAD_selection(data_array, MAD_threshold, verbose)
         print("removing", len(gene_selected) - sum(gene_selected), "genes under the MAD threshold from the dataset")
+        data_array = data_array[:,gene_selected]
+        names = names[gene_selected]
+
+    if(LS_threshold is not None):
+        print("selecting genes based on Laplacian Score (LS) threshold: ",LS_threshold, "...")
+        gene_selected = feature_selection.LS_selection(data_array, LS_threshold, 5, verbose)
+        print("removing", len(gene_selected) - sum(gene_selected), "genes under the LS threshold from the dataset")
         data_array = data_array[:,gene_selected]
         names = names[gene_selected]
 

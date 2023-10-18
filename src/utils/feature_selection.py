@@ -16,6 +16,9 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.utils.random import sample_without_replacement
 from sklearn.metrics import confusion_matrix
 
+from scipy.spatial.distance import pdist, squareform
+from sklearn.neighbors import NearestNeighbors
+
 from numpy import arange
 
 from collections import Counter
@@ -43,6 +46,71 @@ def MAD_selection(data_array, threshold, verbose = 0):
         plt.axvline(threshold, color='red', linestyle='--', label='Threshold')
         plt.title('Distribution of Median Absolute Deviation (MAD)')
         plt.xlabel('MAD Value')
+        plt.ylabel('Frequency')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+    return gene_selected
+
+
+
+def laplacian_score(X, k=5):
+    """
+    Compute the Laplacian Score for each feature of dataset X.
+
+    Parameters:
+    X : numpy array : The dataset (number of samples x number of features)
+    k : int : Number of neighbors for the KNN graph
+
+    Returns:
+    scores : list : Laplacian scores for each feature
+    """
+
+    # Step 1: Construct the adjacency matrix W using the heat kernel based on Euclidean distance
+    dists = squareform(pdist(X, metric='euclidean'))
+    dists_knn = np.sort(dists)[:, 1:k+1]  # Excluding the first column (distance to itself)
+    sigma = np.mean(dists_knn)
+    heat_kernel = np.exp(-dists ** 2 / (2 * sigma ** 2))
+
+    # Step 2: Define the diagonal matrix D and compute the Laplacian matrix L
+    W = heat_kernel
+    D = np.diag(np.sum(W, axis=1))
+    L = D - W
+
+    # Step 3: Compute the pairwise fraternities for each feature
+    fraternities = np.zeros(X.shape[1])  # number of features
+    D_inverse_sqrt = np.diag(1 / np.sqrt(np.diag(D)))
+    S = D_inverse_sqrt @ L @ D_inverse_sqrt
+
+    for i in range(X.shape[1]):
+        f = X[:, i]
+        f = f - np.mean(f)  # centering the feature
+        fraternities[i] = f.T @ S @ f / (f.T @ D @ f)
+
+    return fraternities
+
+
+
+
+def LS_selection(data_array, threshold, k = 5, verbose = 0):
+    '''Laplacian score selection'''
+    # Compute Laplacian scores
+    scores = laplacian_score(data_array, k)
+
+    if(verbose):
+        print("min LS",min(scores))
+        print("max LS",max(scores))
+
+    # we also use a cieling to get rid of outliers.
+    gene_selected = [True if val > threshold and val < 100 else False for val in scores]
+    
+    if(verbose):
+        # Plot the distribution of MAD
+        plt.figure(figsize=(10, 5))
+        plt.hist(scores, bins=200, color='blue', range = [0, .01])
+        plt.axvline(threshold, color='red', linestyle='--', label='Threshold')
+        plt.title('Distribution of Laplacian Score (LS)')
+        plt.xlabel('scores Value')
         plt.ylabel('Frequency')
         plt.legend()
         plt.grid(True)
