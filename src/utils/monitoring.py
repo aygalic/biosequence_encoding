@@ -55,11 +55,11 @@ class Monitor():
                 x = iter(self.dataloader).__next__()
 
                 if self.model.is_variational:
-                     x_reconstructed, _, _ = self.model.forward(x.to(self.DEVICE)).cpu().detach().numpy()
-
+                     x_reconstructed, _, _ = self.model.forward(x.to(self.DEVICE))
                 else:
-                    x_reconstructed = self.model.forward(x.to(self.DEVICE)).cpu().detach().numpy()
+                    x_reconstructed = self.model.forward(x.to(self.DEVICE))
 
+                x_reconstructed = x_reconstructed.cpu().detach().numpy()
 
                 # stacking a single observation as well as its reconstruction in order to evaluate the results
                 stack = np.vstack([x[0], x_reconstructed[0]])
