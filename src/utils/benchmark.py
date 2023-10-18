@@ -21,6 +21,7 @@ def count_parameters(model):
     
     print(f"Total parameters: {total_params}")
     print(f"Trainable parameters: {trainable_params}")
+    return total_params, trainable_params
 
 def benchmark(model, dataset, dataset_metadata):
 
