@@ -77,11 +77,11 @@ def post_training_viz(data, dataloader, model, DEVICE, loss_hist, labels):
     x = iter(dataloader).__next__()
 
     if model.is_variational:
-            x_reconstructed, _, _ = model.forward(x.to(DEVICE)).cpu().detach().numpy()
+            x_reconstructed, _, _ = model.forward(x.to(DEVICE))
 
     else:
-        x_reconstructed = model.forward(x.to(DEVICE)).cpu().detach().numpy()
-
+        x_reconstructed = model.forward(x.to(DEVICE))
+    x_reconstructed = x_reconstructed.cpu().detach().numpy()
 
     # stacking a single observation as well as its reconstruction in order to evaluate the results
     stack = np.vstack([x[0], x_reconstructed[0]])
