@@ -65,7 +65,18 @@ class Autoencoder(nn.Module):
             return calculated_length[2]
     
 
-    def __init__(self, shape, latent_dim=64, dropout = 0.1, slope = 0.05, is_variational=False, use_convolution = False, attention_size = 64):
+    def __init__(
+            self, 
+            shape, 
+            latent_dim=64, 
+            dropout = 0.1, 
+            slope = 0.05, 
+            is_variational=False, 
+            use_convolution = False, 
+            attention_size = 64,
+            kernel_size = None,
+            padding = None):
+        
         super(Autoencoder, self).__init__()
         self.input_shape = shape
         self.latent_dim = latent_dim
@@ -74,24 +85,31 @@ class Autoencoder(nn.Module):
         self.use_attention = False
         self.use_self_attention = False
         self.attention_size = attention_size
+        self.kernel_size = kernel_size
+        self.padding = padding
         
         
 
 
         if use_convolution:
+            if kernel_size is None:
+                kernel_size = 7
+                if padding is None:
+                    padding = 3
+            
             # Define the convolutional layers for the encoder and decoder
             self.encoder = nn.Sequential(
-                nn.Conv1d(1, 32, kernel_size=7, stride=2, padding = 3),
+                nn.Conv1d(1, 32, kernel_size = kernel_size, stride=2, padding = padding),
                 nn.LeakyReLU(slope),
                 nn.Dropout(dropout),
                 nn.MaxPool1d(2),  # Pooling layer
                 
-                nn.Conv1d(32, 64, kernel_size=7, stride=2, padding = 3),
+                nn.Conv1d(32, 64, kernel_size = kernel_size, stride=2, padding = padding),
                 nn.LeakyReLU(slope),
                 nn.Dropout(dropout),
                 nn.MaxPool1d(2),  # Pooling layer
                 
-                nn.Conv1d(64, 128, kernel_size=7, stride=2, padding = 3),
+                nn.Conv1d(64, 128, kernel_size = kernel_size, stride=2, padding = padding),
                 nn.LeakyReLU(slope),
                 nn.Dropout(dropout),
                 nn.MaxPool1d(2),  # Pooling layer
@@ -108,17 +126,17 @@ class Autoencoder(nn.Module):
                 nn.Unflatten(1, (128, self.calculated_length)),
                 
                 nn.Upsample(scale_factor=2),  # Upsampling layer
-                nn.ConvTranspose1d(128, 64, kernel_size=7, stride=2, padding=3),
+                nn.ConvTranspose1d(128, 64, kernel_size = kernel_size, stride=2, padding=padding),
                 nn.LeakyReLU(slope),
                 nn.Dropout(dropout),
                 
                 nn.Upsample(scale_factor=2),  # Upsampling layer
-                nn.ConvTranspose1d(64, 32, kernel_size=7, stride=2, padding=3),
+                nn.ConvTranspose1d(64, 32, kernel_size = kernel_size, stride=2, padding=padding),
                 nn.LeakyReLU(slope),
                 nn.Dropout(dropout),
                 
                 nn.Upsample(scale_factor=2),  # Upsampling layer
-                nn.ConvTranspose1d(32, 1, kernel_size=7, stride=2, padding=3),  # Adjusted kernel size
+                nn.ConvTranspose1d(32, 1, kernel_size = kernel_size, stride=2, padding=padding),  # Adjusted kernel size
                 #nn.LeakyReLU(slope),  # Preserved the non-linearity
                 
                 nn.LazyLinear(self.input_shape), 
