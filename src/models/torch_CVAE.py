@@ -3,6 +3,47 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math 
 
+from torch.nn import TransformerEncoder, TransformerEncoderLayer
+
+class MultiHeadSelfAttention(nn.Module):
+    def __init__(self, feature_size, num_heads, dropout):
+        super(MultiHeadSelfAttention, self).__init__()
+
+        self.feature_size = feature_size  # The input size (dimension) of each time step of each sequence
+        self.num_heads = num_heads  # Number of attention heads
+        self.dropout = dropout  # Dropout rate
+
+        # Define the encoder layer using PyTorch's TransformerEncoderLayer
+        self.encoder_layer = TransformerEncoderLayer(
+            d_model=self.feature_size,  # The feature size
+            nhead=self.num_heads,  # Number of heads in the multiheadattention models
+            dropout=self.dropout  # Dropout rate
+        )
+
+        self.transformer_encoder = TransformerEncoder(self.encoder_layer, num_layers=1)  # We use one layer here for simplicity
+
+    def forward(self, x):
+        """
+        Forward pass of the multi-head attention layer.
+
+        Arguments:
+        x -- A tensor of shape (batch_size, sequence_length, feature_size)
+
+        Returns:
+        out -- Multi-head self-attention applied output
+        """
+        # Transformer expects inputs of shape (sequence_length, batch_size, feature_size)
+        x = x.permute(1, 0, 2)
+
+        # Apply the transformer encoder
+        out = self.transformer_encoder(x)
+
+        # Return output to the original shape (batch_size, sequence_length, feature_size)
+        out = out.permute(1, 0, 2)
+        
+        return out
+
+
 
 
 class AttentionModule(nn.Module):
@@ -44,8 +85,10 @@ class SelfAttention(nn.Module):
         attended_values = torch.matmul(attention, value)
         return attended_values
     
-class Autoencoder(nn.Module):
 
+
+
+class Autoencoder(nn.Module):
     def find_calculated_length(self):
             # Create a mock tensor. Assuming it's a 1D signal, the "1" size is for the channel dimension.
             # The batch size here is 1, and it could be any number since it doesn't affect the calculation.
@@ -71,25 +114,42 @@ class Autoencoder(nn.Module):
             latent_dim=64, 
             dropout = 0.1, 
             slope = 0.05, 
+            num_layers = 16,
             is_variational=False, 
             use_convolution = False, 
+            full_attention = False,
             attention_size = 64,
+            num_heads = 64,
             kernel_size = None,
             padding = None):
         
         super(Autoencoder, self).__init__()
         self.input_shape = shape
         self.latent_dim = latent_dim
+        self.num_layers = num_layers
         self.is_variational = is_variational
         self.use_convolution = use_convolution
         self.use_attention = False
         self.use_self_attention = False
+        self.full_attention = full_attention
         self.attention_size = attention_size
         self.kernel_size = kernel_size
         self.padding = padding
+        self.dropout = dropout
+        self.num_heads = num_heads
         
-        
+        if self.full_attention: 
 
+            self.encoder_layers = TransformerEncoderLayer(d_model=self.input_shape, nhead=self.num_heads, dropout=self.dropout)
+            self.encoder = nn.Sequential( 
+                TransformerEncoder(self.encoder_layers, num_layers=self.num_layers),
+                nn.LazyLinear(self.latent_dim)
+            )
+
+            decoder_layers = TransformerEncoderLayer(d_model=self.input_shape, nhead=self.num_heads, dropout=self.dropout)
+            self.decoder = nn.Sequential(
+                TransformerEncoder(decoder_layers, num_layers=self.num_layers),
+                nn.Linear(self.input_shape, self.input_shape))  
 
         if use_convolution:
             if kernel_size is None:
@@ -199,7 +259,12 @@ class Autoencoder(nn.Module):
 
 
     def encode(self, x):
+        if self.full_attention: 
+            #x = x.permute(1, 0, 2)
+            None
+
         x = self.encoder(x)
+
         if self.use_attention:
             x = self.attention_module(x)
         
@@ -211,7 +276,11 @@ class Autoencoder(nn.Module):
             return x
         
     def decode(self, x):
-        return self.decoder(x)
+        x = self.decoder(x)
+        if self.full_attention: 
+            #x = x.permute(1, 0, 2)
+            None
+        return x
 
     def reparameterize(self, mu, log_var):
         std = torch.exp(0.5*log_var)
