@@ -43,7 +43,7 @@ def encode_recon_dataset(dataloader, model, DEVICE):
 
     model.eval()
     for _, inputs in enumerate(dataloader):
-        if model.is_variational:
+        if model.variational:
             latent_1, _ = model.encode(inputs.to(DEVICE))
             data_recon, _, _ = model(inputs.to(DEVICE))
         else:

@@ -76,7 +76,7 @@ def post_training_viz(data, dataloader, model, DEVICE, loss_hist, labels):
 
     x = iter(dataloader).__next__()
 
-    if model.is_variational:
+    if model.variational:
             x_reconstructed, _, _ = model.forward(x.to(DEVICE))
 
     else:

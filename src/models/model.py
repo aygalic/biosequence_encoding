@@ -115,9 +115,9 @@ class Autoencoder(nn.Module):
             dropout = 0.1, 
             slope = 0.05, 
             num_layers = 16,
-            is_variational=False, 
-            use_convolution = False, 
-            full_attention = False,
+            variational=False, 
+            convolution = False, 
+            transformer = False,
             attention_size = 64,
             num_heads = 64,
             kernel_size = None,
@@ -127,18 +127,18 @@ class Autoencoder(nn.Module):
         self.input_shape = shape
         self.latent_dim = latent_dim
         self.num_layers = num_layers
-        self.is_variational = is_variational
-        self.use_convolution = use_convolution
+        self.variational = variational
+        self.convolution = convolution
         self.use_attention = False
         self.use_self_attention = False
-        self.full_attention = full_attention
+        self.transformer = transformer
         self.attention_size = attention_size
         self.kernel_size = kernel_size
         self.padding = padding
         self.dropout = dropout
         self.num_heads = num_heads
         
-        if self.full_attention: 
+        if self.transformer: 
 
             self.encoder_layers = TransformerEncoderLayer(d_model=self.input_shape, nhead=self.num_heads, dropout=self.dropout)
             self.encoder = nn.Sequential( 
@@ -151,7 +151,7 @@ class Autoencoder(nn.Module):
                 TransformerEncoder(decoder_layers, num_layers=self.num_layers),
                 nn.Linear(self.input_shape, self.input_shape))  
 
-        if use_convolution:
+        if convolution:
             if kernel_size is None:
                 kernel_size = 7
                 if padding is None:
@@ -241,7 +241,7 @@ class Autoencoder(nn.Module):
                 nn.Sigmoid()
             )
 
-        if is_variational:
+        if variational:
                 # For VAE, create additional layers to learn log_var
                 self.mu_layer = nn.Linear(latent_dim, latent_dim)
                 self.logvar_layer = nn.Linear(latent_dim, latent_dim)
@@ -259,7 +259,7 @@ class Autoencoder(nn.Module):
 
 
     def encode(self, x):
-        if self.full_attention: 
+        if self.transformer: 
             #x = x.permute(1, 0, 2)
             None
 
@@ -269,7 +269,7 @@ class Autoencoder(nn.Module):
             x = self.attention_module(x)
         
 
-        if self.is_variational:
+        if self.variational:
             mean, logvar = self.mu_layer(x), self.logvar_layer(x)
             return mean, logvar
         else:
@@ -277,7 +277,7 @@ class Autoencoder(nn.Module):
         
     def decode(self, x):
         x = self.decoder(x)
-        if self.full_attention: 
+        if self.transformer: 
             #x = x.permute(1, 0, 2)
             None
         return x
@@ -293,7 +293,7 @@ class Autoencoder(nn.Module):
             x = self.attention_module(x)
 
 
-        if self.is_variational:
+        if self.variational:
             mu, log_var = self.encode(x)
             z = self.reparameterize(mu, log_var)
             x_reconstructed = self.decoder(z)

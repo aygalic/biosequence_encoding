@@ -54,7 +54,7 @@ class Monitor():
 
                 x = iter(self.dataloader).__next__()
 
-                if self.model.is_variational:
+                if self.model.variational:
                      x_reconstructed, _, _ = self.model.forward(x.to(self.DEVICE))
                 else:
                     x_reconstructed = self.model.forward(x.to(self.DEVICE))

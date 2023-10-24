@@ -9,7 +9,7 @@ sys.path.append('..')
 from src.utils import data_handler
 from src import config
 from src.utils import visualisation, benchmark, helpers, monitoring
-from src.models import torch_CVAE
+from src.models import model
 
 
 # data manipulation
@@ -52,7 +52,7 @@ class Experiment():
         print("input shape :", self.input_shape)
 
     def build_model(self, shape, model_param):
-        self.model = torch_CVAE.Autoencoder(shape = shape, **model_param)
+        self.model = model.Autoencoder(shape = shape, **model_param)
         self.model.add_attention()
 
 
@@ -92,7 +92,7 @@ class Experiment():
                 self.optimizer.zero_grad()
                 inputs = inputs.to(DEVICE)
                 # Compute the VAE loss or standard loss
-                if self.model.is_variational:
+                if self.model.variational:
                     outputs, mu, log_var = self.model(inputs)
                     reconstruction_loss = F.mse_loss(outputs, inputs)
                     kld = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
