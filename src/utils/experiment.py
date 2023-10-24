@@ -52,11 +52,17 @@ class Experiment():
         print("input shape :", self.input_shape)
 
     def build_model(self, shape, model_param):
-        self.model = model.Autoencoder(shape = shape, **model_param)
-        self.model.add_attention()
+        if model_param["transformer"] == True:
+            num_heads_candidate = helpers.find_primes(self.input_shape)
+            print(num_heads_candidate)
+            self.model_param["num_heads"] = num_heads_candidate[-1]
+
+        self.model = model.Autoencoder(shape = shape, **self.model_param)
+
+        #self.model.add_attention()
 
 
-    def __init__(self, data_param, model_param, verbose = 0, n_epoch = 3000):
+    def __init__(self, data_param, model_param, verbose = 1, n_epoch = 3000):
         self.data_param = data_param
         self.model_param = model_param
         self.verbose = verbose
@@ -70,11 +76,11 @@ class Experiment():
         
         self.build_dataset(data_param)
         # here we need to capture the shape of the input before building the model.
-        self.build_model(shape = self.input_shape, model_param = model_param)
+        self.build_model(shape = self.input_shape, model_param = self.model_param)
         self.optimizer = optim.Adam(self.model.parameters(), lr=1e-4, amsgrad=False)
         self.data_set, self.dataloader = helpers.format_dataset(self.data, self.metadata)
 
-        self.monitor = monitoring.Monitor(self.model, self.dataloader, label = self.metadata["subtypes"])
+        self.monitor = monitoring.Monitor(self.model, self.dataloader, label = self.metadata["subtypes"], verbose= verbose - 1)
         self.callbacks = self.monitor.callbacks
         self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'min', min_lr= 1e-5)
 

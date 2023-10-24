@@ -10,7 +10,7 @@ import seaborn as sns
 from sklearn.decomposition import PCA
 
 class Monitor():
-    def __init__(self, model, dataloader, label):
+    def __init__(self, model, dataloader, label, verbose = 1):
         self.checkpoints = [math.floor(x) for x in np.logspace(1,4)]
         self.feature_num = None
         self.DEVICE = torch.device(config["DEVICE"])
@@ -20,6 +20,7 @@ class Monitor():
         self.model = model
         self.dataloader = dataloader
         self.label = label
+        self.verbose = verbose
         
     def set_device(self, device):
         self.DEVICE = device
@@ -64,7 +65,7 @@ class Monitor():
                 # stacking a single observation as well as its reconstruction in order to evaluate the results
                 stack = np.vstack([x[0], x_reconstructed[0]])
                 
-
-                callback_viz(pca_result, encode_out, stack, self.train_res_recon_error, self.label)
+                if(self.verbose >=1):
+                    callback_viz(pca_result, encode_out, stack, self.train_res_recon_error, self.label)
 
             self.model.train()

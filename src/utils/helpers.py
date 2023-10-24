@@ -5,6 +5,9 @@ import numpy as np
 
 from sklearn.model_selection import train_test_split
 
+import itertools
+
+
 
 class Mydatasets(torch.utils.data.Dataset):
     def __init__(self, data1 ,transform = None):
@@ -59,9 +62,46 @@ def encode_recon_dataset(dataloader, model, DEVICE):
 
         
     encode_out = np.array(en_lat)
-    if(not model.use_convolution):
+    if(not model.convolution):
         encode_out = encode_out.squeeze(axis=1)
     reconstruction_out = np.array(en_reconstruction).squeeze(axis=1)
 
     return encode_out, reconstruction_out
 
+
+
+def generate_config(static_params, dynamic_params):
+    """
+    Generate a list of configurations for ML experiments, combining static and dynamic parameters.
+
+    Args:
+    static_params (dict): Parameters that stay the same for each configuration.
+    dynamic_params (dict): Dictionary of lists of parameters that should be varied. 
+                           Each key is a parameter name, and each value is a list of values to try for that parameter.
+
+    Returns:
+    list: A list of configuration dictionaries.
+    """
+    configurations = []
+
+    # Extract the list of parameter values from the dynamic_params dictionary
+    # and create a Cartesian product of all combinations (an N-dimensional grid)
+    keys, values = zip(*dynamic_params.items())
+    for combination in itertools.product(*values):
+        # Merge dynamic parameters with their values for this combination
+        dynamic_combination = dict(zip(keys, combination))
+
+        # Create a new configuration by merging static and dynamic parameters
+        config = {**static_params, **dynamic_combination}
+
+        # Add this configuration to the list
+        configurations.append(config)
+
+    return configurations
+
+def find_primes(n):
+    primes = []
+    for i in range(1,n+1):
+        if n % i == 0:
+            primes.append(i)
+    return primes
