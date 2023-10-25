@@ -47,6 +47,7 @@ from sklearn.metrics import confusion_matrix, adjusted_rand_score, normalized_mu
 
 class Experiment():
     def build_dataset(self, data_param):
+        data_param["verbose"] = self.verbose - 1
         self.data, self.metadata = data_handler.generate_dataset_BRCA(**data_param)
         self.input_shape = len(self.metadata["feature_names"])
         print("input shape :", self.input_shape)
@@ -54,8 +55,10 @@ class Experiment():
     def build_model(self, shape, model_param):
         if model_param["transformer"] == True:
             num_heads_candidate = helpers.find_primes(self.input_shape)
-            print(num_heads_candidate)
-            self.model_param["num_heads"] = num_heads_candidate[-1]
+            if(len(num_heads_candidate) > 1):
+                self.model_param["num_heads"] = num_heads_candidate[-1]
+            else:
+                self.model_param["num_heads"] = num_heads_candidate[-2]
 
         self.model = model.Autoencoder(shape = shape, **self.model_param)
 

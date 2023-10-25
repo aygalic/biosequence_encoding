@@ -767,7 +767,7 @@ def generate_dataset_BRCA(
         log1p = True,
         min_max = True,
         keep_only_protein_coding = False,
-        verbose = 0):
+        verbose = 1):
 
     # getting entries ready
 
@@ -801,7 +801,8 @@ def generate_dataset_BRCA(
     ###########################################
 
     # load the dataset into an array 
-    print("loading samples...")
+    if verbose:
+        print("loading samples...")
     data = [load_patient_data(e, header = 5) for e in entries]
 
     # get the entry name list    
@@ -852,43 +853,51 @@ def generate_dataset_BRCA(
 
     if(MT_removal):
         gene_selected =  [False if name.startswith("MT-") else True for name in names["gene_name"]]
-        print("removing", len(gene_selected) - sum(gene_selected), "mithocondrial genes from the dataset")
+        if verbose:
+            print("removing", len(gene_selected) - sum(gene_selected), "mithocondrial genes from the dataset")
         data_array = data_array[:,gene_selected]
         names = names[gene_selected]
 
     if(keep_only_protein_coding):
         gene_selected = names["gene_type"] == "protein_coding"
-        print("removing", len(gene_selected) - sum(gene_selected), "Non coding genes from dataset")
+        if verbose:
+            print("removing", len(gene_selected) - sum(gene_selected), "Non coding genes from dataset")
         data_array = data_array[:,gene_selected]
         names = names[gene_selected]
 
     if(expression_threshold is not None):
-        print("selecting genes based on expression threshold: ",expression_threshold, "...")
+        if verbose:
+            print("selecting genes based on expression threshold: ",expression_threshold, "...")
         gene_selected = feature_selection.expression_selection(data_array, expression_threshold, verbose)
-        print("removing", len(gene_selected) - sum(gene_selected), "genes under the expression threshold from the dataset")
+        if verbose:
+            print("removing", len(gene_selected) - sum(gene_selected), "genes under the expression threshold from the dataset")
         data_array = data_array[:,gene_selected]
         names = names[gene_selected]
 
     if(MAD_threshold is not None):
-        print("selecting genes based on median absolute deviation (MAD) threshold: ",MAD_threshold, "...")
+        if verbose:
+            print("selecting genes based on median absolute deviation (MAD) threshold: ",MAD_threshold, "...")
         gene_selected = feature_selection.MAD_selection(data_array, MAD_threshold, verbose)
-        print("removing", len(gene_selected) - sum(gene_selected), "genes under the MAD threshold from the dataset")
+        if verbose:
+            print("removing", len(gene_selected) - sum(gene_selected), "genes under the MAD threshold from the dataset")
         data_array = data_array[:,gene_selected]
         names = names[gene_selected]
 
     if(LS_threshold is not None):
-        print("selecting genes based on Laplacian Score (LS) threshold: ",LS_threshold, "...")
+        if verbose:
+            print("selecting genes based on Laplacian Score (LS) threshold: ",LS_threshold, "...")
         gene_selected = feature_selection.LS_selection(data_array, LS_threshold, 5, verbose)
-        print("removing", len(gene_selected) - sum(gene_selected), "genes under the LS threshold from the dataset")
+        if verbose:
+            print("removing", len(gene_selected) - sum(gene_selected), "genes under the LS threshold from the dataset")
         data_array = data_array[:,gene_selected]
         names = names[gene_selected]
 
 
 
 
-    
-    print("number of genes selected : ", len(data_array[0]))
-    print("matching : ", len(names))
+    if verbose:
+        print("number of genes selected : ", len(data_array[0]))
+        print("matching : ", len(names))
 
     ###########################################
     ############## normalisation  #############
@@ -898,24 +907,27 @@ def generate_dataset_BRCA(
 
 
     if(log1p == True): 
-        print("log(1 + x) transformation...")
+        if verbose:
+            print("log(1 + x) transformation...")
         data_array = np.log1p(data_array)
 
     # after log1p transform because it already provide us with a very good dataset 
     if(min_max == True):
-        print("scaling to [0, 1]...")
+        if verbose:
+            print("scaling to [0, 1]...")
         scaler = MinMaxScaler(feature_range=(0, 1), clip = True)
         data_array = scaler.fit_transform(data_array)
 
     if(normalization == True): 
-        print("normalizing data...")
+        if verbose:
+            print("normalizing data...")
         scaler = StandardScaler()
         data_array = scaler.fit_transform(data_array)
 
 
-    print("shape of the dataset :", data_array.shape)
-
-    print("number of seq in the dataset :", len(data_array))
+    if verbose:
+        print("shape of the dataset :", data_array.shape)
+        print("number of seq in the dataset :", len(data_array))
 
 
     metadata = {"name"           : "cancer",
