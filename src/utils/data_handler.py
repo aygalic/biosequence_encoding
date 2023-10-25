@@ -7,16 +7,11 @@ import pandas as pd
 import pathlib
 import matplotlib.pyplot as plt
 import numpy as np
-import tensorflow as tf
-from tensorflow import keras
 import scipy
 import scipy.cluster.hierarchy as sch
 import json
 
 from sklearn.preprocessing import normalize, MinMaxScaler, StandardScaler
-
-
-from tensorflow import keras
 
 
 # for translation of gene symbols
@@ -64,8 +59,6 @@ def generate_dataset_genes(
         class_balancing = None,
         normalization = False,
         minimum_time_point = "BL",
-        as_time_series = False,
-        transpose = False,
         MT_removal = False,
         log1p = True,
         min_max = True,
@@ -121,19 +114,19 @@ def generate_dataset_genes(
     # The following stategy for filtering also filters out every patient who have missed a visit up to the given timepoint.
     # This comportement could be tweaked easely later on
     # a bit clunky though
-    if(minimum_time_point == "BL" and as_time_series == False):
+    if(minimum_time_point == "BL"):
         print("retaining all patient who have at least passed the Base Line Visit...")
         BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
         matchin_entries = [entry for entry in entries if entry.split(".")[1] in BL_ids]
         entries = matchin_entries
-    elif(minimum_time_point == "V02" and as_time_series == False):
+    elif(minimum_time_point == "V02"):
         print("retaining all patient who have at least passed the Base Line to month 6 Visit...")
         BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
         V02_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V02"] 
         common_ids = set(BL_ids) & set(V02_ids) 
         matchin_entries = [entry for entry in entries if entry.split(".")[1] in common_ids]
         entries = matchin_entries
-    elif(minimum_time_point == "V04" and as_time_series == False):
+    elif(minimum_time_point == "V04" ):
         print("retaining all patient who have at least passed the Base Line to month 12 Visit...")
         BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
         V02_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V02"] 
@@ -141,7 +134,7 @@ def generate_dataset_genes(
         common_ids = set(BL_ids) & set(V02_ids) & set(V04_ids) 
         matchin_entries = [entry for entry in entries if entry.split(".")[1] in common_ids]
         entries = matchin_entries
-    elif(minimum_time_point == "V06" and as_time_series == False):
+    elif(minimum_time_point == "V06"):
         print("retaining all patient who have at least passed the Base Line to month 24 Visit...")
         BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
         V02_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V02"] 
@@ -151,7 +144,7 @@ def generate_dataset_genes(
         matchin_entries = [entry for entry in entries if entry.split(".")[1] in common_ids]
         entries = matchin_entries
     # if we want time series, we constrain them to only patients that went through every visits.
-    elif(minimum_time_point == "V08" or as_time_series == True):
+    elif(minimum_time_point == "V08"):
         print("retaining all patient who have passed all visits...")
         BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
         V02_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V02"] 
@@ -299,39 +292,16 @@ def generate_dataset_genes(
     ##########################################
     print("number of seq in the dataset :", len(data_array))
 
-    if as_time_series:
-        print("converting samples to time series")
-        time_series_dict = {key: [sample for (sample, name) in zip(data_array, entries) if int(name.split(".")[1]) == key] for key in patient_id}
 
-        print("number of actual individuals to be studied:", len(time_series_dict))
-
-        # Convert dictionary values to NumPy arrays
-        sequences = np.array(list(time_series_dict.values()), dtype=np.float32)
-
-        if transpose:
-            print("using transposed data...")
-
-            # Define a function to transpose a sequence
-            def transpose_sequence(sequence):
-                return np.transpose(sequence, axes=[1, 0])
-
-            # Transpose each element in the sequences array
-            dataset = np.array([transpose_sequence(sequence) for sequence in sequences], dtype=np.float32)
-
-        # To keep track of which time series correspond to which identifier
-        sequence_names = list(time_series_dict.keys())
-    else:
-        # we don't assemble the files into timeseries and simply return the TPM values and the corresponding filename
-        print("keeping sample as is, no conversion to time series")
-        dataset = data_array
-        sequence_names = [f for (f, test) in  zip(entries, samples_to_keep) if test]
+    # we don't assemble the files into timeseries and simply return the TPM values and the corresponding filename
+    print("keeping sample as is, no conversion to time series")
+    dataset = data_array
+    sequence_names = [f for (f, test) in  zip(entries, samples_to_keep) if test]
 
     
 
 
     metadata = {"name" : "genes",
-                "is_transpose": transpose,
-                "is_time_series" : as_time_series,
                 "feature_names" : query_result,
                 "seq_names" : sequence_names,
                 "n_features" : len(data_array[0]),
@@ -356,13 +326,10 @@ def generate_dataset_transcripts(
         path = PPMI_DATA_PATH, 
         metadata_path = PPMI_METADATA_PATH,
         MAD_threshold = None, 
-        batch_size = 64, 
         subsample = None, 
         retain_phases = None,
         normalization = False,
         minimum_time_point = "BL",
-        as_time_series = False,
-        transpose = False,
         MT_removal = False,
         log1p = True,
         min_max = True,
@@ -423,19 +390,19 @@ def generate_dataset_transcripts(
     ########################################################################################
     # there is a bit of trouble shooting left to do in this section, in the case time series + BL
     ########################################################################################
-    if(minimum_time_point == "BL" and as_time_series == False):
+    if(minimum_time_point == "BL"):
         print("retaining all patient who have at least passed the Base Line Visit...")
         BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
         matchin_entries = [entry for entry in entries if entry.split(".")[1] in BL_ids]
         entries = matchin_entries
-    elif(minimum_time_point == "V02" and as_time_series == False):
+    elif(minimum_time_point == "V02"):
         print("retaining all patient who have at least passed the Base Line to month 6 Visit...")
         BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
         V02_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V02"] 
         common_ids = set(BL_ids) & set(V02_ids) 
         matchin_entries = [entry for entry in entries if entry.split(".")[1] in common_ids]
         entries = matchin_entries
-    elif(minimum_time_point == "V04" and as_time_series == False):
+    elif(minimum_time_point == "V04"):
         print("retaining all patient who have at least passed the Base Line to month 12 Visit...")
         BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
         V02_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V02"] 
@@ -443,7 +410,7 @@ def generate_dataset_transcripts(
         common_ids = set(BL_ids) & set(V02_ids) & set(V04_ids) 
         matchin_entries = [entry for entry in entries if entry.split(".")[1] in common_ids]
         entries = matchin_entries
-    elif(minimum_time_point == "V06" and as_time_series == False):
+    elif(minimum_time_point == "V06"):
         print("retaining all patient who have at least passed the Base Line to month 24 Visit...")
         BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
         V02_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V02"] 
@@ -454,7 +421,7 @@ def generate_dataset_transcripts(
         entries = matchin_entries
     
     # if we want time series, we constrain them to only patients that went through every visits.
-    elif(minimum_time_point == "V08" or as_time_series == True):
+    elif(minimum_time_point == "V08"):
         print("retaining all patient who have passed all visits...")
         BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
         V02_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V02"] 
@@ -574,37 +541,13 @@ def generate_dataset_transcripts(
     ##########################################
     print("number of seq in the dataset :", len(data))
 
-    if as_time_series:
-        print("converting samples to time series")
-        time_series_dict = {key: [sample for (sample, name) in zip(data, entries) if int(name.split(".")[1]) == key] for key in patient_id}
 
-        print("number of actual individuals to be studied:", len(time_series_dict))
 
-        # Convert dictionary values to NumPy arrays
-        sequences = np.array(list(time_series_dict.values()), dtype=np.float32)
-
-        if transpose:
-            print("using transposed data...")
-
-            # Define a function to transpose a sequence
-            def transpose_sequence(sequence):
-                return np.transpose(sequence, axes=[1, 0])
-
-            # Transpose each element in the sequences array
-            data = np.array([transpose_sequence(sequence) for sequence in sequences], dtype=np.float32)
-
-        # To keep track of which time series correspond to which identifier
-        sequence_names = list(time_series_dict.keys())
-    else:
-        # we don't assemble the files into timeseries and simply return the TPM values and the corresponding filename
-        print("keeping sample as is, no conversion to time series")
-        sequence_names = [f for (f, test) in  zip(entries, samples_to_keep) if test]
+    sequence_names = [f for (f, test) in  zip(entries, samples_to_keep) if test]
 
 
     
     metadata = {"name" : "transcripts",
-                "is_transpose": transpose,
-                "is_time_series" : as_time_series,
                 "feature_names" : names,
                 "sequence_names" : sequence_names,
                 "n_features" : len(data[0])} 
@@ -836,8 +779,6 @@ def generate_dataset_BRCA(
 
 
     metadata = {"name"           : "cancer",
-                "is_transpose"   : False,
-                "is_time_series" : False,
                 "feature_names"  : names,
                 "sequence_names" : entries,
                 "n_features"     : len(data_array[0]),
