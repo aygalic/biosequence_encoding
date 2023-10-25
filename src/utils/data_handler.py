@@ -624,131 +624,6 @@ def generate_dataset_transcripts(
 
 
 
-### now we design a function that return a dataset of multivriate time series or the individual timestamps
-def generate_dataset_cancer(
-        path = CANCER_DATA_PATH, 
-        MAD_threshold = None, 
-        subsample = None, 
-        normalization = False,
-        transpose = False,
-        log1p = True,
-        min_max = True):
-
-
-
-
-    # getting entries ready
-
-    entries = os.listdir(path)
-    # entries are contained into their own subdir
-    entries = [[path+"/"+entry+"/"+file for file in os.listdir(path+"/"+entry)] for entry in entries if os.path.isdir(path+"/"+entry)]
-    entries = [[e for e in entries if ".tsv" in e ][0] for entries in entries]
-    entries = [e for e in entries if "augmented_star_gene_counts" in e ]
-
-
-
-    # we load metadata, so we can have access to additional information not included in the filename
-    #meta_data = pd.read_excel(metadata_path, header = 1, usecols = range(1,10) )
-
-    ###########################################
-    ###### pre-loading patient selection ######
-    ###########################################
-    # selecting which entires to include in our analysis
-
-
-    # if we want a smaller dataset for testing purposes
-    if(subsample is not None):
-        entries = entries[0:subsample]
-
-    # sanity check : don't load patient where some values are missing
-    #Na_s =  meta_data[meta_data.isna().any(axis=1)]["Patient Number"]
-    #entries = [e for e in entries if e.split(".")[1] not in str(Na_s) ]
-
-
-    ###########################################
-    ############ loading patients  ############
-    ###########################################
-
-    # load the dataset into an array 
-    print("loading samples...")
-    data = [load_patient_data(e, header = 5) for e in entries]
-
-    # get the entry name list
-    names = get_names(entries[0], header = 5)
-    
-    # remove artifacts by keeping samples of correct length
-    samples_to_keep = [1 if s.shape == (60660,) else 0 for s in data]   
-    print("loaded",sum(samples_to_keep), "/",len(samples_to_keep), "samples")
-    
-    train_ds = [sample for (sample, test) in  zip(data, samples_to_keep) if test]
-    data_array = np.array(train_ds)
-
-    #patient_id = [int(p.split(".")[1]) for (p, test) in  zip(entries, samples_to_keep) if test]
-
-    # only keep metadata for selected patients
-    #meta_data = meta_data.set_index('Patient Number')
-    #meta_data = meta_data.reindex(index=patient_id)
-    #meta_data = meta_data.reset_index()
-
-
-
-
-
-    ###########################################
-    ############ feature selection  ###########
-    ###########################################
- 
-    if(MAD_threshold is not None):
-        print("selecting genes based on median absolute deviation threshold: ",MAD_threshold, "...")
-        gene_selected = feature_selection.MAD_selection(data_array, MAD_threshold)
-        print("removing", len(gene_selected) - sum(gene_selected), "genes under the MAD threshold from the dataset")
-        data_array = data_array[:,gene_selected]
-        names = names[gene_selected]
-
-
-    
-    print("number of genes selected : ", len(data_array[0]))
-    print("number of genes selected : ", len(names))
-
-    ###########################################
-    ############## normalisation  #############
-    ###########################################
-
-    
-    if(normalization == True): 
-        print("normalizing data...")
-        data_array = normalize(data_array)
-
-    if(log1p == True): 
-        print("log(1 + x) transformation...")
-        data_array = np.log1p(data_array)
-
-    # after log1p transform because it already provide us with a very good dataset 
-    if(min_max == True):
-        print("scaling to [0, 1]...")
-        scaler = MinMaxScaler(feature_range=(0, 1), clip = True)
-        data_array = scaler.fit_transform(data_array)
-
-    
-
-
-    print("shape of the dataset :", data_array.shape)
-
-    print("number of seq in the dataset :", len(data_array))
-
-    sequence_names = [f for (f, test) in  zip(entries, samples_to_keep) if test]
-
-
-    dataset = data_array
-
-    metadata = {"name" : "cancer",
-                "is_transpose": transpose,
-                "is_time_series" : False,
-                "feature_names" : names,
-                "sequence_names" : sequence_names,
-                "n_features" : len(data_array[0])} 
-
-    return dataset, metadata
 
 
 
@@ -762,11 +637,11 @@ def generate_dataset_BRCA(
         expression_threshold = None, 
         subsample = None, 
         normalization = False,
-        transpose = False,
         MT_removal = False,
         log1p = True,
         min_max = True,
         keep_only_protein_coding = False,
+        sort = True,
         verbose = 1):
 
     # getting entries ready
@@ -898,6 +773,36 @@ def generate_dataset_BRCA(
     if verbose:
         print("number of genes selected : ", len(data_array[0]))
         print("matching : ", len(names))
+        
+
+    
+    ###########################################
+    ############## Sorting genes  #############
+    ###########################################
+    if(sort):
+        print("retriving symbols for genes")
+        queries = [name.split(".")[0] for name in names["gene_id"]]
+        query_result = mg.querymany(queries, fields = ['genomic_pos', 'symbol'], scopes='ensembl.gene', species='human', verbose = False, as_dataframe = True)
+
+        query_result = query_result.reset_index()
+        query_result = query_result.drop_duplicates(subset = ["query"])
+        # here we have the correct length
+
+        names_ = [q if(pd.isna(s)) else s for (s,q) in zip(query_result["symbol"],query_result["query"])]
+        query_result['name'] = names_
+
+        print("sorting based on genomic position chr then transcript start...")
+        # reset the indexes because of all the previous transformations we have done
+        query_result = query_result.reset_index(drop=True)
+        query_result = query_result.sort_values(['genomic_pos.chr', 'genomic_pos.start'], ascending=[True, True])
+        # Extract the sorted rows as a NumPy array
+        data_array = data_array[:, query_result.index]
+        names = names.iloc[query_result.index]
+
+
+
+
+
 
     ###########################################
     ############## normalisation  #############
@@ -931,7 +836,7 @@ def generate_dataset_BRCA(
 
 
     metadata = {"name"           : "cancer",
-                "is_transpose"   : transpose,
+                "is_transpose"   : False,
                 "is_time_series" : False,
                 "feature_names"  : names,
                 "sequence_names" : entries,
