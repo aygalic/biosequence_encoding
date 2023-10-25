@@ -52,6 +52,12 @@ class Experiment():
         self.input_shape = len(self.metadata["feature_names"])
         print("input shape :", self.input_shape)
 
+    def load_dataset(self, data_param):
+        with open(data_param, 'rb') as f:
+            self.data, self.metadata = pickle.load(f)
+        self.input_shape = len(self.metadata["feature_names"])
+        print("input shape :", self.input_shape)
+
     def build_model(self, shape, model_param):
         if model_param["transformer"] == True:
             num_heads_candidate = helpers.find_primes(self.input_shape)
@@ -66,18 +72,27 @@ class Experiment():
 
 
     def __init__(self, data_param, model_param, verbose = 1, n_epoch = 3000):
+        # basic attributes
         self.data_param = data_param
         self.model_param = model_param
         self.verbose = verbose
         self.n_epoch = n_epoch
+        
+        # data related attributes
         self.data = None
         self.input_shape = None
-
         self.meta_data = None
+
+        # model related attributes
         self.model = None
+
+        # initializing metric
         self.metric = None
         
-        self.build_dataset(data_param)
+        if isinstance(data_param, dict):
+            self.build_dataset(data_param)
+        elif isinstance(data_param, str):
+            self.load_dataset(data_param)
         # here we need to capture the shape of the input before building the model.
         self.build_model(shape = self.input_shape, model_param = self.model_param)
         self.optimizer = optim.Adam(self.model.parameters(), lr=1e-4, amsgrad=False)

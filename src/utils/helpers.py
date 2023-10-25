@@ -76,25 +76,41 @@ def generate_config(static_params, dynamic_params):
 
     Args:
     static_params (dict): Parameters that stay the same for each configuration.
-    dynamic_params (dict): Dictionary of lists of parameters that should be varied. 
-                           Each key is a parameter name, and each value is a list of values to try for that parameter.
+    dynamic_params (dict): Dictionary of parameter names to lists of possible values. 
+                           This includes both single-value parameters and coupled parameters (as tuples).
 
     Returns:
     list: A list of configuration dictionaries.
     """
     configurations = []
 
-    # Extract the list of parameter values from the dynamic_params dictionary
-    # and create a Cartesian product of all combinations (an N-dimensional grid)
-    keys, values = zip(*dynamic_params.items())
+    # Prepare keys and respective values from dynamic parameters
+    keys = list(dynamic_params.keys())
+    values = list(dynamic_params.values())
+
+    # Here, we recognize coupled parameters by checking if we have a tuple
+    # We will convert tuples to dictionaries in the configurations
     for combination in itertools.product(*values):
-        # Merge dynamic parameters with their values for this combination
-        dynamic_combination = dict(zip(keys, combination))
+        temp_config = dict(zip(keys, combination))
 
-        # Create a new configuration by merging static and dynamic parameters
-        config = {**static_params, **dynamic_combination}
+        # Flatten the configuration: if a value is a tuple, we unpack it
+        # assuming it represents coupled parameters
+        flat_config = {}
+        for k, v in temp_config.items():
+            if isinstance(v, tuple):
+                # If the tuple is not directly the values but rather a pair of key-value itself
+                # then we assume it's meant to unpack into the config as key-value pairs
+                if all(isinstance(i, tuple) for i in v):
+                    for inner_key, inner_value in v:
+                        flat_config[inner_key] = inner_value
+                else:
+                    # if it's a simple tuple, just add it plainly
+                    flat_config[k] = v
+            else:
+                flat_config[k] = v
 
-        # Add this configuration to the list
+        # Combine static and dynamic parameters into a single config dictionary
+        config = {**static_params, **flat_config}
         configurations.append(config)
 
     return configurations
