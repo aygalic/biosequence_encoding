@@ -76,7 +76,7 @@ def post_training_viz(data, dataloader, model, DEVICE, loss_hist, labels):
 
     x = iter(dataloader).__next__()
 
-    if model.variational:
+    if model.variational == "VAE":
             x_reconstructed, _, _ = model.forward(x.to(DEVICE))
 
     else:
@@ -159,110 +159,4 @@ def dataset_plot(data):
     plt.ylabel('Density')
     plt.tight_layout()  # Ensure plots don't overlap
     plt.show()
-
-
-# plot a single observation, its latent space as well as its reconstruction
-def plot_single_obs_processing(dataset, autoencoder, dataset_metadata):
-    e = dataset[0]    
-    if(autoencoder._is_variational == True):
-        _,__, z = autoencoder.encoder(e)
-    else :
-        z = autoencoder.encoder(e)
-    decoded = autoencoder.decoder(z)
-    if(dataset_metadata["is_time_series"]):
-        e_ = e[0]  
-        z_ = z[0].reshape(1, -1) 
-        decoded_ = decoded[0]  
-    else:
-        e_ = e[0].reshape(1, -1) 
-        z_ = z[0].reshape(1, -1) 
-        decoded_ = decoded[0].reshape(1, -1) 
-    # Create subplot grid with vertical stacking
-    fig = sp.make_subplots(rows=3, cols=1, shared_xaxes=False, vertical_spacing=0.1)
-    # Add the original image as a heatmap-like plot
-    heatmap_trace1 = go.Heatmap(z=e_, colorscale='viridis')
-    fig.add_trace(heatmap_trace1, row=1, col=1)
-    # Add the latent representation as a heatmap-like plot
-    heatmap_trace2 = go.Heatmap(z=z_, colorscale='viridis')
-    fig.add_trace(heatmap_trace2, row=2, col=1)
-    # Add the decoded image as a heatmap-like plot
-    heatmap_trace3 = go.Heatmap(z=decoded_, colorscale='viridis')
-    fig.add_trace(heatmap_trace3, row=3, col=1)
-    # Update layout
-    fig.update_layout(title='Stacked Graph of Image and Latent Space', showlegend=False)
-    fig.show()
-
-
-
-# plot the whole , its latent representation as well as its reconstruction
-def plot_dataset_processing(data, autoencoder, dataset_metadata):
-    if(autoencoder._is_variational == True):
-        _,__, z = autoencoder.encoder(data)
-    else :
-        z = autoencoder.encoder(data)
-    reconstruction = autoencoder.decoder.predict(z)
-    if(dataset_metadata["is_time_series"]):
-        data = data.reshape(data.shape[0], data.shape[2]*data.shape[1])
-        reconstruction = reconstruction.reshape(reconstruction.shape[0], reconstruction.shape[2]*reconstruction.shape[1])
-    # Create a single figure with two subplots
-    plt.figure(figsize=(18, 6))
-    plt.subplot(1, 3, 1)
-    sns.heatmap(data, yticklabels=False, xticklabels=False, cbar=True)
-    # sns.clustermap(data,yticklabels=False,xticklabels=False) # IF I WANT CLUSTERS
-    plt.title('Gene expression plot')
-    plt.xlabel('Genes')
-    plt.ylabel('Cells')
-    plt.subplot(1, 3, 2)
-    sns.heatmap(z, yticklabels=False, xticklabels=False, cbar=True)
-    plt.title('Latent representaiton plot')
-    plt.xlabel('Latent variables')
-    plt.ylabel('Cells')
-    plt.subplot(1, 3, 3)
-    sns.heatmap(reconstruction, yticklabels=False, xticklabels=False, cbar=True)
-    plt.title('Reconstruction - Gene expression plot')
-    plt.xlabel('Genes')
-    plt.ylabel('Cells')
-    plt.tight_layout()  # Ensure plots don't overlap
-    plt.show()
-
-
-def plot_clusters(latent_Z, True_labels):
-    True_labels = True_labels.tolist()  
-    # Map string labels to numeric values
-    my_cmap = plt.get_cmap('viridis', len(np.unique(True_labels)))
-    subtype_labels = np.unique(True_labels)
-    subtype_to_numeric = {subtype: i for i, subtype in enumerate(subtype_labels)}
-    colors = [my_cmap(subtype_to_numeric[subtype]) for subtype in True_labels]
-    #### PCA of learened feature
-    pca = PCA(n_components=2)
-    pca.fit(latent_Z)
-    pca_result = pca.transform(latent_Z)
-    # Plot the second subplot (PCA)
-    sns.scatterplot(x = pca_result[:, 0], y = pca_result[:, 1], cmap=my_cmap, c=colors)
-    #### Joinplot
-    f = sns.jointplot(x=pca_result[:, 0], y=pca_result[:, 1], cmap="Blues", fill=True, kind='kde',height=6,
-                 marginal_kws={"alpha":.2},thresh=0.05, alpha=.8)
-    #### blobs 
-    f = sns.jointplot(x=pca_result[:, 0], y=pca_result[:, 1], fill=True, kind='kde',hue=True_labels,height=6,marginal_kws={"alpha":.2},thresh=0.05, alpha=.9)
-    f.ax_joint.legend_._visible=False
-
-
-def compare_cluser_vis(data, label_1, label_2 ): 
-    # create a viz to compare the labels on
-    #### PCA of learened feature
-    pca = PCA(n_components=2)
-    pca.fit(data)
-    pca_result = pca.transform(data)
-    # Create a single figure with two subplots
-    plt.figure(figsize=(12, 12))
-    plt.subplot(2, 2, 1)
-    sns.scatterplot(data=pca_result[:, 0:1], x='TSNE_Dim1', y='TSNE_Dim2', hue='label_1' )
-    plt.title('True Labels')
-    # Create the KDE plot in the second subplot
-    plt.subplot(2, 2, 2)  # Create a new subplot for the KDE plot
-    sns.scatterplot(data=pca_result[:, 0:1], x='TSNE_Dim1', y='TSNE_Dim2', hue='label_2')
-    plt.title('Discovered Labels')
-    conf_matrix = confusion_matrix(label_1, label_2)
-    print(conf_matrix)
-
 

@@ -121,7 +121,7 @@ class Experiment():
                 self.optimizer.zero_grad()
                 inputs = inputs.to(DEVICE)
                 # Compute the VAE loss or standard loss
-                if self.model.variational:
+                if self.model.variational == "VAE":
                     outputs, mu, log_var = self.model(inputs)
                     reconstruction_loss = F.mse_loss(outputs, inputs)
                     kld = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())

@@ -46,7 +46,7 @@ def encode_recon_dataset(dataloader, model, DEVICE):
 
     model.eval()
     for _, inputs in enumerate(dataloader):
-        if model.variational:
+        if model.variational == "VAE":
             latent_1, _ = model.encode(inputs.to(DEVICE))
             data_recon, _, _ = model(inputs.to(DEVICE))
         else:

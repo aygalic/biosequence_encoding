@@ -115,7 +115,7 @@ class Autoencoder(nn.Module):
             dropout = 0.1, 
             slope = 0.05, 
             num_layers = 16,
-            variational=False, 
+            variational = None, 
             convolution = False, 
             transformer = False,
             attention_size = 64,
@@ -241,7 +241,7 @@ class Autoencoder(nn.Module):
                 nn.Sigmoid()
             )
 
-        if variational:
+        if self.variational == "VAE":
                 # For VAE, create additional layers to learn log_var
                 self.mu_layer = nn.Linear(latent_dim, latent_dim)
                 self.logvar_layer = nn.Linear(latent_dim, latent_dim)
@@ -293,7 +293,7 @@ class Autoencoder(nn.Module):
             x = self.attention_module(x)
 
 
-        if self.variational:
+        if self.variational == "VAE":
             mu, log_var = self.encode(x)
             z = self.reparameterize(mu, log_var)
             x_reconstructed = self.decoder(z)
