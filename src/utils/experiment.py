@@ -86,8 +86,9 @@ class Experiment():
         # model related attributes
         self.model = None
 
-        # initializing metric
+        # initializing metrics
         self.metric = None
+        self.all_metrics = None
         
         if isinstance(data_param, dict):
             self.build_dataset(data_param)
@@ -106,6 +107,10 @@ class Experiment():
     
         
     def run(self):
+        if self.verbose:
+            print("Running the following configuration:")
+            print(self.data_param)
+            print(self.model_param)
         self.model.to(DEVICE)
         for epoch in tqdm(range(self.n_epoch)):
             running_loss = 0.0
@@ -188,7 +193,9 @@ class Experiment():
         # Filter out None values
         y_pred = [label for label, test in zip(y_pred, y_true) if test is not None]
         y_true = [label for label in y_true if label is not None]
-        X_filtered = [x for x, test in zip(encode_out, y_true) if test is not None]
+
+        # just in case we wanted to compute extra silouhette
+        #X_filtered = [x for x, test in zip(encode_out, y_true) if test is not None]
         # Ensure you apply the same filter to the associated data if needed
 
 
@@ -213,6 +220,15 @@ class Experiment():
         fm_score = fowlkes_mallows_score(y_true, y_pred)  # or use y_true_filtered, y_pred_filtered
         homogeneity, completeness, v_measure = homogeneity_completeness_v_measure(y_true, y_pred)  # or use y_true_filtered, y_pred_filtered
 
+        # we want to score all computed metrics for later analysis.
+        self.all_metrics = {
+            "ari"           : ari_score,
+            "nmi"           : nmi_score,
+            "silhouette"    : silhouette_avg,
+            "fm"            : fm_score,
+            "homogeneity"   : homogeneity,
+            "completeness"  : completeness,
+            "v_measure"     : v_measure}
 
         if(self.verbose >= 1):
             # Plot the confusion matrix
