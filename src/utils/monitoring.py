@@ -57,6 +57,9 @@ class Monitor():
 
                 if self.model.variational == "VAE":
                      x_reconstructed, _, _ = self.model.forward(x.to(self.DEVICE))
+                elif self.model.variational == "VQ-VAE":
+                    # for VQ-VAE the latent space is the quantized space, not the encodings.
+                    vq_loss, x_reconstructed, perplexity, encodings, quantized = self.model(x.to(self.DEVICE))
                 else:
                     x_reconstructed = self.model.forward(x.to(self.DEVICE))
 

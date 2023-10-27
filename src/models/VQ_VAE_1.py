@@ -45,11 +45,6 @@ from sklearn.preprocessing import StandardScaler
 import importlib
 import sys
 
-sys.path.append('../src')
-from utils import data_handler
-from utils import benchmark
-from utils import visualisation
-importlib.reload(data_handler) # to allow modification of the script without restarting the whole session
 
 import json
 from tqdm import tqdm

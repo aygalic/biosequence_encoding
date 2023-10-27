@@ -1,46 +1,9 @@
-import os
-import pickle
-import numpy as np
-import pandas as pd
-import math
-from itertools import chain
-import itertools
-import random
-import tqdm
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as F
-from torch.autograd.function import Function
-import torch.nn.utils.prune as prune
-from IPython.display import display, HTML
-import matplotlib.pyplot as plt
-from scipy import signal
-from scipy.fft import fftshift
 
-from einops import rearrange, repeat
-from einops.layers.torch import Rearrange
-from torch import nn, einsum
-import logging
-from functools import partial
-from collections import OrderedDict
-import seaborn as sns
-import matplotlib as mp
-import time
-from scipy.signal import savgol_filter
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib.patches import Patch
-from matplotlib.colors import ListedColormap
+from einops import rearrange
 
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, silhouette_score, silhouette_samples
-from sklearn.decomposition import PCA
-from sklearn import metrics
-from sklearn.manifold import TSNE
-from sklearn.datasets import make_blobs
-from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
-from sklearn.preprocessing import StandardScaler
 
 
 class VectorQuantizer(nn.Module):
