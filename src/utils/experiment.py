@@ -60,12 +60,13 @@ class Experiment():
         print("input shape :", self.input_shape)
 
     def build_model(self, shape, model_param):
-        if model_param["transformer"] == True:
-            num_heads_candidate = helpers.find_primes(self.input_shape)
-            if(len(num_heads_candidate) > 1):
-                self.model_param["num_heads"] = num_heads_candidate[-1]
-            else:
-                self.model_param["num_heads"] = num_heads_candidate[-2]
+        if "transformer" in model_param:
+            if model_param["transformer"] == True:
+                num_heads_candidate = helpers.find_primes(self.input_shape)
+                if(len(num_heads_candidate) > 1):
+                    self.model_param["num_heads"] = num_heads_candidate[-1]
+                else:
+                    self.model_param["num_heads"] = num_heads_candidate[-2]
 
         self.model = model.Autoencoder(shape = shape, **self.model_param)
 
