@@ -45,6 +45,7 @@ from sklearn.metrics import confusion_matrix, adjusted_rand_score, normalized_mu
 
 
 
+
 class Experiment():
     def build_dataset(self, data_param):
         data_param["verbose"] = self.verbose - 1
@@ -68,79 +69,7 @@ class Experiment():
 
         self.model = model.Autoencoder(shape = shape, **self.model_param)
 
-        #self.model.add_attention()
-
-
-    def __init__(self, data_param, model_param, verbose = 1, n_epoch = 3000):
-        # basic attributes
-        self.data_param = data_param
-        self.model_param = model_param
-        self.verbose = verbose
-        self.n_epoch = n_epoch
-        
-        # data related attributes
-        self.data = None
-        self.input_shape = None
-        self.meta_data = None
-
-        # model related attributes
-        self.model = None
-
-        # initializing metrics
-        self.metric = None
-        self.all_metrics = None
-        
-        if isinstance(data_param, dict):
-            self.build_dataset(data_param)
-        elif isinstance(data_param, str):
-            self.load_dataset(data_param)
-        # here we need to capture the shape of the input before building the model.
-        self.build_model(shape = self.input_shape, model_param = self.model_param)
-        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-4, amsgrad=False)
-        self.data_set, self.dataloader = helpers.format_dataset(self.data, self.metadata)
-
-        self.monitor = monitoring.Monitor(self.model, self.dataloader, label = self.metadata["subtypes"], verbose= verbose - 1)
-        self.callbacks = self.monitor.callbacks
-        self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'min', min_lr= 1e-5)
-
-
-    
-        
-    def run(self):
-        if self.verbose:
-            print("Running the following configuration:")
-            print(self.data_param)
-            print(self.model_param)
-        self.model.to(DEVICE)
-        for epoch in tqdm(range(self.n_epoch)):
-            running_loss = 0.0
-            count = 0
-            
-            # Training loop
-            for _, inputs in enumerate(self.dataloader):
-                self.optimizer.zero_grad()
-                inputs = inputs.to(DEVICE)
-                # Compute the VAE loss or standard loss
-                if self.model.variational == "VAE":
-                    outputs, mu, log_var = self.model(inputs)
-                    reconstruction_loss = F.mse_loss(outputs, inputs)
-                    kld = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
-                    loss = reconstruction_loss + (1 * kld)
-                else:
-                    outputs = self.model(inputs)
-                    loss = F.mse_loss(outputs, inputs)
-                
-                loss.backward()
-                self.optimizer.step()
-                count += 1
-                running_loss += loss.item()
-            
-            # Calculate and store training loss for this epoch
-            train_loss = running_loss / count
-            self.monitor.append_loss(train_loss)
-            self.callbacks(epoch)
-        
-
+    def compute_metric(self):
         encode_out, reconstruction_out = helpers.encode_recon_dataset(self.dataloader, self.model, DEVICE)
 
         # PCA of the latent space
@@ -151,6 +80,9 @@ class Experiment():
 
         # Assuming you've determined that you want 5 clusters
         n_clusters = 5
+
+
+
 
         # Initialize the KMeans model
         kmeans = KMeans(n_clusters=n_clusters)
@@ -164,30 +96,24 @@ class Experiment():
         # Calculate silhouette score
         silhouette_avg = silhouette_score(encode_out, labels)
 
-        # Visualization: Assuming you have 2D data, you can also visualize the clusters:
-        # (This is for illustration. If your data is not 2D, additional steps are needed for plotting, like PCA to reduce dimensions before plotting.)
 
 
-        
-
-
-        plt.show()
         if self.verbose >= 1:
             print(f"Silhouette score for {n_clusters} clusters: {silhouette_avg}")
 
+            # plot of True vs Discovered labels
             fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+            sns.scatterplot(x=pca_result[:, 0], y=pca_result[:, 1], hue=self.metadata["subtypes"], ax=axs[1]).set(title='True Labels')
+            sns.scatterplot(x=pca_result[:, 0], y=pca_result[:, 1], hue=[str(l) for l in labels], ax=axs[0]).set(title='Found Labels')
 
-            sns.scatterplot(x=pca_result[:, 0], y=pca_result[:, 1], hue=[str(l) for l in labels], ax=axs[0])
-            sns.scatterplot(x=pca_result[:, 0], y=pca_result[:, 1], hue=self.metadata["subtypes"], ax=axs[1])
             plt.show()
 
         
 
 
         # These are your cluster labels and true labels.
-        # They should be assigned with your actual data.
-        y_pred = labels  # replace with your actual labels
-        y_true = self.metadata["subtypes"]  # replace with your actual clustering results
+        y_pred = labels  
+        y_true = self.metadata["subtypes"] 
 
 
         # Filter out None values
@@ -196,7 +122,7 @@ class Experiment():
 
         # just in case we wanted to compute extra silouhette
         #X_filtered = [x for x, test in zip(encode_out, y_true) if test is not None]
-        # Ensure you apply the same filter to the associated data if needed
+
 
 
 
@@ -255,8 +181,102 @@ class Experiment():
 
             print(f"Silhouette Score: {silhouette_avg:.2f}")
 
-
         self.metric = ari_score
+
+
+
+
+    def __init__(self, data_param, model_param, verbose = 1, n_epoch = 3000):
+        # basic attributes
+        self.data_param = data_param
+        self.model_param = model_param
+        self.verbose = verbose
+        self.n_epoch = n_epoch
+        
+        # data related attributes
+        self.data = None
+        self.input_shape = None
+        self.metadata = None
+
+        # model related attributes
+        self.model = None
+
+        # initializing metrics
+        self.metric = None
+        self.all_metrics = None
+        
+        if isinstance(self.data_param, dict):
+            self.build_dataset(self.data_param)
+        elif isinstance(self.data_param, str):
+            self.load_dataset(self.data_param)
+        # here we need to capture the shape of the input before building the model.
+        self.build_model(shape = self.input_shape, model_param = self.model_param)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=1e-4, amsgrad=False)
+        self.data_set, self.dataloader = helpers.format_dataset(self.data, self.metadata)
+
+        self.monitor = monitoring.Monitor(self.model, self.dataloader, label = self.metadata["subtypes"], verbose= verbose - 1)
+        self.callbacks = self.monitor.callbacks
+        self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, 'min', min_lr= 1e-5)
+        
+        # useful for VQ-VAE
+        self.data_variance = np.var(self.data)
+
+    
+        
+    def run(self):
+        if self.verbose:
+            print("Running the following configuration:")
+            print(self.data_param)
+            print(self.model_param)
+
+    
+        self.model.to(DEVICE)
+        for epoch in tqdm(range(self.n_epoch)):
+            running_loss = 0.0
+            count = 0
+            
+            # Training loop
+            for _, inputs in enumerate(self.dataloader):
+
+                self.optimizer.zero_grad()
+                inputs = inputs.to(DEVICE)
+
+                if self.model.variational == "VQ-VAE":
+                    quantized_merge = torch.empty(0,1,64).to(DEVICE)
+
+                # Compute the VAE loss or standard loss
+                if self.model.variational == "VAE":
+                    outputs, mu, log_var = self.model(inputs)
+                    reconstruction_loss = F.mse_loss(outputs, inputs)
+                    kld = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
+                    loss = reconstruction_loss + (1 * kld)
+                elif self.model.variational == "VQ-VAE":
+                    vq_loss, data_recon, perplexity, encodings, quantized = self.model(inputs)
+                    recon_error = F.mse_loss(data_recon, inputs) / self.data_variance
+                    loss = recon_error + vq_loss
+                else:
+                    outputs = self.model(inputs)
+                    loss = F.mse_loss(outputs, inputs)
+                
+                loss.backward()
+                self.optimizer.step()
+                count += 1
+                running_loss += loss.item()
+            
+            # Calculate and store training loss for this epoch
+            train_loss = running_loss / count
+            self.monitor.append_loss(train_loss)
+            self.callbacks(epoch)
+        
+        if self.verbose:
+            visualisation.post_training_viz(self.data, self.dataloader, self.model, DEVICE, self.monitor.train_res_recon_error, labels = self.metadata["subtypes"])
+            #visualisation.post_training_animation(self.monitor, self.metadata)
+            
+
+
+        self.compute_metric()
+
+
 
 
 

@@ -31,6 +31,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import confusion_matrix
 
 
+from matplotlib.animation import FuncAnimation
+from IPython.display import HTML
+
+
 # new plots for the pytorch refacto
 def callback_viz(pca_result, encoded_set, stack, loss_hist, labels):
 
@@ -78,7 +82,9 @@ def post_training_viz(data, dataloader, model, DEVICE, loss_hist, labels):
 
     if model.variational == "VAE":
             x_reconstructed, _, _ = model.forward(x.to(DEVICE))
-
+    elif model.variational == "VQ-VAE":
+            # for VQ-VAE the latent space is the quantized space, not the encodings.
+            vq_loss, x_reconstructed, perplexity, encodings, quantized = model(x.to(DEVICE))
     else:
         x_reconstructed = model.forward(x.to(DEVICE))
     x_reconstructed = x_reconstructed.cpu().detach().numpy()
@@ -129,7 +135,24 @@ def post_training_viz(data, dataloader, model, DEVICE, loss_hist, labels):
 
 
 
+def post_training_animation(monitor, metadata):
+    fig, ax = plt.subplots()
+    # Define an update function for the animation
+    def update(frame):
+        ax.clear()
+        ax.set_title(f'Frame {frame}')
+        
+        # Get the PCA result for the current frame
+        pca_result = monitor.frames[frame]
+        
+        # Scatter plot of PCA results with color based on index
+        sns.scatterplot(x=pca_result[:, 1], y=pca_result[:, 2], hue=metadata["subtypes"])
 
+    # Create the animation
+    ani = FuncAnimation(fig, update, frames=len(monitor.frames), repeat=True)
+
+    # Display the animation as HTML
+    HTML(ani.to_jshtml())
 
 
 
