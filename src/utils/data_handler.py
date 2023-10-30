@@ -329,7 +329,7 @@ def generate_dataset_transcripts(
         subsample = None, 
         retain_phases = None,
         normalization = False,
-        minimum_time_point = "BL",
+        time_point = "BL",
         MT_removal = False,
         log1p = True,
         min_max = True,
@@ -387,59 +387,14 @@ def generate_dataset_transcripts(
 
 
 
-    ########################################################################################
-    # there is a bit of trouble shooting left to do in this section, in the case time series + BL
-    ########################################################################################
-    if(minimum_time_point == "BL"):
-        print("retaining all patient who have at least passed the Base Line Visit...")
-        BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
-        matchin_entries = [entry for entry in entries if entry.split(".")[1] in BL_ids]
-        entries = matchin_entries
-    elif(minimum_time_point == "V02"):
-        print("retaining all patient who have at least passed the Base Line to month 6 Visit...")
-        BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
-        V02_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V02"] 
-        common_ids = set(BL_ids) & set(V02_ids) 
-        matchin_entries = [entry for entry in entries if entry.split(".")[1] in common_ids]
-        entries = matchin_entries
-    elif(minimum_time_point == "V04"):
-        print("retaining all patient who have at least passed the Base Line to month 12 Visit...")
-        BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
-        V02_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V02"] 
-        V04_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V04"] 
-        common_ids = set(BL_ids) & set(V02_ids) & set(V04_ids) 
-        matchin_entries = [entry for entry in entries if entry.split(".")[1] in common_ids]
-        entries = matchin_entries
-    elif(minimum_time_point == "V06"):
-        print("retaining all patient who have at least passed the Base Line to month 24 Visit...")
-        BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
-        V02_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V02"] 
-        V04_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V04"] 
-        V06_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V06"] 
-        common_ids = set(BL_ids) & set(V02_ids) & set(V04_ids) & set(V06_ids) 
-        matchin_entries = [entry for entry in entries if entry.split(".")[1] in common_ids]
-        entries = matchin_entries
+
+    if(time_point == "BL"):
+        print("retaining only the Base Line Visit data...")
+        entries = [e for e in  entries if e.split(".")[2] == "BL"] 
     
-    # if we want time series, we constrain them to only patients that went through every visits.
-    elif(minimum_time_point == "V08"):
-        print("retaining all patient who have passed all visits...")
-        BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
-        V02_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V02"] 
-        V04_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V04"] 
-        V06_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V06"] 
-        V08_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V08"] 
-        common_ids = set(BL_ids) & set(V02_ids) & set(V04_ids) & set(V06_ids) & set(V08_ids) 
-        matchin_entries = [entry for entry in entries if entry.split(".")[1] in common_ids]
-        entries = matchin_entries
-
-    # sanity check : are the patient numbers actually numeric ? 
-    entries = [e for e in entries if e.split(".")[1].isnumeric() ]
-
     # sanity check : don't load patient where some values are missing
     Na_s =  meta_data[meta_data.isna().any(axis=1)]["Patient Number"]
     entries = [e for e in entries if e.split(".")[1] not in str(Na_s) ]
-
-
 
 
 
@@ -452,9 +407,10 @@ def generate_dataset_transcripts(
     data = [load_patient_data(os.path.join(path, e)) for e in entries]
 
     # get the entry name list
-    names = get_names(os.path.join(path,entries[0]))
-
+    names = get_names(os.path.join(path,entries[0])).iloc[:,0]
     names = pd.DataFrame([n.split("|") for n in names])
+
+
 
     # remove artifacts by keeping samples of correct length
     samples_to_keep = [1 if s.shape == (95309,) else 0 for s in data]
@@ -509,6 +465,8 @@ def generate_dataset_transcripts(
         gene_selected = feature_selection.MAD_selection(data, MAD_threshold)
         print("removing", len(gene_selected) - sum(gene_selected), "genes under the MAD threshold from the dataset")
         data = data[:,gene_selected]
+        print(names)
+        print(gene_selected)
         names = names[gene_selected]
 
 
@@ -520,25 +478,23 @@ def generate_dataset_transcripts(
     ###########################################
 
     
-    if(normalization == True): 
+    if normalization: 
         print("normalizing data...")
         data = normalize(data)
 
-    if(log1p == True): 
+    if log1p : 
         print("log(1 + x) transformation...")
         data = np.log1p(data)
 
     # after log1p transform because it already provide us with a very good dataset 
-    if(min_max == True):
+    if min_max:
         print("scaling to [0, 1]...")
         scaler = MinMaxScaler(feature_range=(0, 1), clip = True)
         data = scaler.fit_transform(data)
 
     
 
-    ##########################################
-    ######## Building the time series ########
-    ##########################################
+
     print("number of seq in the dataset :", len(data))
 
 
@@ -546,11 +502,12 @@ def generate_dataset_transcripts(
     sequence_names = [f for (f, test) in  zip(entries, samples_to_keep) if test]
 
 
-    
     metadata = {"name" : "transcripts",
                 "feature_names" : names,
                 "sequence_names" : sequence_names,
-                "n_features" : len(data[0])} 
+                "n_features" : len(data[0]),
+                "meta_data" : meta_data,
+                "subtypes" : meta_data["Cohort"]} 
 
     return data, metadata
     
