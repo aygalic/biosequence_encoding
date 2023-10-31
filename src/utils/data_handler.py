@@ -58,7 +58,7 @@ def generate_dataset_genes(
         sgdc_params = None,
         class_balancing = None,
         normalization = False,
-        minimum_time_point = "BL",
+        time_point = "BL",
         MT_removal = False,
         log1p = True,
         min_max = True,
@@ -114,46 +114,10 @@ def generate_dataset_genes(
     # The following stategy for filtering also filters out every patient who have missed a visit up to the given timepoint.
     # This comportement could be tweaked easely later on
     # a bit clunky though
-    if(minimum_time_point == "BL"):
+    if(time_point == "BL"):
         print("retaining all patient who have at least passed the Base Line Visit...")
-        BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
-        matchin_entries = [entry for entry in entries if entry.split(".")[1] in BL_ids]
-        entries = matchin_entries
-    elif(minimum_time_point == "V02"):
-        print("retaining all patient who have at least passed the Base Line to month 6 Visit...")
-        BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
-        V02_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V02"] 
-        common_ids = set(BL_ids) & set(V02_ids) 
-        matchin_entries = [entry for entry in entries if entry.split(".")[1] in common_ids]
-        entries = matchin_entries
-    elif(minimum_time_point == "V04" ):
-        print("retaining all patient who have at least passed the Base Line to month 12 Visit...")
-        BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
-        V02_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V02"] 
-        V04_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V04"] 
-        common_ids = set(BL_ids) & set(V02_ids) & set(V04_ids) 
-        matchin_entries = [entry for entry in entries if entry.split(".")[1] in common_ids]
-        entries = matchin_entries
-    elif(minimum_time_point == "V06"):
-        print("retaining all patient who have at least passed the Base Line to month 24 Visit...")
-        BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
-        V02_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V02"] 
-        V04_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V04"] 
-        V06_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V06"] 
-        common_ids = set(BL_ids) & set(V02_ids) & set(V04_ids) & set(V06_ids) 
-        matchin_entries = [entry for entry in entries if entry.split(".")[1] in common_ids]
-        entries = matchin_entries
-    # if we want time series, we constrain them to only patients that went through every visits.
-    elif(minimum_time_point == "V08"):
-        print("retaining all patient who have passed all visits...")
-        BL_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "BL"] 
-        V02_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V02"] 
-        V04_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V04"] 
-        V06_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V06"] 
-        V08_ids = [p.split(".")[1] for p in  entries if p.split(".")[2] == "V08"] 
-        common_ids = set(BL_ids) & set(V02_ids) & set(V04_ids) & set(V06_ids) & set(V08_ids) 
-        matchin_entries = [entry for entry in entries if entry.split(".")[1] in common_ids]
-        entries = matchin_entries
+        entries = [p for p in  entries if p.split(".")[2] == "BL"] 
+
 
 
     # sanity check : are the patient numbers actually numeric ? 
@@ -174,7 +138,7 @@ def generate_dataset_genes(
     data = [load_patient_data(os.path.join(path, e)) for e in entries]
 
     # get the entry name list
-    names = get_names(os.path.join(path,entries[0]))
+    names = get_names(os.path.join(path,entries[0])).iloc[:,0]
     
     # getting rid of the version number
     names = [n.split(".")[0] for n in names]
@@ -213,6 +177,7 @@ def generate_dataset_genes(
     query_result = query_result.reset_index()
     query_result = query_result.drop_duplicates(subset = ["query"])
     # here we have the correct length
+
 
     names = [q if(pd.isna(s)) else s for (s,q) in zip(query_result["symbol"],query_result["query"])]
     query_result['name'] = names
@@ -305,7 +270,9 @@ def generate_dataset_genes(
                 "feature_names" : query_result,
                 "seq_names" : sequence_names,
                 "n_features" : len(data_array[0]),
-                "n_seq" : len(sequence_names)} 
+                "n_seq" : len(sequence_names),
+                "meta_data" : meta_data,
+                "subtypes" : meta_data["Cohort"]} 
 
     return dataset, metadata
     
