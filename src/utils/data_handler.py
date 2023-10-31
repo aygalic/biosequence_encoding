@@ -51,7 +51,9 @@ def get_names(filename, header = 0, skiprows= None):
 def generate_dataset_genes(
         path = PPMI_DATA_PATH, 
         metadata_path = PPMI_METADATA_PATH,
-        MAD_threshold = None, 
+        MAD_threshold = None,
+        LS_threshold = None,
+        expression_threshold = None, 
         subsample = None, 
         retain_phases = None,
         feature_selection_proceedure = None,
@@ -65,7 +67,8 @@ def generate_dataset_genes(
         keep_only_symbols = False,
         drop_ambiguous_pos = False,
         sort_symbols = False,
-        gene_selection_file = None):
+        gene_selection_file = None,
+        verbose = 0):
 
     dataset_of_interest = "genes"
 
@@ -200,12 +203,37 @@ def generate_dataset_genes(
         data_array = data_array[:,gene_selected]
         query_result = query_result[gene_selected]
 
+    if(expression_threshold is not None):
+        if verbose:
+            print("selecting genes based on expression threshold: ",expression_threshold, "...")
+        gene_selected = feature_selection.expression_selection(data_array, expression_threshold, verbose)
+        if verbose:
+            print("removing", len(gene_selected) - sum(gene_selected), "genes under the expression threshold from the dataset")
+        data_array = data_array[:,gene_selected]
+        query_result = query_result[gene_selected]
+
     if(MAD_threshold is not None):
         print("selecting genes based on median absolute deviation threshold: ",MAD_threshold, "...")
-        gene_selected = feature_selection.MAD_selection(data_array, MAD_threshold)
+        gene_selected = feature_selection.MAD_selection(data_array, MAD_threshold, verbose)
         print("removing", len(gene_selected) - sum(gene_selected), "genes under the MAD threshold from the dataset")
         data_array = data_array[:,gene_selected]
         query_result = query_result[gene_selected]
+
+    if(LS_threshold is not None):
+        if verbose:
+            print("selecting genes based on Laplacian Score (LS) threshold: ",LS_threshold, "...")
+        gene_selected = feature_selection.LS_selection(data_array, LS_threshold, 5, verbose)
+        if verbose:
+            print("removing", len(gene_selected) - sum(gene_selected), "genes under the LS threshold from the dataset")
+        data_array = data_array[:,gene_selected]
+        query_result = query_result[gene_selected]
+
+
+
+
+
+
+
 
     if(feature_selection_proceedure == "LASSO"):
         # for each patient in our dataset, we want to know to what cohort he belongs
