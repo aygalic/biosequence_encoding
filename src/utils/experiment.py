@@ -90,12 +90,14 @@ class Experiment():
 
 
 
-    def __init__(self, data_param, model_param, verbose = 1, n_epoch = 3000):
+    def __init__(self, data_param, model_param, verbose = 1):
         # basic attributes
         self.data_param = data_param
         self.model_param = model_param
+        # n_epoch is not actually a model param, but this was made for simpler code, default value : 1000
+        self.n_epoch = self.model_param.pop("n_epoch", 1000)
+
         self.verbose = verbose
-        self.n_epoch = n_epoch
         
         # data related attributes
         self.data = None

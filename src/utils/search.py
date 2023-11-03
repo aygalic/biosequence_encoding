@@ -146,13 +146,3 @@ class genetic_search:
 
 
 
-
-"""
-class random_search:
-    def __init__(self, search_param, configs, param_sets):
-        self.search_param = search_param
-
-class exhaustive_search:
-    def __init__(self, search_param, configs, param_sets):
-        self.search_param = search_param
-"""
