@@ -276,7 +276,7 @@ class Autoencoder(nn.Module):
             latent_dim=64, 
             dropout = 0.1, 
             slope = 0.05, 
-            num_layers = 16,
+            num_layers = 3,
             variational = None, 
             convolution = False, 
             transformer = False,
@@ -335,90 +335,92 @@ class Autoencoder(nn.Module):
                 kernel_size = 7
                 if padding is None:
                     padding = 3
+
+            # Encoder
+            encoder_layers = []
+            in_channels = 1  # Starting with one input channel
+
             
             # Define the convolutional layers for the encoder and decoder
-            self.encoder = nn.Sequential(
-                nn.Conv1d(1, 32, kernel_size = kernel_size, stride=2, padding = padding),
-                nn.LeakyReLU(slope),
-                nn.Dropout(dropout),
-                nn.MaxPool1d(2),  # Pooling layer
-                
-                nn.Conv1d(32, 64, kernel_size = kernel_size, stride=2, padding = padding),
-                nn.LeakyReLU(slope),
-                nn.Dropout(dropout),
-                nn.MaxPool1d(2),  # Pooling layer
-                
-                nn.Conv1d(64, 128, kernel_size = kernel_size, stride=2, padding = padding),
-                nn.LeakyReLU(slope),
-                nn.Dropout(dropout),
-                nn.MaxPool1d(2),  # Pooling layer
-                
+            for i in range(num_layers):
+                out_channels = 32 * (2 ** i)
+                encoder_layers.extend([
+                    nn.Conv1d(in_channels, out_channels, kernel_size=kernel_size, stride=2, padding=padding),
+                    nn.LeakyReLU(slope),
+                    nn.Dropout(dropout),
+                    nn.MaxPool1d(2)
+                ])
+                in_channels = out_channels
+
+            encoder_layers.extend([
                 nn.Flatten(),
-                nn.LazyLinear(self.latent_dim),  # Adjust based on strides, kernels, and pooling
+                nn.LazyLinear(self.latent_dim),
                 nn.LeakyReLU(slope)
-            )
+            ])
+
+            self.encoder = nn.Sequential(*encoder_layers)
             
             self.calculated_length = self.find_calculated_length()
 
-            self.decoder = nn.Sequential(
-                nn.Linear(self.latent_dim, 128 * (self.calculated_length)),  # Adjusted due to pooling layers
-                nn.Unflatten(1, (128, self.calculated_length)),
-                
-                nn.Upsample(scale_factor=2),  # Upsampling layer
-                nn.ConvTranspose1d(128, 64, kernel_size = kernel_size, stride=2, padding=padding),
-                nn.LeakyReLU(slope),
-                nn.Dropout(dropout),
-                
-                nn.Upsample(scale_factor=2),  # Upsampling layer
-                nn.ConvTranspose1d(64, 32, kernel_size = kernel_size, stride=2, padding=padding),
-                nn.LeakyReLU(slope),
-                nn.Dropout(dropout),
-                
-                nn.Upsample(scale_factor=2),  # Upsampling layer
-                nn.ConvTranspose1d(32, 1, kernel_size = kernel_size, stride=2, padding=padding),  # Adjusted kernel size
-                #nn.LeakyReLU(slope),  # Preserved the non-linearity
-                
-                nn.LazyLinear(self.input_shape), 
-                nn.Sigmoid()
-            )
-        
-        else:
-        # Encoder
-            
-            self.encoder = nn.Sequential(
-                nn.Linear(shape, 1024),
-                nn.LeakyReLU(slope),
-                nn.Dropout(dropout),
-                
-                nn.Linear(1024, 512),
-                nn.LeakyReLU(slope),
-                nn.Dropout(dropout),
-                
-                nn.Linear(512, 256),
-                nn.LeakyReLU(slope),
-                nn.Dropout(dropout),
-                
-                nn.Linear(256, self.latent_dim),
-                nn.LeakyReLU(slope)
-            )
+            # Decoder
+            decoder_layers = []
+            in_features = self.latent_dim
+            current_length = self.calculated_length
 
-            # Decoder        
-            self.decoder = nn.Sequential(
-                nn.Linear(self.latent_dim, 256),
-                nn.LeakyReLU(slope),
-                nn.Dropout(dropout),
-                
-                nn.Linear(256, 512),
-                nn.LeakyReLU(slope),
-                nn.Dropout(dropout),
-                
-                nn.Linear(512, 1024),
-                nn.LeakyReLU(slope),
-                nn.Dropout(dropout),
-                
-                nn.Linear(1024, shape),
+            decoder_layers.extend([
+                nn.Linear(in_features, 128 * current_length),
+                nn.Unflatten(1, (128, current_length))
+            ])
+
+            for i in reversed(range(num_layers)):
+                out_channels = 32 * (2 ** i)
+                decoder_layers.extend([
+                    nn.Upsample(scale_factor=2),
+                    nn.ConvTranspose1d(in_channels, out_channels, kernel_size=kernel_size, stride=2, padding=padding),
+                    nn.LeakyReLU(slope),
+                    nn.Dropout(dropout)
+                ])
+                in_channels = out_channels
+
+            # Last layer of decoder to reconstruct the input
+            decoder_layers.extend([
+                nn.Upsample(scale_factor=2),
+                nn.ConvTranspose1d(in_channels, 1, kernel_size=kernel_size, stride=2, padding=padding),
+                nn.LazyLinear(self.input_shape),
                 nn.Sigmoid()
-            )
+            ])
+
+            self.decoder = nn.Sequential(*decoder_layers)
+        
+        else:            
+            # Encoder
+            encoder_layers = []
+            layer_sizes = [self.input_shape] + [1024 // (2 ** i) for i in range(num_layers - 1)] + [latent_dim]
+
+            for i in range(num_layers):
+                encoder_layers.extend([
+                    nn.Linear(layer_sizes[i], layer_sizes[i+1]),
+                    nn.LeakyReLU(slope),
+                    nn.Dropout(dropout)
+                ])
+
+            self.encoder = nn.Sequential(*encoder_layers)
+
+            # Decoder
+            decoder_layers = []
+            layer_sizes.reverse()
+
+            for i in range(num_layers):
+                decoder_layers.extend([
+                    nn.Linear(layer_sizes[i], layer_sizes[i+1]),
+                    nn.LeakyReLU(slope),
+                    nn.Dropout(dropout)
+                ])
+
+            decoder_layers.append(nn.Sigmoid())
+
+            self.decoder = nn.Sequential(*decoder_layers)
+
 
         if self.variational == "VAE":
             # For VAE, create additional layers to learn log_var
