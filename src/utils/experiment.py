@@ -29,6 +29,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 DEVICE = torch.device(config["DEVICE"])
+LOGFILE = config["LOGFILE"]
 
 
 
@@ -40,7 +41,24 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-
+def log_experiment(record, csv_path=LOGFILE):
+    # Create a DataFrame from the new record
+    new_df = pd.DataFrame([record])
+    
+    # Check if the CSV file exists
+    try:
+        # Read the existing data
+        existing_df = pd.read_csv(csv_path)
+        
+        # Concatenate the new data with the existing data
+        # This aligns data by columns names, inserting NaNs where columns do not match
+        combined_df = pd.concat([existing_df, new_df], ignore_index=True, sort=False)
+    except FileNotFoundError:
+        # If the CSV doesn't exist, the new data is all we need to write
+        combined_df = new_df
+    
+    # Write the combined DataFrame back to CSV
+    combined_df.to_csv(csv_path, index=False)
 
 
 class Experiment():
@@ -109,7 +127,7 @@ class Experiment():
 
     
         
-    def run(self):
+    def run(self, log = True):
         if self.verbose:
             print("Running the following configuration:")
             print(self.data_param)
@@ -154,14 +172,20 @@ class Experiment():
             self.monitor.append_loss(train_loss)
             self.callbacks(epoch)
         
+        self.monitor.compute_metrics()
+        self.metric = self.monitor.metrics[-1]["ari"]
+
         if self.verbose:
             visualisation.post_training_viz(self.data, self.dataloader, self.model, DEVICE, self.monitor.train_res_recon_error, labels = self.metadata["subtypes"])
             #visualisation.post_training_animation(self.monitor, self.metadata)
             
+            print(self.monitor.metrics[-1])
         
-        print(self.monitor.compute_metrics())
-
-
-
+        if log:
+            if type(self.data_param) == dict:
+                record = {**self.data_param, **self.model_param, **self.monitor.metrics}
+            elif type(self.data_param) == str:
+                record = {"data" : self.data_param, **self.model_param, **self.monitor.metrics[-1]}
+            log_experiment(record)
 
 

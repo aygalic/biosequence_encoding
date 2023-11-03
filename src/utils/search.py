@@ -12,6 +12,8 @@ class genetic_search:
         self.model_param = model_param
         self.dynamic_params = dynamic_params
 
+        self.alt_data_param = None
+
         # initialization
         self.initial_population = initial_population
         self.best_performer = None
@@ -20,6 +22,9 @@ class genetic_search:
         self.performance_tracker = [0]*self.search_param["generations"]
         self.n_iter = 0
         
+    def add_alternative_dataset(self, alt_data_param):
+        self.alt_data_param = alt_data_param
+
 
     def calculate_fitness(self, individual):
         
@@ -38,6 +43,9 @@ class genetic_search:
             print("No change in best performer.")
             print("Best individual is still:", self.best_performer, "with metric:", self.best_performer_metric)
         
+        if self.alt_data_param is not None:
+            e = experiment.Experiment(data_param=self.alt_data_param, model_param=individual, n_epoch = self.search_param['EPOCH'])
+            e.run() 
         self.n_iter += 1
         return e.metric
 
@@ -110,8 +118,6 @@ class genetic_search:
         for generation in range(self.search_param["generations"]):
             print(f"Running generation {generation + 1}...")
 
-            # Calculate fitness for each individual
-            # population_fitness = [(individual, self.calculate_fitness(individual)) for individual in population]
 
             new_population = []
             while len(new_population) < self.search_param['population_size']:
