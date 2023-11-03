@@ -28,7 +28,7 @@ class genetic_search:
 
     def calculate_fitness(self, individual):
         
-        e = experiment.Experiment(data_param=self.data_param, model_param=individual, n_epoch = self.search_param['EPOCH'])
+        e = experiment.Experiment(data_param=self.data_param, model_param=individual)
         e.run()
         if (e.metric >= self.best_performer_metric):
             print("new best performer :", individual)
@@ -44,7 +44,7 @@ class genetic_search:
             print("Best individual is still:", self.best_performer, "with metric:", self.best_performer_metric)
         
         if self.alt_data_param is not None:
-            e_alt = experiment.Experiment(data_param=self.alt_data_param, model_param=individual, n_epoch = self.search_param['EPOCH'])
+            e_alt = experiment.Experiment(data_param=self.alt_data_param, model_param=individual)
             e_alt.run() 
         self.n_iter += 1
         return e.metric
