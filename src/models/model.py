@@ -18,7 +18,7 @@ class VectorQuantizer(nn.Module):
 
     def forward(self, inputs):
         # convert inputs from BCHW -> BHWC
-        inputs = rearrange(inputs, 'b c l -> b l c')
+        #inputs = rearrange(inputs, 'b c l -> b l c')
         inputs = inputs.contiguous()
         #inputs = inputs.permute(0, 2, 1).contiguous()
         input_shape = inputs.shape
@@ -45,7 +45,7 @@ class VectorQuantizer(nn.Module):
         loss = q_latent_loss + self._commitment_cost * e_latent_loss
         
         quantized = inputs + (quantized - inputs).detach()
-        quantized = rearrange(quantized, 'b c l -> b l c')
+        #quantized = rearrange(quantized, 'b c l -> b l c')
         quantized = quantized.contiguous()
         
         avg_probs = torch.mean(encodings, dim=0)
@@ -75,7 +75,7 @@ class VectorQuantizerEMA(nn.Module):
 
     def forward(self, inputs):
         # convert inputs from BCHW -> BHWC
-        inputs = rearrange(inputs, 'b c l -> b l c')
+        #inputs = rearrange(inputs, 'b c l -> b l c')
         inputs = inputs.contiguous()
         #inputs = inputs.permute(0, 2, 1).contiguous()
         input_shape = inputs.shape
@@ -118,7 +118,7 @@ class VectorQuantizerEMA(nn.Module):
         
         # Straight Through Estimator
         quantized = inputs + (quantized - inputs).detach()
-        quantized = rearrange(quantized, 'b c l -> b l c')
+        #quantized = rearrange(quantized, 'b c l -> b l c')
         quantized = quantized.contiguous()
         
         avg_probs = torch.mean(encodings, dim=0)
