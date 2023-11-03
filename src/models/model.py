@@ -365,13 +365,13 @@ class Autoencoder(nn.Module):
             # Decoder
             decoder_layers = []
             in_features = self.latent_dim
-            current_length = self.calculated_length
 
             decoder_layers.extend([
-                nn.Linear(in_features, 128 * current_length),
-                nn.Unflatten(1, (128, current_length))
+                nn.Linear(in_features, in_channels * self.calculated_length),
+                nn.Unflatten(1, (in_channels, self.calculated_length))
             ])
 
+            #in_channels = 128
             for i in reversed(range(num_layers)):
                 out_channels = 32 * (2 ** i)
                 decoder_layers.extend([
