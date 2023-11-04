@@ -44,8 +44,9 @@ class genetic_search:
             print("Best individual is still:", self.best_performer, "with metric:", self.best_performer_metric)
         
         if self.alt_data_param is not None:
-            e_alt = experiment.Experiment(data_param=self.alt_data_param, model_param=individual)
-            e_alt.run() 
+            for param in self.alt_data_param:
+                e_alt = experiment.Experiment(data_param=param, model_param=individual)
+                e_alt.run() 
         self.n_iter += 1
         return e.metric
 
