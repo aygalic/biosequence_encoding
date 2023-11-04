@@ -68,6 +68,7 @@ def generate_dataset_genes(
         drop_ambiguous_pos = False,
         sort_symbols = False,
         gene_selection_file = None,
+        only_pd = False,
         verbose = 0):
 
     dataset_of_interest = "genes"
@@ -131,6 +132,12 @@ def generate_dataset_genes(
     entries = [e for e in entries if e.split(".")[1] not in str(Na_s) ]
 
 
+    print(len(entries))
+    if(only_pd):
+        meta_data = meta_data[meta_data["Disease Status"].isin(['Prodromal', 'Idiopathic PD'])]
+        id_pd = meta_data["Patient Number"]
+        entries = [e for e in entries if int(e.split(".")[1]) in id_pd.tolist()]
+
 
     ###########################################
     ############ loading patients  ############
@@ -159,6 +166,7 @@ def generate_dataset_genes(
     meta_data = meta_data.set_index('Patient Number')
     meta_data = meta_data.reindex(index=patient_id)
     meta_data = meta_data.reset_index()
+
 
     ###########################################
     ############ feature selection  ###########
@@ -300,7 +308,7 @@ def generate_dataset_genes(
                 "n_features" : len(data_array[0]),
                 "n_seq" : len(sequence_names),
                 "meta_data" : meta_data,
-                "subtypes" : meta_data["Cohort"]} 
+                "subtypes" : meta_data["Disease Status"]} 
 
     return dataset, metadata
     
