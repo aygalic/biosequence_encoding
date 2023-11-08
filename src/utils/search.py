@@ -1,5 +1,7 @@
 from . import experiment
 import random
+import torch
+import gc
 
 
 class genetic_search:
@@ -30,14 +32,23 @@ class genetic_search:
         
         e = experiment.Experiment(data_param=self.data_param, model_param=individual)
         e.run()
-        if (e.metric >= self.best_performer_metric):
-            print("new best performer :", individual)
-            print("Score achieved :", e.metric)
-            self.best_performer = individual
-            self.best_performer_metric = e.metric
+        metric = e.metric
 
-            if self.performance_tracker[self.current_generation] <= e.metric :
-                self.performance_tracker[self.current_generation] = e.metric
+        # trying to spare my poor gpu
+        del e.model
+        del e 
+        with torch.no_grad():
+            torch.cuda.empty_cache()
+        gc.collect()
+
+        if (metric >= self.best_performer_metric):
+            print("new best performer :", individual)
+            print("Score achieved :", metric)
+            self.best_performer = individual
+            self.best_performer_metric = metric
+
+            if self.performance_tracker[self.current_generation] <= metric :
+                self.performance_tracker[self.current_generation] = metric
             
         else:   
             print("No change in best performer.")
@@ -47,8 +58,14 @@ class genetic_search:
             for param in self.alt_data_param:
                 e_alt = experiment.Experiment(data_param=param, model_param=individual)
                 e_alt.run() 
+                del e_alt.model
+                del e_alt
+                with torch.no_grad():
+                    torch.cuda.empty_cache()
+                gc.collect()
+
         self.n_iter += 1
-        return e.metric
+        return metric
 
     def select_parents(self, population):
         # Assuming your population is a list of individuals and 
