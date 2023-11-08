@@ -98,14 +98,22 @@ class genetic_search:
         # if we find a tuple of coupled parametter, we have to adjust our approach
         if isinstance(self.dynamic_params[mutation_param_key][0], tuple):
             # Choose a new set of values for the coupled parameters, ensuring it's not the same as the current values
-            current_values = [(key, individual[key]) for key, _ in self.dynamic_params[mutation_param_key][0]]
-            available_choices = [val for val in self.dynamic_params[mutation_param_key] if val != current_values]
+            print("self.dynamic_params[mutation_param_key][0]", self.dynamic_params[mutation_param_key][0])
+            
+            # prior code
+            #current_values = [(key, individual[key]) for key, _ in self.dynamic_params[mutation_param_key][0]]
+            #available_choices = [val for val in self.dynamic_params[mutation_param_key] if val != current_values]
+
+            # bug free - feature poor version
+
+            available_choices = [val for val in self.dynamic_params[mutation_param_key]]
+            print("available_choices", available_choices)
 
             if not available_choices:
                 return individual  # No mutation if there are no other options
 
             new_values = random.choice(available_choices)
-
+            print("new_value:",  new_values)
             # Apply the mutation
             mutated_individual = individual.copy()
             for (key, val) in new_values:
