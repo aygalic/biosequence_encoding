@@ -134,7 +134,7 @@ def generate_dataset_genes(
 
     print(len(entries))
     if(only_pd):
-        meta_data = meta_data[meta_data["Disease Status"].isin(['Prodromal', 'Idiopathic PD'])]
+        meta_data = meta_data[meta_data["Disease Status"].isin(['Genetic PD', 'Idiopathic PD'])]
         id_pd = meta_data["Patient Number"]
         entries = [e for e in entries if int(e.split(".")[1]) in id_pd.tolist()]
 
