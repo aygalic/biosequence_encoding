@@ -9,6 +9,7 @@ from . import benchmark
 
 import math
 import numpy as np
+import pandas as pd
 import torch
 from matplotlib import pyplot as plt
 import seaborn as sns
@@ -39,6 +40,7 @@ class Monitor():
         self.label = label
         self.verbose = verbose
         self.metrics = []
+        self.n_clusters = pd.Series(label).nunique()
         
     def set_device(self, device):
         self.DEVICE = device
@@ -109,7 +111,7 @@ class Monitor():
 
 
         # Assuming you've determined that you want 5 clusters
-        n_clusters = 5
+        n_clusters = self.n_clusters
 
 
 
