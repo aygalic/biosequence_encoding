@@ -221,9 +221,10 @@ def generate_dataset_genes(
         query_result = query_result[gene_selected]
 
     if(MAD_threshold is not None):
-        print("selecting genes based on median absolute deviation threshold: ",MAD_threshold, "...")
-        gene_selected = feature_selection.MAD_selection(data_array, MAD_threshold, verbose)
-        print("removing", len(gene_selected) - sum(gene_selected), "genes under the MAD threshold from the dataset")
+        MAD_ceiling = 150
+        print("selecting genes based on median absolute deviation window: [",MAD_threshold,",", MAD_ceiling, "] ...")
+        gene_selected = feature_selection.MAD_selection(data_array, MAD_threshold, verbose = verbose)
+        print("removing", len(gene_selected) - sum(gene_selected), "genes out of the MAD window from the dataset")
         data_array = data_array[:,gene_selected]
         query_result = query_result[gene_selected]
 
@@ -336,7 +337,8 @@ def generate_dataset_transcripts(
         MT_removal = False,
         log1p = True,
         min_max = True,
-        gene_selection_file = None):
+        gene_selection_file = None,
+        verbose = 1):
 
     # getting entries ready
     # each couple of entries correspond to one patient, we are only interested in the "transcript" files
@@ -464,9 +466,10 @@ def generate_dataset_transcripts(
     
 
     if(MAD_threshold is not None):
-        print("selecting genes based on median absolute deviation threshold: ",MAD_threshold, "...")
-        gene_selected = feature_selection.MAD_selection(data, MAD_threshold)
-        print("removing", len(gene_selected) - sum(gene_selected), "genes under the MAD threshold from the dataset")
+        MAD_ceiling = 150
+        print("selecting genes based on median absolute deviation window: [",MAD_threshold,",", MAD_ceiling, "] ...")
+        gene_selected = feature_selection.MAD_selection(data, MAD_threshold, verbose = verbose)
+        print("removing", len(gene_selected) - sum(gene_selected), "genes out of the MAD window from the dataset")
         data = data[:,gene_selected]
         print(names)
         print(gene_selected)
@@ -652,14 +655,25 @@ def generate_dataset_BRCA(
         data_array = data_array[:,gene_selected]
         names = names[gene_selected]
 
+
+
+
+
     if(MAD_threshold is not None):
+        MAD_ceiling = 100
+
         if verbose:
-            print("selecting genes based on median absolute deviation (MAD) threshold: ",MAD_threshold, "...")
-        gene_selected = feature_selection.MAD_selection(data_array, MAD_threshold, verbose)
+            print("selecting genes based on median absolute deviation window: [",MAD_threshold,",", MAD_ceiling, "] ...")
+        gene_selected = feature_selection.MAD_selection(data_array, MAD_threshold, MAD_ceiling, verbose)
         if verbose:
-            print("removing", len(gene_selected) - sum(gene_selected), "genes under the MAD threshold from the dataset")
+            print("removing", len(gene_selected) - sum(gene_selected), "genes out of the MAD window from the dataset")
         data_array = data_array[:,gene_selected]
         names = names[gene_selected]
+
+
+
+
+
 
     if(LS_threshold is not None):
         if verbose:

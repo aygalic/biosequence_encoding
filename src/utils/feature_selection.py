@@ -29,27 +29,31 @@ from collections import Counter
 
 from sklearn.preprocessing import StandardScaler
 
-def MAD_selection(data_array, threshold, verbose = 0):
+def MAD_selection(data_array, threshold, ceiling = 100, verbose = 0):
     MAD = scipy.stats.median_abs_deviation(data_array)
     
     if(verbose):
         print("min MAD",min(MAD))
+        print("treshold:", threshold)
         print("max MAD",max(MAD))
 
-    # we also use a cieling to get rid of outliers.
-    gene_selected = [True if val > threshold and val < 100 else False for val in MAD]
     
     if(verbose):
         # Plot the distribution of MAD
         plt.figure(figsize=(10, 5))
-        plt.hist(MAD, bins=200, color='blue', range = [0,50])
+        plt.hist(MAD, bins=100, color='blue', range = [0, ceiling + 20])
+
         plt.axvline(threshold, color='red', linestyle='--', label='Threshold')
+        plt.axvline(ceiling,   color='red', linestyle='--', label='Cieling')
+
         plt.title('Distribution of Median Absolute Deviation (MAD)')
         plt.xlabel('MAD Value')
         plt.ylabel('Frequency')
         plt.legend()
         plt.grid(True)
         plt.show()
+    
+    gene_selected = [True if val > threshold and val < ceiling else False for val in MAD]
     return gene_selected
 
 
@@ -132,8 +136,8 @@ def expression_selection(data_array, threshold, verbose = 0):
         plt.figure(figsize=(10, 5))
         plt.hist(expr, bins=100, color='blue', range = [0,1])
         plt.axvline(threshold, color='red', linestyle='--', label='Threshold')
-        plt.title('Distribution of zero values')
-        plt.xlabel('Counts of zero Values')
+        plt.title('Distribution of Non Zero values per genes')
+        plt.xlabel('Counts of Non Zero Values')
         plt.ylabel('Frequency')
         plt.legend()
         plt.grid(True)
