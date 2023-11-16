@@ -118,9 +118,9 @@ def generate_dataset_genes(
     # The following stategy for filtering also filters out every patient who have missed a visit up to the given timepoint.
     # This comportement could be tweaked easely later on
     # a bit clunky though
-    if(time_point == "BL"):
-        print("retaining all patient who have at least passed the Base Line Visit...")
-        entries = [p for p in  entries if p.split(".")[2] == "BL"] 
+    if(time_point is not None):
+        print("retaining all patient who have at least passed the", time_point,"Visit...")
+        entries = [p for p in  entries if p.split(".")[2] == time_point] 
 
 
 
