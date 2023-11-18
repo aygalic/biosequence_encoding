@@ -100,12 +100,6 @@ class genetic_search:
             # Choose a new set of values for the coupled parameters, ensuring it's not the same as the current values
             print("self.dynamic_params[mutation_param_key][0]", self.dynamic_params[mutation_param_key][0])
             
-            # prior code
-            #current_values = [(key, individual[key]) for key, _ in self.dynamic_params[mutation_param_key][0]]
-            #available_choices = [val for val in self.dynamic_params[mutation_param_key] if val != current_values]
-
-            # bug free - feature poor version
-
             available_choices = [val for val in self.dynamic_params[mutation_param_key]]
             print("available_choices", available_choices)
 
