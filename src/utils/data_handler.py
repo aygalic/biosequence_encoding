@@ -68,7 +68,7 @@ def generate_dataset_genes(
         drop_ambiguous_pos = False,
         sort_symbols = False,
         gene_selection_file = None,
-        only_pd = False,
+        select_subtypes = None,
         verbose = 0):
 
     dataset_of_interest = "genes"
@@ -133,8 +133,9 @@ def generate_dataset_genes(
 
 
     print(len(entries))
-    if(only_pd):
-        meta_data = meta_data[meta_data["Disease Status"].isin(['Genetic PD', 'Idiopathic PD'])]
+    if(select_subtypes is not None):
+        #meta_data = meta_data[meta_data["Disease Status"].isin(['Genetic PD', 'Idiopathic PD'])]
+        meta_data = meta_data[meta_data["Disease Status"].isin(select_subtypes)]
         id_pd = meta_data["Patient Number"]
         entries = [e for e in entries if int(e.split(".")[1]) in id_pd.tolist()]
 
