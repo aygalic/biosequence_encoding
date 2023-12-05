@@ -4,14 +4,12 @@ from . import feature_selection
 
 import os
 import pandas as pd
-import pathlib
-import matplotlib.pyplot as plt
 import numpy as np
-import scipy
-import scipy.cluster.hierarchy as sch
 import json
 
 from sklearn.preprocessing import normalize, MinMaxScaler, StandardScaler
+
+from typing import Optional, List
 
 
 # for translation of gene symbols
@@ -34,95 +32,141 @@ BRCA_SUBTYPES_PATH  = config["BRCA_SUBTYPES_PATH"]
 
 
 
+# Helper functions 
 
-# from filename to tensor
-# here we open a single file passed as "filename" we return a tensor of TPM values.
-def load_patient_data(filename, header = 0):
-    data = pd.read_table(filename, header = header)
-    return data.iloc[:, 3]
+def load_patient_data(filename: str, header: int = 0) -> pd.Series:
+    """
+    Load patient data from a given file.
 
-# here we open a single file passed as "filename" we return a lit of the values names.
-def get_names(filename, header = 0, skiprows= None):
-    names = pd.read_table(filename, header = header, skiprows = skiprows)
-    return names#.iloc[:, 0]
+    Args:
+    filename (str): The path to the file to be loaded.
+    header (int, optional): The row number to use as the column names. Defaults to 0.
+
+    Returns:
+    pd.Series: A pandas Series containing TPM values from the file.
+    """
+    try:
+        data = pd.read_table(filename, header=header)
+        return data.iloc[:, 3]
+    except FileNotFoundError:
+        print(f"File not found: {filename}")
+
+def get_gene_names_from_file(filename: str, header: int = 0, skiprows: Optional[List[int]] = None) -> pd.DataFrame:
+    """
+    Retrieves a list of gene names from a given file.
+
+    Args:
+    filename (str): Path to the file from which to read the names.
+    header (int, optional): Row number to use as the header (column names). Defaults to 0.
+    skiprows (list of int, optional): Line numbers to skip while reading the file. Defaults to None.
+
+    Returns:
+    pd.DataFrame: A DataFrame containing the names from the file.
+    """
+    try:
+        names = pd.read_table(filename, header=header, skiprows=skiprows)
+        return names
+    except FileNotFoundError:
+        print(f"File not found: {filename}")
+    except pd.errors.ParserError as e:
+        print(f"Error parsing file {filename}: {e}")
 
 
-### now we design a function that return a dataset of multivriate time series or cell wise observations
-def generate_dataset_genes(
-        path = PPMI_DATA_PATH, 
-        metadata_path = PPMI_METADATA_PATH,
-        MAD_threshold = None,
-        LS_threshold = None,
-        expression_threshold = None, 
-        subsample = None, 
-        retain_phases = None,
-        feature_selection_proceedure = None,
-        sgdc_params = None,
-        class_balancing = None,
-        normalization = False,
-        time_point = "BL",
-        MT_removal = False,
-        log1p = True,
-        min_max = True,
-        keep_only_symbols = False,
-        drop_ambiguous_pos = False,
-        sort_symbols = False,
-        gene_selection_file = None,
-        select_subtypes = None,
-        verbose = 0):
 
-    dataset_of_interest = "genes"
+def load_metadata(metadata_path, columns=None):
+    """Load metadata from a given path."""
+    return pd.read_excel(metadata_path, header=1, usecols=columns if columns else range(1, 10))
 
-    # getting entries ready
-    # each couple of entries correspond to one patient, we are only interested in the "transcript" files
-    entries = os.listdir(path)
-    #entries_transcripts = [e for e in entries if "transcripts" in e ]
-    entries = [e for e in entries if dataset_of_interest in e ]
-    entries.sort()
-
-    # we load metadata, so we can have access to additional information not included in the filename
-    meta_data = pd.read_excel(metadata_path, header = 1, usecols = range(1,10) )
-
-    ###########################################
-    ###### pre-loading patient selection ######
-    ###########################################
-    # selecting which entires to include in our analysis
-
-    # To avoid the natural tendency of the model to base its response to different phases
-    # we provide the option to focus our analysis on either or both phases of the study.
-    if(retain_phases == "1"):
-        entries = [e for e in entries if "Phase1" in e ]
-        print("retained phase 1")
-    elif(retain_phases == "2"):
-        entries = [e for e in entries if "Phase2" in e ]
-        print("retained phase 2")
+def filter_entries_by_phase(entries, retain_phases):
+    """Filter entries based on phase criteria."""
+    if retain_phases == "1":
+        return [e for e in entries if "Phase1" in e]
+    elif retain_phases == "2":
+        return [e for e in entries if "Phase2" in e]
     elif(retain_phases == "Both"):
         print("Retaining patients that are included in phases 1 & 2")
         phase_1_ids = [p.split(".")[1] for p in  entries if "Phase1" in p]
         phase_2_ids = [p.split(".")[1] for p in  entries if "Phase2" in p]
         # Find the entries that match with both Phase 1 and Phase 2
         common_ids = set(phase_1_ids) & set(phase_2_ids) # set intersection
-        entries_matching_both_phases = [entry for entry in entries if any(f".{common_id}." in entry for common_id in common_ids)]
-        entries = entries_matching_both_phases
+        return [entry for entry in entries if any(f".{common_id}." in entry for common_id in common_ids)]
     elif(retain_phases == None):
         print("not applying any filtering over phases")
+        return entries
     else:
         print("Warning: 'retain_phases' argment wrong.") # couldn't use warning due to conflicts
+        return entries
 
 
-    # if we want a smaller dataset for testing purposes
-    if(subsample is not None):
-        entries = entries[0:subsample]
+def generate_dataset(dataset_type, path = PPMI_DATA_PATH , metadata_path = PPMI_METADATA_PATH, 
+                     subsample=None, retain_phases=None, MAD_threshold=None, LS_threshold=None, 
+                     expression_threshold=None, normalization=False, time_points=["BL"], 
+                     MT_removal=False, log1p=True, min_max=True, keep_only_symbols=False, 
+                     drop_ambiguous_pos=False, sort_symbols=False, select_subtypes=None, 
+                     verbose=0):
+    
+    """
+    Generate a genomic or transcriptomic dataset from specified files, applying various
+    processing and filtering steps.
 
-    # We can decide to only include patient who completed a given quantities of timepoints
-    # The following stategy for filtering also filters out every patient who have missed a visit up to the given timepoint.
-    # This comportement could be tweaked easely later on
-    # a bit clunky though
-    if(time_point is not None):
-        print("retaining all patient who have at least passed the", time_point,"Visit...")
-        entries = [p for p in  entries if p.split(".")[2] == time_point] 
+    Args:
+        dataset_type (str): Specifies the type of dataset to generate. Options are 'genomic' or 'transcriptomic'.
+        path (str): Filepath to the directory containing the data files.
+        metadata_path (str): Filepath to the metadata file.
+        subsample (int, optional): If specified, limits the number of samples to process.
+        retain_phases (str, optional): Specifies which study phases to include in the analysis (e.g., '1', '2', 'Both').
+        MAD_threshold (float, optional): Threshold for Median Absolute Deviation-based feature selection.
+        LS_threshold (float, optional): Threshold for Laplacian Score-based feature selection.
+        expression_threshold (float, optional): Threshold for expression level-based gene selection.
+        normalization (bool, optional): If True, normalizes the data.
+        time_points (list of str, optional): Specific time points to include in the analysis.
+        MT_removal (bool, optional): If True, removes mitochondrial genes from the dataset.
+        log1p (bool, optional): If True, applies log(1 + x) transformation to the data.
+        min_max (bool, optional): If True, scales the data using Min-Max normalization.
+        keep_only_symbols (bool, optional): For genomic data, if True, retains only symbol-named genes.
+        drop_ambiguous_pos (bool, optional): For genomic data, if True, drops genes with ambiguous genomic positions.
+        sort_symbols (bool, optional): For genomic data, if True, sorts genes based on their genomic position.
+        select_subtypes (list of str, optional): Filters the data to include only specified subtypes.
+        gene_selection_file (str, optional): Filepath to a gene selection file.
+        verbose (int, optional): Verbosity level for output messages.
 
+    Returns:
+        tuple: A tuple containing:
+            - data_array (numpy.ndarray): The processed data array.
+            - metadata (dict): A dictionary containing metadata information about the dataset.
 
+    Raises:
+        ValueError: If an invalid dataset type is provided.
+    
+    The function applies a series of data preprocessing, normalization, and feature selection 
+    steps to generate a dataset ready for analysis. It is capable of handling both genomic 
+    and transcriptomic data, contingent on the specified 'dataset_type'. The function also 
+    accommodates various filtering and data transformation options.
+    """
+
+    # Common code for loading and filtering entries
+    entries = os.listdir(path)
+    if dataset_type == 'genomic':
+        dataset_of_interest = "genes"
+
+    elif dataset_type == 'transcriptomic':
+        dataset_of_interest = "transcripts"
+    else:
+        raise ValueError("Invalid dataset type. Choose 'genomic' or 'transcriptomic'.")
+
+    entries = [e for e in entries if dataset_of_interest in e]
+    entries.sort()
+
+    meta_data = pd.read_excel(metadata_path, header=1, usecols=range(1, 10))
+
+    if subsample is not None:
+        entries = entries[:subsample]
+
+    entries = filter_entries_by_phase(entries, retain_phases)
+
+    if(time_points is not None):
+        print("retaining all patient who have at least passed the", time_points,"Visit...")
+        entries = [p for p in  entries if p.split(".")[2] in time_points] 
 
     # sanity check : are the patient numbers actually numeric ? 
     entries = [e for e in entries if e.split(".")[1].isnumeric() ]
@@ -131,68 +175,72 @@ def generate_dataset_genes(
     Na_s =  meta_data[meta_data.isna().any(axis=1)]["Patient Number"]
     entries = [e for e in entries if e.split(".")[1] not in str(Na_s) ]
 
-
-    print(len(entries))
     if(select_subtypes is not None):
-        #meta_data = meta_data[meta_data["Disease Status"].isin(['Genetic PD', 'Idiopathic PD'])]
         meta_data = meta_data[meta_data["Disease Status"].isin(select_subtypes)]
-        id_pd = meta_data["Patient Number"]
-        entries = [e for e in entries if int(e.split(".")[1]) in id_pd.tolist()]
-
+        id_pd = meta_data["Patient Number"].tolist()
+        entries = [e for e in entries if int(e.split(".")[1]) in id_pd]
 
     ###########################################
     ############ loading patients  ############
     ###########################################
 
     # load the dataset into an array 
-    print("loading samples...")
-    data = [load_patient_data(os.path.join(path, e)) for e in entries]
+    print("loading samples...")    
+    data_array = np.array([load_patient_data(os.path.join(path, e)) for e in entries])
+    print("loaded ",len(data_array), "samples")
 
-    # get the entry name list
-    names = get_names(os.path.join(path,entries[0])).iloc[:,0]
-    
-    # getting rid of the version number
-    names = [n.split(".")[0] for n in names]
-    
-    # remove artifacts by keeping samples of correct length
-    samples_to_keep = [1 if s.shape == (34569,) else 0 for s in data]
-    
-    print("loaded",sum(samples_to_keep), "samples")
-    
-    data_array = np.array([sample for (sample, test) in  zip(data, samples_to_keep) if test])
-
-    patient_id = [int(p.split(".")[1]) for (p, test) in  zip(entries, samples_to_keep) if test]
+    patient_id = [int(p.split(".")[1]) for p in entries]
 
     # only keep metadata for selected patients
     meta_data = meta_data.set_index('Patient Number')
     meta_data = meta_data.reindex(index=patient_id)
     meta_data = meta_data.reset_index()
 
-
     ###########################################
     ############ feature selection  ###########
     ###########################################
 
-    if(gene_selection_file is not None):
-        names = pd.Series(names)
-        suggested_genes = pd.read_csv(gene_selection_file, sep='\t')
-        suggested_genes = suggested_genes.rename(columns={'Unnamed: 0': 'gene'})
-        gene_selected = names.isin(suggested_genes["gene"])
-        print("number of genes selected:", sum(gene_selected))
-        data_array = data_array[:,gene_selected]
-        names = names[gene_selected]
+ 
 
 
-    print("retriving symbols for genes")
-    query_result = mg.querymany(names, fields = ['genomic_pos', 'symbol'], scopes='ensembl.gene', species='human', verbose = False, as_dataframe = True)
 
-    query_result = query_result.reset_index()
-    query_result = query_result.drop_duplicates(subset = ["query"])
-    # here we have the correct length
+    # Load data and perform dataset-specific processing
+    if dataset_type == 'genomic':
+        # get the genes name list
+        names = get_gene_names_from_file(os.path.join(path,entries[0])).iloc[:,0]
+        # formatting gene names to get rid of the version number
+        names = [n.split(".")[0] for n in names]
+        print("retriving symbols for genes")
+        query_result = mg.querymany(names, fields = ['genomic_pos', 'symbol'], scopes='ensembl.gene', species='human', verbose = False, as_dataframe = True)
+        query_result = query_result.reset_index()
+        query_result = query_result.drop_duplicates(subset = ["query"])
+        # here we have the correct length
+        names = [q if(pd.isna(s)) else s for (s,q) in zip(query_result["symbol"],query_result["query"])]
+        query_result['name'] = names
+
+    elif dataset_type == 'transcriptomic':
+        # get the entry name list
+        names = get_gene_names_from_file(os.path.join(path,entries[0])).iloc[:,0]
+        query_result = pd.DataFrame([n.split("|") for n in names])
+        query_result = query_result.set_axis([
+            #'trascript_id',  # we turn transcript_id into name for cross compatibility
+            'name', 
+            'gene_id', 
+            'idk', 
+            'idk', 
+            'transcript_variant', 
+            'symbol', 
+            'length', 
+            'untranslated_region_3', 
+            'coding_region', 
+            'untranslated_region_5', 
+            'idk'], axis=1)
+
+    else:
+        raise ValueError("Invalid dataset type. Choose 'genomic' or 'transcriptomic'.")
 
 
-    names = [q if(pd.isna(s)) else s for (s,q) in zip(query_result["symbol"],query_result["query"])]
-    query_result['name'] = names
+
 
     if(MT_removal == True):
         gene_selected = [False if q.startswith('MT') else True for q in query_result['name']]
@@ -200,13 +248,13 @@ def generate_dataset_genes(
         data_array = data_array[:,gene_selected]
         query_result = query_result[gene_selected]
 
-    if(keep_only_symbols == True):
+    if(keep_only_symbols == True and dataset_type == 'genomic'):
         gene_selected = [False if s.startswith('ENSG') else True for s in query_result['name']]
         print("removing", len(gene_selected) - sum(gene_selected), "not found symbols from the dataset")
         data_array = data_array[:,gene_selected]
         query_result = query_result[gene_selected]
 
-    if(drop_ambiguous_pos == True):
+    if(drop_ambiguous_pos == True and dataset_type == 'genomic'):
         gene_selected = query_result["genomic_pos"].isna()
         print("removing", len(gene_selected) - sum(gene_selected), "ambigously positioned symbols from the dataset")
         data_array = data_array[:,gene_selected]
@@ -238,30 +286,13 @@ def generate_dataset_genes(
         data_array = data_array[:,gene_selected]
         query_result = query_result[gene_selected]
 
-
-
-
-
-
-
-
-    if(feature_selection_proceedure == "LASSO"):
-        # for each patient in our dataset, we want to know to what cohort he belongs
-        cohorts = np.array(meta_data["Cohort"], dtype=np.int32)
-        print("selecting genes based on LASSO-like classification...")
-        gene_selected = feature_selection.LASSO_selection(data_array, cohorts, sgdc_params, class_balancing)
-        data_array = data_array[:,gene_selected]
-        query_result = query_result[gene_selected]
-
-
-
     print("number of genes selected : ", len(data_array[0]))
-
 
     ###########################################
     ################# sorting  ################
     ###########################################
-    if(sort_symbols):
+
+    if(sort_symbols and dataset_type == 'genomic'):
         print("sorting based on genomic position chr then transcript start...")
         # reset the indexes because of all the previous transformations we have done
         query_result = query_result.reset_index(drop=True)
@@ -270,10 +301,11 @@ def generate_dataset_genes(
         data_array = data_array[:, query_result.index]
 
 
+
+
     ###########################################
     ############## normalisation  #############
     ###########################################
-
     
     if(normalization == True): 
         print("normalizing data...")
@@ -290,234 +322,20 @@ def generate_dataset_genes(
         data_array = scaler.fit_transform(data_array)
 
 
-    ##########################################
-    ######## Building the time series ########
-    ##########################################
     print("number of seq in the dataset :", len(data_array))
 
 
-    # we don't assemble the files into timeseries and simply return the TPM values and the corresponding filename
-    print("keeping sample as is, no conversion to time series")
-    dataset = data_array
-    sequence_names = [f for (f, test) in  zip(entries, samples_to_keep) if test]
-
-    
-
-
-    metadata = {"name" : "genes",
+    metadata = {"name" : dataset_of_interest,
                 "feature_names" : query_result,
-                "seq_names" : sequence_names,
+                "seq_names" : entries,
                 "n_features" : len(data_array[0]),
-                "n_seq" : len(sequence_names),
+                "n_seq" : len(entries),
                 "meta_data" : meta_data,
                 "subtypes" : meta_data["Disease Status"]} 
 
-    return dataset, metadata
-    
+    return data_array, metadata
 
 
-
-
-
-
-
-
-
-
-
-
-### now we design a function that return a dataset of multivriate time series or the individual timestamps
-def generate_dataset_transcripts(
-        path = PPMI_DATA_PATH, 
-        metadata_path = PPMI_METADATA_PATH,
-        MAD_threshold = None, 
-        subsample = None, 
-        retain_phases = None,
-        normalization = False,
-        time_point = "BL",
-        MT_removal = False,
-        log1p = True,
-        min_max = True,
-        gene_selection_file = None,
-        verbose = 1):
-
-    # getting entries ready
-    # each couple of entries correspond to one patient, we are only interested in the "transcript" files
-    entries = os.listdir(path)
-    #entries_transcripts = [e for e in entries if "transcripts" in e ]
-    entries = [e for e in entries if "transcripts" in e ]
-    entries.sort()
-
-    # we load metadata, so we can have access to additional information not included in the filename
-    meta_data = pd.read_excel(metadata_path, header = 1, usecols = range(1,10) )
-
-    ###########################################
-    ###### pre-loading patient selection ######
-    ###########################################
-    # selecting which entires to include in our analysis
-
-    # To avoid the natural tendency of the model to base its response to different phases
-    # we provide the option to focus our analysis on either or both phases of the study.
-    
-
-    if(retain_phases == "1"):
-        entries = [e for e in entries if "Phase1" in e ]
-        print("retained phase 1")
-    elif(retain_phases == "2"):
-        entries = [e for e in entries if "Phase2" in e ]
-        print("retained phase 2")
-    elif(retain_phases == "Both"):
-        print("Retaining patients that are included in phases 1 & 2")
-        phase_1_ids = [p.split(".")[1] for p in  entries if "Phase1" in p]
-        phase_2_ids = [p.split(".")[1] for p in  entries if "Phase2" in p]
-        # Find the entries that match with both Phase 1 and Phase 2
-        common_ids = set(phase_1_ids) & set(phase_2_ids) # set intersection
-        entries_matching_both_phases = [entry for entry in entries if any(f".{common_id}." in entry for common_id in common_ids)]
-        entries = entries_matching_both_phases
-    elif(retain_phases == None):
-        print("not applying any filtering over phases")
-    else:
-        print("Warning: 'retain_phases' argment wrong.") # couldn't use warning due to conflicts
-
-
-
-    # if we want a smaller dataset for testing purposes
-    if(subsample is not None):
-        entries = entries[0:subsample]
-
-
-    # We can decide to only include patient who completed a given quantities of timepoints
-    # The following stategy for filtering also filters out every patient who have missed a visit up to the given timepoint.
-    # This comportement could be tweaked easely later on
-    # a bit clunky though
-
-
-
-
-    if(time_point == "BL"):
-        print("retaining only the Base Line Visit data...")
-        entries = [e for e in  entries if e.split(".")[2] == "BL"] 
-    
-    # sanity check : don't load patient where some values are missing
-    Na_s =  meta_data[meta_data.isna().any(axis=1)]["Patient Number"]
-    entries = [e for e in entries if e.split(".")[1] not in str(Na_s) ]
-
-
-
-    ###########################################
-    ############ loading patients  ############
-    ###########################################
-
-    # load the dataset into an array 
-    print("loading samples...")
-    data = [load_patient_data(os.path.join(path, e)) for e in entries]
-
-    # get the entry name list
-    names = get_names(os.path.join(path,entries[0])).iloc[:,0]
-    names = pd.DataFrame([n.split("|") for n in names])
-
-
-
-    # remove artifacts by keeping samples of correct length
-    samples_to_keep = [1 if s.shape == (95309,) else 0 for s in data]
-
-        
-    print("loaded",sum(samples_to_keep), "samples")
-    
-    data = [sample for (sample, test) in  zip(data, samples_to_keep) if test]
-    data = np.array(data)
-
-    patient_id = [int(p.split(".")[1]) for (p, test) in  zip(entries, samples_to_keep) if test]
-
-    # only keep metadata for selected patients
-    meta_data = meta_data.set_index('Patient Number')
-    meta_data = meta_data.reindex(index=patient_id)
-    meta_data = meta_data.reset_index()
-
-
-
-
-
-    ###########################################
-    ############ feature selection  ###########
-    ###########################################
- 
-    if(gene_selection_file is not None):
-        name_df = names.set_axis([
-            'trascript_id', 
-            'gene_id', 
-            'idk', 
-            'idk', 
-            'transcript_variant', 
-            'symbol', 
-            'length', 
-            'untranslated_region_3', 
-            'coding_region', 
-            'untranslated_region_5', 
-            'idk'], axis=1)
-        suggested_genes = pd.read_csv(gene_selection_file, sep='\t')
-        suggested_genes = suggested_genes.rename(columns={'Unnamed: 0': 'gene_id'})
-        mask_gene_name = name_df["symbol"].isin(suggested_genes["name"])
-        mask_gene_id = pd.Series([id.split(".")[0] for id in name_df["gene_id"]]).isin(suggested_genes["gene_id"])
-        gene_selected = mask_gene_name | mask_gene_id
-        data = data[:,gene_selected]
-        names = names[gene_selected]
-
-
-    
-
-    if(MAD_threshold is not None):
-        MAD_ceiling = 150
-        print("selecting genes based on median absolute deviation window: [",MAD_threshold,",", MAD_ceiling, "] ...")
-        gene_selected = feature_selection.MAD_selection(data, MAD_threshold, verbose = verbose)
-        print("removing", len(gene_selected) - sum(gene_selected), "genes out of the MAD window from the dataset")
-        data = data[:,gene_selected]
-        print(names)
-        print(gene_selected)
-        names = names[gene_selected]
-
-
-    
-    print("number of genes selected : ", len(data[0]))
-
-    ###########################################
-    ############## normalisation  #############
-    ###########################################
-
-    
-    if normalization: 
-        print("normalizing data...")
-        data = normalize(data)
-
-    if log1p : 
-        print("log(1 + x) transformation...")
-        data = np.log1p(data)
-
-    # after log1p transform because it already provide us with a very good dataset 
-    if min_max:
-        print("scaling to [0, 1]...")
-        scaler = MinMaxScaler(feature_range=(0, 1), clip = True)
-        data = scaler.fit_transform(data)
-
-    
-
-
-    print("number of seq in the dataset :", len(data))
-
-
-
-    sequence_names = [f for (f, test) in  zip(entries, samples_to_keep) if test]
-
-
-    metadata = {"name" : "transcripts",
-                "feature_names" : names,
-                "sequence_names" : sequence_names,
-                "n_features" : len(data[0]),
-                "meta_data" : meta_data,
-                "subtypes" : meta_data["Cohort"]} 
-
-    return data, metadata
-    
 
 
 
@@ -588,7 +406,7 @@ def generate_dataset_BRCA(
     data = [load_patient_data(e, header = 5) for e in entries]
 
     # get the entry name list    
-    names = pd.DataFrame(get_names(entries[0], header = 1, skiprows = [2,3,4,5]))
+    names = pd.DataFrame(get_gene_names_from_file(entries[0], header = 1, skiprows = [2,3,4,5]))
 
     data_array = np.array(data)
 
@@ -598,11 +416,6 @@ def generate_dataset_BRCA(
     ###########################################
     ################ subtypes  ################
     ###########################################
-
-
-    
-
-    # using chatGPT overlord to solve this 
 
 
     # Step 1: Construct a mapping from file_name to entity_submitter_id
