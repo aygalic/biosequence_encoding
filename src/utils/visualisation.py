@@ -3,33 +3,12 @@ from .helpers import encode_recon_dataset
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
-import pandas as pd 
 
-import plotly.express as px
-import plotly.subplots as sp
-import plotly.graph_objs as go
 
 import sys
 sys.path.append('../src')
 
-
-# Silhouette score of original groups
-from sklearn.metrics import silhouette_score
-from utils.benchmark import dunn_index
-from utils.benchmark import davies_bouldin
-
-
-# from vq-vae
-from sklearn.metrics import classification_report, silhouette_score, silhouette_samples
 from sklearn.decomposition import PCA
-from sklearn import metrics
-from sklearn.manifold import TSNE
-from sklearn.datasets import make_blobs
-from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import confusion_matrix
-
 
 from matplotlib.animation import FuncAnimation
 from IPython.display import HTML

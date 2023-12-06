@@ -1,5 +1,5 @@
 from .. import config
-from .helpers import Mydatasets, encode_recon_dataset
+from .helpers import encode_recon_dataset
 from .visualisation import callback_viz
 from . import helpers
 from . import benchmark
