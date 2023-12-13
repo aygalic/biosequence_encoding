@@ -30,6 +30,7 @@ DEVICE = torch.device(config["DEVICE"])
 class Monitor():
     def __init__(self, model, dataloader, label, verbose = 1):
         self.checkpoints = [math.floor(x) for x in np.logspace(1,4)]
+        self.checkpoints = [math.floor(x) for x in np.logspace(1,3)]
         self.feature_num = None
         self.DEVICE = torch.device(config["DEVICE"])
         self.train_res_recon_error = []
