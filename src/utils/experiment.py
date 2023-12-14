@@ -1,8 +1,39 @@
+"""
+Experiment Module for Model Training and Evaluation
+
+This module provides functionalities to set up, execute, and log experiments.
+
+Classes:
+    Experiment: A class for managing the overall process of setting up, 
+    running, and logging model training with specific data and model configurations.
+
+Functions:
+    log_experiment: Function to log the results of an experiment to a CSV file.
+
+Usage:
+    The module is used to create an instance of an Experiment class, which can 
+    then be configured with specific data and model parameters. The experiment 
+    can be executed, and the results are logged for analysis.
+
+Example:
+    To use this module, import it in your script, initialize an Experiment 
+    object with the desired parameters, and call its `run` method to start 
+    the experiment. Optionally, you can log the results using `log_experiment`.
+
+    >>> experiment = Experiment(data_param, model_param)
+    >>> experiment.run(log=True)
+
+Note:
+    This module assumes the availability of certain external libraries and 
+    modules, such as PyTorch for model building and training, and pandas 
+    for data handling. Ensure these dependencies are met before using this module.
+"""
+
+
 from .. import config
 
 import sys
 import pickle
-import importlib
 
 sys.path.append('..')
 #from utils import data_handler
@@ -15,12 +46,7 @@ from src.models import model
 # data manipulation
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 
-# data analysis
-from sklearn.model_selection import train_test_split
-from sklearn.decomposition import PCA
 
 # pytorch specific
 import torch
@@ -32,16 +58,17 @@ DEVICE = torch.device(config["DEVICE"])
 LOGFILE = config["LOGFILE"]
 
 
-
-from sklearn import datasets
-import matplotlib.pyplot as plt
-
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-
 def log_experiment(record, csv_path=LOGFILE):
+    """
+    Logs the experiment results to a CSV file.
+
+    Args:
+        record (dict): A dictionary containing the experiment's results and parameters.
+        csv_path (str): Filepath to the CSV file where the log will be stored.
+
+    Note:
+        If the CSV file does not exist, it creates a new file. If it exists, the new record is appended.
+    """
     # Create a DataFrame from the new record
     new_df = pd.DataFrame([record])
     
@@ -62,6 +89,29 @@ def log_experiment(record, csv_path=LOGFILE):
 
 
 class Experiment():
+    """
+    A class for setting up and running experiments with specific data and model configurations.
+
+    Attributes:
+        data_param (dict or str): Parameters for the dataset or filepath to a saved dataset.
+        model_param (dict): Parameters for model configuration.
+        verbose (int): Verbosity level for output messages.
+        data (array): Loaded dataset.
+        input_shape (int): Shape of the input data.
+        metadata (dict): Metadata associated with the dataset.
+        model (torch.nn.Module): The model for the experiment.
+        optimizer (torch.optim.Optimizer): Optimizer for the model.
+        dataloader (torch.utils.data.DataLoader): DataLoader for the dataset.
+        monitor (Monitor): Monitoring object for tracking training progress.
+        scheduler (torch.optim.lr_scheduler): Learning rate scheduler.
+        data_variance (float): Variance of the dataset, used in VQ-VAE.
+
+    Methods:
+        build_dataset: Builds the dataset from specified parameters.
+        load_dataset: Loads the dataset from a pickle file.
+        build_model: Initializes the model based on input shape and model parameters.
+        run: Executes the training process and logs results if specified.
+    """
     def build_dataset(self, data_param):
         data_param["verbose"] = self.verbose - 1
         self.data, self.metadata = data_handler.generate_dataset_BRCA(**data_param)
@@ -130,6 +180,18 @@ class Experiment():
     
         
     def run(self, log = True):
+        """
+        Runs the experiment with the specified model and dataset.
+
+        This method manages the training loop, loss calculation, and calls to monitor callbacks. 
+        It also handles visualization and logging of results based on verbosity and logging settings.
+
+        Args:
+            log (bool): Whether to log the experiment results to a file.
+
+        Note:
+            The method assumes that the model, data, and other necessary components are already set up.
+        """
         if self.verbose:
             print("Running the following configuration:")
             print(self.data_param)

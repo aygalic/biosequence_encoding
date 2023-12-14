@@ -1,3 +1,26 @@
+"""
+Helpers Module
+
+This module provides a collection of utility functions and classes to assist in various tasks 
+related to Pytorch-based machine learning experiments. 
+
+It includes tools for dataset handling, data formatting, encoding and reconstructing datasets, 
+experiment configuration generation, and finding prime numbers. These utilities are designed to 
+streamline the process of preparing data for model training and evaluation, as well as facilitating 
+the experimentation with different model configurations.
+
+Functions:
+- format_dataset: Formats a given dataset for training with a PyTorch model.
+- encode_recon_dataset: Encodes and reconstructs a dataset using a provided model.
+- generate_config: Generates a list of configurations for machine learning experiments.
+- find_primes: Finds prime numbers up to a given number.
+
+Classes:
+- Mydatasets: A custom PyTorch Dataset class for handling datasets.
+
+The module primarily supports tasks in data preprocessing and experiment setup in a machine learning context.
+"""
+
 from .. import config
 
 import torch
@@ -8,6 +31,16 @@ import itertools
 
 
 class Mydatasets(torch.utils.data.Dataset):
+    """
+    A custom PyTorch Dataset class for handling datasets.
+
+    This class is designed to work with datasets in a format suitable for PyTorch models, 
+    allowing for transformations and easy integration with PyTorch DataLoader.
+
+    Args:
+        data1: The primary dataset.
+        transform (optional): A function/transform that takes in a sample and returns a transformed version.
+    """
     def __init__(self, data1 ,transform = None):
         self.transform = transform
         self.data1 = data1
@@ -24,7 +57,15 @@ class Mydatasets(torch.utils.data.Dataset):
 
         return out_data1
 
-def format_dataset(data, metadata, test_size = 0):
+def format_dataset(data):
+    """
+    Formats a given dataset for training with a PyTorch model, providing a dataloader object.
+
+    Args:
+        data: The dataset to be formatted.
+    Returns:
+        Tuple: A tuple containing the formatted dataset and the corresponding DataLoader.
+    """
     print(data.shape)
     feature_num = data.shape[1]
     data = data.reshape(-1,1,feature_num)
@@ -39,6 +80,17 @@ def format_dataset(data, metadata, test_size = 0):
     return data_set, dataloader
 
 def encode_recon_dataset(dataloader, model, DEVICE):
+    """
+    Encodes and reconstructs a dataset using a provided model.
+
+    Args:
+        dataloader: The DataLoader containing the dataset to be processed.
+        model: The model to be used for encoding and reconstruction.
+        DEVICE: The device (CPU/GPU) on which the model is running.
+
+    Returns:
+        Tuple: A tuple containing the encoded and reconstructed outputs of the dataset.
+    """
     en_lat = []
     en_reconstruction = []
 
@@ -49,7 +101,7 @@ def encode_recon_dataset(dataloader, model, DEVICE):
             data_recon, _, _ = model(inputs.to(DEVICE))
         elif model.variational == "VQ-VAE":
             # for VQ-VAE the latent space is the quantized space, not the encodings.
-            vq_loss, data_recon, perplexity, encodings, quantized = model(inputs.to(DEVICE))
+            _, data_recon, _, _, quantized = model(inputs.to(DEVICE))
             latent_1 = quantized
         else:
             latent_1 = model.encode(inputs.to(DEVICE))
@@ -118,6 +170,15 @@ def generate_config(static_params, dynamic_params):
     return configurations
 
 def find_primes(n):
+    """
+    Finds prime numbers up to a given number.
+
+    Args:
+        n (int): The upper limit for finding prime numbers.
+
+    Returns:
+        List: A list of prime numbers up to 'n'.
+    """
     primes = []
     for i in range(1,n+1):
         if n % i == 0:

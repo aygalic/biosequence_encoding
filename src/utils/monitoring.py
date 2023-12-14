@@ -1,11 +1,57 @@
+"""
+This module provides functionalities for monitoring and evaluating deep learning models 
+during the training process, specifically tailored for clustering and dimensionality reduction tasks.
+
+Key Components:
+- Monitor class: A class designed to track and evaluate model performance over training epochs. 
+  It includes methods for calculating various clustering metrics, performing PCA, and 
+  visualizing both the model's latent space and reconstruction quality.
+
+- DEVICE: A global variable indicating the device (CPU/GPU) to be used for model training and evaluation.
+
+Main Features:
+- Tracking model performance metrics such as silhouette score, Hopkins statistic, adjusted Rand index (ARI), 
+  and others over epochs.
+- Visualizing the model's latent space using PCA and comparing true labels with clustered labels.
+- Reconstructing inputs using the model and visualizing the reconstruction quality.
+- The ability to handle different types of models including VAE and VQ-VAE.
+
+Usage:
+The module is intended to be used in conjunction with model training loops. 
+The Monitor class can be instantiated with a model, data loader, and labels, 
+and its 'callbacks' method should be called at the end of each training epoch.
+
+Example:
+    monitor = Monitor(model, dataloader, labels)
+    for epoch in range(num_epochs):
+        # ... training logic ...
+        monitor.callbacks(epoch)
+
+Dependencies:
+- PyTorch for model-related operations.
+- Scikit-learn for PCA and clustering metrics.
+- Matplotlib and Seaborn for visualization.
+- Numpy and Pandas for data handling and manipulation.
+
+Note:
+This module is specifically designed for models involved in clustering and dimensionality reduction tasks. 
+It assumes the existence of certain methods and attributes in the model being monitored.
+
+"""
+
+from .. import config
+from .helpers import encode_recon_dataset
+from .visualisation import callback_viz
+# ... rest of the imports ...
+
+# ... rest of the code ...
+
+
 from .. import config
 from .helpers import encode_recon_dataset
 from .visualisation import callback_viz
 from . import helpers
 from . import benchmark
-
-
-
 
 import math
 import numpy as np
@@ -18,7 +64,6 @@ import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 
-# so many metrics
 from sklearn.metrics import confusion_matrix, adjusted_rand_score, normalized_mutual_info_score
 from sklearn.metrics import fowlkes_mallows_score, homogeneity_completeness_v_measure, silhouette_score
 
@@ -29,8 +74,17 @@ DEVICE = torch.device(config["DEVICE"])
 
 class Monitor():
     def __init__(self, model, dataloader, label, verbose = 1):
-        self.checkpoints = [math.floor(x) for x in np.logspace(1,4)]
-        self.checkpoints = [math.floor(x) for x in np.logspace(1,3)]
+        """
+        Initialize the Monitor object.
+
+        Args:
+            model: The model to be monitored.
+            dataloader: DataLoader object providing the data.
+            label: Ground truth labels for the data.
+            verbose (int): Level of verbosity for output messages.
+        """
+        #self.checkpoints = [math.floor(x) for x in np.logspace(1,4)] # for 10K epoch
+        self.checkpoints = [math.floor(x) for x in np.logspace(1,3)] # for 1K epoch
         self.feature_num = None
         self.DEVICE = torch.device(config["DEVICE"])
         self.train_res_recon_error = []
@@ -49,25 +103,39 @@ class Monitor():
         self.train_res_recon_error.append(value)
 
     def callbacks(self, epoch):
+        """
+        Perform various callback actions at specific epochs during model training.
+
+        This method is designed to be called at the end of each training epoch. 
+        It checks if the current epoch matches any pre-defined checkpoints. 
+        If so, it performs several actions: computes metrics, conducts PCA on the 
+        encoded output, visualizes PCA results, reconstructs a sample input, and 
+        visualizes the reconstruction. It also prints the Adjusted Rand Index (ARI) 
+        metric if the verbosity level is high enough.
+
+        Args:
+            epoch (int): The current epoch number in the training process.
+
+        Note:
+            This method modifies the internal state by updating metrics, adding PCA 
+            results to frames, and potentially updating visualization plots. It is 
+            expected to be called within a training loop.
+        """
         if (epoch + 1) in self.checkpoints:
             if(self.feature_num is None):
                 self.feature_num = self.model.input_shape
-
 
             self.model.eval()
 
             encode_out, _ = encode_recon_dataset(self.dataloader, self.model, self.DEVICE)
 
-
             # first, we compute all the metrics and add them to the list
             self.compute_metrics()
-
             
             # PCA of the latent space
             pca = PCA(n_components=2)
             pca.fit(encode_out)
             pca_result = pca.transform(encode_out)
-
 
             index_column = np.full((pca_result.shape[0], 1), len(self.frames), dtype=int)
 
@@ -94,15 +162,18 @@ class Monitor():
             if(self.verbose >=1):
                 callback_viz(pca_result, encode_out, stack, self.train_res_recon_error, self.label)
 
-                # I am also interested in the Hopkins statistics:
-                print("HOPKINS STATISTIC", self.metrics[-1]["hopkins"])
-
-
+                # I am also interested in the ARI:
+                print("ARI", self.metrics[-1]["ari"])
 
             self.model.train()
 
     def compute_metrics(self):
+        """
+        Compute and store various clustering and performance metrics.
 
+        Returns:
+            list: A list containing dictionaries of computed metrics.
+        """
         encode_out, _ = helpers.encode_recon_dataset(self.dataloader, self.model, DEVICE)
 
         # PCA of the latent space
@@ -110,41 +181,23 @@ class Monitor():
         pca.fit(encode_out)
         pca_result = pca.transform(encode_out)
 
-
-        # Assuming you've determined that you want 5 clusters
         n_clusters = self.n_clusters
-
-
-
 
         # Initialize the KMeans model
         kmeans = KMeans(n_clusters=n_clusters)
 
-        # Fit the model on your data
+        # Fit the model to data
         kmeans.fit(encode_out)
 
         # Get the cluster assignments
         labels = kmeans.labels_
 
-        # Calculate silhouette score
-        silhouette_avg = silhouette_score(encode_out, labels)
-
-        # hopkins statistics
-        hopkins = benchmark.hopkins(encode_out)
-
-
         if self.verbose >= 1:
-            print(f"Silhouette score for {n_clusters} clusters: {silhouette_avg}")
-
             # plot of True vs Discovered labels
             fig, axs = plt.subplots(1, 2, figsize=(12, 6))
             sns.scatterplot(x=pca_result[:, 0], y=pca_result[:, 1], hue= self.label, ax=axs[1]).set(title='True Labels')
             sns.scatterplot(x=pca_result[:, 0], y=pca_result[:, 1], hue=[str(l) for l in labels], ax=axs[0]).set(title='Found Labels')
-
             plt.show()
-
-        
-
 
         # These are your cluster labels and true labels.
         y_pred = labels  
@@ -154,12 +207,6 @@ class Monitor():
         # Filter out None values
         y_pred = [label for label, test in zip(y_pred, y_true) if test is not None]
         y_true = [label for label in y_true if label is not None]
-
-        # just in case we wanted to compute extra silouhette
-        #X_filtered = [x for x, test in zip(encode_out, y_true) if test is not None]
-
-
-
 
         # Because your labels might not be integers, or might not start from zero, or not consecutive, we create mappings to ensure the confusion matrix is created correctly.
         true_labels = np.unique(y_true)
@@ -175,7 +222,10 @@ class Monitor():
 
         # Calculate confusion matrix
         conf_matrix = confusion_matrix(y_true_mapped, y_pred_mapped)
-
+        
+        # Calculate metrics
+        silhouette_avg = silhouette_score(encode_out, labels)
+        hopkins = benchmark.hopkins(encode_out)
         ari_score = adjusted_rand_score(y_true, y_pred)
         nmi_score = normalized_mutual_info_score(y_true, y_pred, average_method='arithmetic')
         fm_score = fowlkes_mallows_score(y_true, y_pred)  # or use y_true_filtered, y_pred_filtered

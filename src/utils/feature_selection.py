@@ -1,14 +1,37 @@
-# In this file, we want to build a feature selection pipeline
-# the main approach we will focus on is LASSO regression
+"""
+Feature Selection Module
 
+This module provides a set of functions for feature selection in datasets, particularly focusing on genomic data. 
+It includes various statistical and machine learning methods to identify the most significant features for modeling.
 
-# How it works : We select the genes that are the most influencial in a given objective
-# for instance : we want the top 1000 genes involved into which cohort our patient are part of
+Methods:
+- MAD_selection: Selects features based on Median Absolute Deviation (MAD).
+- laplacian_score: Computes the Laplacian Score for each feature in the dataset.
+- LS_selection: Selects features based on Laplacian Score.
+- expression_selection: Selects features based on gene expression levels.
+- LASSO_selection: Selects features using LASSO regression.
+
+Each method applies different criteria to determine the importance or relevance of features in the dataset, 
+enabling users to reduce the dimensionality of their data for more efficient and effective analysis.
+
+Usage:
+Import the module and use its functions to perform feature selection on your dataset. 
+Each function accepts a dataset (numpy array) and specific parameters related to its selection criteria.
+
+Example:
+    import feature_selection as fs
+    selected_features = fs.MAD_selection(data_array, threshold=0.5)
+
+The module also includes visualization tools (when verbose is enabled) for understanding 
+the distribution of feature scores and the effect of the selection threshold.
+
+Note:
+The module is designed with genomic datasets in mind, but it may be applicable to other types of numerical datasets.
+"""
 
 import numpy as np
 import scipy
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 
 from sklearn.linear_model import SGDClassifier    
@@ -17,9 +40,7 @@ from sklearn.utils.random import sample_without_replacement
 from sklearn.metrics import confusion_matrix
 
 from scipy.spatial.distance import pdist, squareform
-from sklearn.neighbors import NearestNeighbors
 
-from numpy import arange
 
 from collections import Counter
 
@@ -30,6 +51,18 @@ from collections import Counter
 from sklearn.preprocessing import StandardScaler
 
 def MAD_selection(data_array, threshold, ceiling = 100, verbose = 0):
+    """
+    Selects features based on Median Absolute Deviation (MAD).
+
+    Parameters:
+        data_array (numpy.ndarray): The dataset to process.
+        threshold (float): The lower threshold for feature selection.
+        ceiling (float): The upper limit for feature selection.
+        verbose (int): Controls the verbosity of the function.
+
+    Returns:
+        list: A list of boolean values indicating selected features.
+    """
     MAD = scipy.stats.median_abs_deviation(data_array)
     
     if(verbose):
@@ -60,14 +93,14 @@ def MAD_selection(data_array, threshold, ceiling = 100, verbose = 0):
 
 def laplacian_score(X, k=5):
     """
-    Compute the Laplacian Score for each feature of dataset X.
+    Computes the Laplacian Score for each feature of the dataset.
 
     Parameters:
-    X : numpy array : The dataset (number of samples x number of features)
-    k : int : Number of neighbors for the KNN graph
+        X (numpy.ndarray): The dataset (samples x features).
+        k (int): Number of neighbors for the KNN graph.
 
     Returns:
-    scores : list : Laplacian scores for each feature
+        numpy.ndarray: Array of Laplacian scores for each feature.
     """
 
     # Step 1: Construct the adjacency matrix W using the heat kernel based on Euclidean distance
@@ -97,8 +130,19 @@ def laplacian_score(X, k=5):
 
 
 def LS_selection(data_array, threshold, k = 5, verbose = 0):
-    '''Laplacian score selection'''
-    # Compute Laplacian scores
+    """
+    Selects features based on Laplacian Score.
+
+    Parameters:
+        data_array (numpy.ndarray): The dataset to process.
+        threshold (float): The threshold for feature selection.
+        k (int): Number of neighbors for the KNN graph.
+        verbose (int): Controls the verbosity of the function.
+
+    Returns:
+        list: A list of boolean values indicating selected features.
+    """
+
     scores = laplacian_score(data_array, k)
 
     if(verbose):
@@ -123,6 +167,17 @@ def LS_selection(data_array, threshold, k = 5, verbose = 0):
 
 
 def expression_selection(data_array, threshold, verbose = 0):
+    """
+    Selects features based on gene expression levels.
+
+    Parameters:
+        data_array (numpy.ndarray): The dataset to process.
+        threshold (float): The threshold for feature selection.
+        verbose (int): Controls the verbosity of the function.
+
+    Returns:
+        list: A list of boolean values indicating selected features.
+    """
     expr = np.count_nonzero(data_array, axis = 0)/data_array.shape[0]    
     if(verbose):
         print("min expression level",min(expr))
@@ -145,7 +200,19 @@ def expression_selection(data_array, threshold, verbose = 0):
     return gene_selected
 
 def LASSO_selection(data_array, labels, sgdc_params = None, class_balancing = None):
+    """
+    Selects features using LASSO regression.
 
+    Parameters:
+        data_array (numpy.ndarray): The dataset to process.
+        labels (numpy.ndarray): The labels associated with the data.
+        sgdc_params (dict, optional): Parameters for the SGDClassifier.
+        class_balancing (str, optional): Method for class balancing.
+
+    Returns:
+        list: A list of boolean values indicating selected features.
+    """
+    
     ###########################################
     ############## normalization ##############
     ###########################################

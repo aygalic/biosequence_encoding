@@ -1,3 +1,32 @@
+"""
+This module is designed to generate datasets for genomic, transcriptomic, and specialized dataset (such as BRCA). 
+It provides functionalities to process and filter data files, perform various feature selections, and format datasets for further analysis.
+
+Functions in this module allow loading of patient data, retrieval of gene names, metadata processing, and dataset-specific processing. 
+This includes options for sub-sampling, phase retention, numerical and logical feature selection, as well as data normalization.
+
+Key Functions:
+    - load_patient_data: Loads patient data from a file.
+    - get_gene_names_from_file: Retrieves gene names from a file.
+    - load_metadata: Loads metadata from a specified file.
+    - filter_entries_by_phase: Filters file entries based on study phases.
+    - retrive_position: Retrieves genomic positions for gene names.
+    - generate_dataset: Generates a dataset with specified parameters for genomic, transcriptomic, or BRCA analysis.
+
+The module uses pandas for data handling and sklearn for normalization purposes. It also employs the mygene library for gene symbol translation and genomic position retrieval.
+
+Example:
+    To generate a genomic dataset:
+        dataset, metadata = generate_dataset('genomic', path='path_to_data', metadata_path='path_to_metadata')
+
+Dependencies:
+    - pandas
+    - numpy
+    - json
+    - sklearn.preprocessing
+    - mygene
+"""
+
 from .. import config
 from . import feature_selection
 

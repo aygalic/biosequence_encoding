@@ -1,3 +1,22 @@
+"""
+This module contains a collection of visualization functions designed to aid in the analysis and interpretation of machine learning model outputs, particularly focusing on aspects like training process, latent space characteristics, and dataset features. It includes functionalities for creating various plots and animations to visually represent model performance metrics, PCA results, dataset characteristics, and reconstruction quality.
+
+Functions:
+
+- `callback_viz`: Creates a multi-faceted visualization during model training callbacks, featuring training loss, heatmaps, and PCA scatter plots.
+
+- `post_training_viz`: Generates comprehensive visualizations after model training, including PCA scatter plots, heatmaps of original data, encoded space, reconstructions, and training loss.
+
+- `post_training_animation`: Produces an animation to visualize the evolution of PCA results over the course of training epochs.
+
+- `dataset_plot`: Plots the entire dataset as a heatmap and provides a kernel density estimation plot for the total gene expression, facilitating an understanding of dataset-wide gene expression patterns.
+
+These functions are intended to provide intuitive and informative visual cues that help in assessing model behavior and performance, understanding data distributions, and identifying key characteristics of the latent space and reconstructed outputs.
+
+Typical use cases include monitoring model training progress, evaluating model performance, and exploring data characteristics for insights that guide further model development and refinement.
+"""
+
+
 from .helpers import encode_recon_dataset
 
 import matplotlib.pyplot as plt
@@ -16,7 +35,19 @@ from IPython.display import HTML
 
 # new plots for the pytorch refacto
 def callback_viz(pca_result, encoded_set, stack, loss_hist, labels):
+    """
+    Generates a 1x4 subplot visualization during model training callbacks.
 
+    Args:
+        pca_result (numpy.ndarray): PCA results for plotting.
+        encoded_set (numpy.ndarray): Encoded dataset for heat map visualization.
+        stack (numpy.ndarray): Stacked array of an observation and its reconstruction.
+        loss_hist (list): History of training loss values.
+        labels (list): Labels for data points, used in PCA scatter plot.
+
+    Displays:
+        A figure with four subplots: training loss, heatmap of samples, heatmap of the entire encoded dataset, and a PCA scatter plot.
+    """
     # prepping a 1x4 plot to monitor the model through training
     fig, axs = plt.subplots(1, 4, figsize=(12, 3))
 
@@ -49,7 +80,20 @@ def callback_viz(pca_result, encoded_set, stack, loss_hist, labels):
 
 
 def post_training_viz(data, dataloader, model, DEVICE, loss_hist, labels):
+    """
+    Generates 2x3 visualizations after model training, including PCA, heatmaps, and loss plots.
 
+    Args:
+        data (numpy.ndarray): Original dataset.
+        dataloader (DataLoader): DataLoader object for the dataset.
+        model (torch.nn.Module): Trained model for encoding and reconstruction.
+        DEVICE (torch.device): Device on which the model is running.
+        loss_hist (list): History of training loss values.
+        labels (list): Labels for data points, used in PCA scatter plot.
+
+    Displays:
+        A figure with six subplots: two rows with training loss plot, heatmaps of the original dataset, encoded space, reconstruction, and a PCA scatter plot.
+    """
     encode_out, reconstruction_out = encode_recon_dataset(dataloader, model, DEVICE)
 
     # PCA of the latent space
@@ -115,6 +159,16 @@ def post_training_viz(data, dataloader, model, DEVICE, loss_hist, labels):
 
 
 def post_training_animation(monitor, metadata):
+    """
+    Creates an animation showing the evolution of PCA results over training epochs.
+
+    Args:
+        monitor (Monitor): Monitor object containing PCA results for each epoch.
+        metadata (dict): Metadata containing labels for the data points.
+
+    Returns:
+        HTML: An HTML representation of the animation for displaying in Jupyter notebooks.
+    """
     fig, ax = plt.subplots()
     # Define an update function for the animation
     def update(frame):
@@ -142,9 +196,18 @@ def post_training_animation(monitor, metadata):
 
 
 
-# this function is used in the dataset analysis. it plots the whole dataset as a heatmap, 
-# as well as the density of total expression of genes
+
+
 def dataset_plot(data):
+    """
+    Plots the entire dataset as a heatmap and provides a density plot of the total gene expression.
+
+    Args:
+        data (numpy.ndarray): Dataset to be visualized.
+
+    Displays:
+        A figure with two subplots: a heatmap of gene expression across cells and a KDE plot showing the density of total gene expression.
+    """
     # Create a single figure with two subplots
     plt.figure(figsize=(12, 6))
     #plt.subplots(1, 2, figsize=(12, 6))

@@ -1,3 +1,29 @@
+"""
+This module defines a collection of neural network models and modules, primarily focusing on autoencoders, 
+including variational autoencoders (VAE) and vector quantized variational autoencoders (VQ-VAE), along with 
+additional attention mechanisms. The models are implemented using PyTorch.
+
+Classes:
+- `VectorQuantizer`: Implements the vector quantization mechanism used in VQ-VAE.
+- `VectorQuantizerEMA`: Vector quantizer with Exponential Moving Average, used in VQ-VAE.
+- `ResidualStack`: A residual stack module for building deep neural networks.
+- `vq_conversion`: A linear conversion layer for VQ-VAE.
+- `vq_pre_residual_stack_decoder`: Preprocessing layer before residual stacking in VQ-VAE decoder.
+- `MultiHeadSelfAttention`: Implements multi-head self-attention using PyTorch's TransformerEncoder.
+- `AttentionModule`: Basic attention module for feature weighting.
+- `SelfAttention`: Custom self-attention mechanism for sequence data.
+- `Autoencoder`: A flexible autoencoder class supporting various configurations including VAE, VQ-VAE, 
+  convolutional layers, and attention mechanisms.
+
+The module provides flexibility to construct various types of autoencoders with different architectures 
+and capabilities, suitable for a range of tasks from basic autoencoding to more complex generative modeling.
+Each class is equipped with forward methods for defining the data flow through the network.
+
+Example Usage:
+    model = Autoencoder(shape=input_shape, latent_dim=64, variational='VAE')
+    output = model(input_data)
+"""
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

@@ -1,3 +1,31 @@
+"""
+    Implements a genetic algorithm for optimizing parameters in machine learning models.
+
+    This class manages a population of parameter sets (individuals), evolving them over generations 
+    to optimize a fitness metric evaluated through experiments.
+
+    Attributes:
+        search_param (dict): Parameters related to the genetic algorithm's operation.
+        data_param (dict): Parameters for the dataset used in the experiment.
+        model_param (dict): Parameters for the model used in the experiment.
+        dynamic_params (dict): Parameters that are subject to mutation.
+        initial_population (list): The initial set of individuals for the genetic algorithm.
+        alt_data_param (dict, optional): Alternative dataset parameters for additional testing.
+        best_performer (dict): The best performing individual so far.
+        best_performer_metric (float): The metric score of the best performer.
+        current_generation (int): The current generation count in the algorithm.
+        performance_tracker (list): Tracks the best performance in each generation.
+        n_iter (int): Counter for the number of iterations.
+
+    Methods:
+        add_alternative_dataset: Adds alternative dataset parameters for testing.
+        calculate_fitness: Evaluates and returns the fitness of an individual.
+        select_parents: Selects two parents from the population based on fitness.
+        crossover: Creates a new individual by combining attributes of two parents.
+        mutate: Applies mutation to an individual's parameters.
+        run: Executes the genetic algorithm for the specified number of generations.
+"""
+
 from . import experiment
 import random
 import torch
@@ -25,11 +53,28 @@ class genetic_search:
         self.n_iter = 0
         
     def add_alternative_dataset(self, alt_data_param):
+        """
+        Adds alternative dataset parameters for additional testing during the fitness evaluation.
+
+        Args:
+            alt_data_param (dict): Parameters for the alternative dataset.
+        """
         self.alt_data_param = alt_data_param
 
 
     def calculate_fitness(self, individual):
-        
+        """
+        Evaluates and returns the fitness of an individual based on an experiment.
+
+        Fitness is determined by running an experiment with the individual's parameters and 
+        measuring its performance.
+
+        Args:
+            individual (dict): A set of parameters representing an individual in the population.
+
+        Returns:
+            float: The fitness metric of the individual.
+        """
         e = experiment.Experiment(data_param=self.data_param, model_param=individual)
         e.run()
         metric = e.metric
@@ -68,11 +113,17 @@ class genetic_search:
         return metric
 
     def select_parents(self, population):
-        # Assuming your population is a list of individuals and 
-        # you can retrieve the fitness of each individual, possibly through a function call.
+        """
+        Selects two parents from the population based on their fitness.
 
-        # First, sort the population by fitness. I'm assuming higher fitness is better.
-        # If your fitness measure works the other way, you can reverse the sort.
+        Args:
+            population (list): The current population of individuals.
+
+        Returns:
+            tuple: A tuple of two individuals selected as parents.
+        """
+
+        # First, sort the population by fitness. Assuming higher fitness is better.
         sorted_population = sorted(population, key=self.calculate_fitness, reverse=True)
 
         # Now, select the two fittest individuals. If you prefer, you could also add some
@@ -85,6 +136,16 @@ class genetic_search:
 
     # most basic crossover possible
     def crossover(self, parent1, parent2):
+        """
+        Creates a new individual by combining attributes of two parents.
+
+        Args:
+            parent1 (dict): The first parent's parameters.
+            parent2 (dict): The second parent's parameters.
+
+        Returns:
+            dict: A new individual created from the parents.
+        """
         child = {}
         for key in parent1.keys():
             child[key] = parent1[key] if random.choice([True, False]) else parent2[key]
@@ -92,6 +153,17 @@ class genetic_search:
         return child
 
     def mutate(self, individual):
+        """
+        Applies mutation to an individual's parameters.
+
+        Selects a parameter at random and changes its value, based on available choices in dynamic_params.
+
+        Args:
+            individual (dict): The individual to be mutated.
+
+        Returns:
+            dict: The mutated individual.
+        """
         # Choose a parameter to mutate
         mutation_param_key = random.choice(list(self.dynamic_params.keys()))
             
@@ -132,6 +204,12 @@ class genetic_search:
         return mutated_individual
     
     def run(self):
+        """
+        Executes the genetic algorithm, evolving the population over specified generations.
+
+        In each generation, selects parents, performs crossover and mutation, 
+        and updates the population for the next generation.
+        """
         self.current_generation = 0
         population = self.initial_population
 
