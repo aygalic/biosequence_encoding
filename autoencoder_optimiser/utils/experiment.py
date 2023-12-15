@@ -37,10 +37,10 @@ import pickle
 
 sys.path.append('..')
 #from utils import data_handler
-from src.utils import data_handler
-from src import config
-from src.utils import visualisation, benchmark, helpers, monitoring
-from src.models import model
+from . import data_handler
+from .. import config
+from . import visualisation, helpers, monitoring
+from ..models import model
 
 
 # data manipulation
@@ -168,7 +168,7 @@ class Experiment():
         # here we need to capture the shape of the input before building the model.
         self.build_model(shape = self.input_shape, model_param = self.model_param)
         self.optimizer = optim.Adam(self.model.parameters(), lr=1e-4, amsgrad=False)
-        self.data_set, self.dataloader = helpers.format_dataset(self.data, self.metadata)
+        self.data_set, self.dataloader = helpers.format_dataset(self.data)
 
         self.monitor = monitoring.Monitor(self.model, self.dataloader, label = self.metadata["subtypes"], verbose= verbose - 1)
         self.callbacks = self.monitor.callbacks

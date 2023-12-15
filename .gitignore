@@ -10,5 +10,6 @@ external_aproach/VQ_VAE_disc
 *.csv
 external_aproach/VQ_2_disc
 *.mp4
-*.gif
 config_custom.json
+# Egg-info directory
+*.egg-info/

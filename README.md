@@ -66,4 +66,6 @@ The folder `thesis_related` encapsulate all the work done around this scientific
 You can Find example for training in the `model_training` folder, where both Genetic algorithm and standalone approach are used.
 
 
+Here you can see the result of a Genetic search over the BRCA dataset. This specific animation is used to show the overfitting issue and the need for the number of epoch to be a criteria of selection.
 
+![Alt text](img/animation.gif)
