@@ -37,7 +37,7 @@ import pickle
 
 sys.path.append('..')
 #from utils import data_handler
-from . import data_handler
+from ..data import data_handler
 from .. import config
 from . import visualisation, helpers, monitoring
 from ..models import model

@@ -39,12 +39,7 @@ It assumes the existence of certain methods and attributes in the model being mo
 
 """
 
-from .. import config
-from .helpers import encode_recon_dataset
-from .visualisation import callback_viz
-# ... rest of the imports ...
 
-# ... rest of the code ...
 
 
 from .. import config
@@ -68,8 +63,8 @@ from sklearn.metrics import confusion_matrix, adjusted_rand_score, normalized_mu
 from sklearn.metrics import fowlkes_mallows_score, homogeneity_completeness_v_measure, silhouette_score
 
 
-
-DEVICE = torch.device(config["DEVICE"])
+from .. import DEVICE
+#DEVICE = torch.device(config["DEVICE"])
 
 
 class Monitor():

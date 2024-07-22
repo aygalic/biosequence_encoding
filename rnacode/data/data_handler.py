@@ -27,8 +27,7 @@ Dependencies:
     - mygene
 """
 
-from .. import config
-from . import feature_selection
+from ..utils import feature_selection
 
 import os
 import pandas as pd
@@ -39,19 +38,16 @@ from sklearn.preprocessing import normalize, MinMaxScaler
 
 from typing import Optional, List
 
+
+
+from . import BRCA_DATA_PATH, BRCA_METADATA_FILE, BRCA_SUBTYPES_FILE
+
 # for translation of gene symbols
 import mygene
 mg = mygene.MyGeneInfo()
 
-# default path of the folder containing the salmon files
-PPMI_DATA_PATH      = config["PPMI_DATA_PATH"]
-PPMI_METADATA_PATH  = config["PPMI_METADATA_PATH"]
- 
-CANCER_DATA_PATH    = config["CANCER_DATA_PATH"] # now unsupported 
 
-BRCA_DATA_PATH      = config["BRCA_DATA_PATH"]
-BRCA_METADATA_PATH  = config["BRCA_METADATA_PATH"]
-BRCA_SUBTYPES_PATH  = config["BRCA_SUBTYPES_PATH"]
+
 
 
 def load_patient_data(filename: str, header: int = 0) -> pd.Series:
@@ -167,12 +163,13 @@ def retrive_position(names, drop_na=False, verbose=0):
 
 
 
-def generate_dataset(dataset_type, path = None , metadata_path = None, subtypes_table = None,
-                     subsample=None, retain_phases=None, MAD_threshold=None, LS_threshold=None, 
-                     expression_threshold=None, normalization=False, time_points=["BL"], 
-                    keep_only_protein_coding = None, log1p=True, min_max=True, keep_only_symbols=False, 
-                     drop_ambiguous_pos=False, sort_symbols=False, select_subtypes=None, 
-                     verbose=0):
+def generate_dataset(
+        dataset_type, path = None , metadata_path = None, subtypes_table = None,
+        subsample=None, retain_phases=None, MAD_threshold=None, LS_threshold=None,
+        expression_threshold=None, normalization=False, time_points=["BL"],
+        keep_only_protein_coding = None, log1p=True, min_max=True, keep_only_symbols=False,
+        drop_ambiguous_pos=False, sort_symbols=False, select_subtypes=None,
+        verbose=0):
     
     """
     Generate a genomic or transcriptomic dataset from specified files, applying various
@@ -212,8 +209,8 @@ def generate_dataset(dataset_type, path = None , metadata_path = None, subtypes_
     if dataset_type in ["transcriptomic", "genomic"] :
         # Rooting path
         if path is None:
-            path = PPMI_DATA_PATH 
-            metadata_path = PPMI_METADATA_PATH
+            path = BRCA_DATA_PATH 
+            metadata_path = BRCA_METADATA_FILE
 
         # we load metadata, so we can have access to additional information not included in the filename
         meta_data = pd.read_excel(metadata_path, header=1, usecols=range(1, 10))
@@ -224,11 +221,11 @@ def generate_dataset(dataset_type, path = None , metadata_path = None, subtypes_
     elif dataset_type == 'BRCA':
         if path is None:
             path = BRCA_DATA_PATH
-            metadata_path = BRCA_METADATA_PATH
-            subtypes_table = BRCA_SUBTYPES_PATH # provided by supervisor
+            metadata_path = BRCA_METADATA_FILE
+            subtypes_table = BRCA_SUBTYPES_FILE # provided by supervisor
 
-        f = open(metadata_path)
-        meta_data = json.load(f)
+        with open(metadata_path, 'r', encoding='utf-8') as f:
+            meta_data = json.load(f)
         data_array_header = 5
         dataset_of_interest = "augmented_star_gene_counts"
 
@@ -242,11 +239,15 @@ def generate_dataset(dataset_type, path = None , metadata_path = None, subtypes_
         entries = [os.path.join(path, e) for e in entries]
     if dataset_type == 'BRCA':
         # entries are contained into their own subdir.
-        entries = [[path+"/"+entry+"/"+file for file in os.listdir(path+"/"+entry)] for entry in entries if os.path.isdir(path+"/"+entry)]
-        entries = [[e for e in entries if ".tsv" in e ][0] for entries in entries]
+        
+        entries = [entry for entry in entries if os.path.isdir(path / entry)]
+        entries = [[path / entry / file for file in os.listdir(path / entry)] for entry in entries]
+        entries = [[entry for entry in files if entry.suffix== ".tsv" ] for files in entries]
+        entries = [entry[0] for entry in entries]
+
 
     # filtering for files that are actually the correct entries by filename
-    entries = [e for e in entries if dataset_of_interest in e]
+    entries = [e for e in entries if dataset_of_interest in e.stem]
     entries.sort()
 
     # taking subsample for quicker processing
@@ -306,33 +307,27 @@ def generate_dataset(dataset_type, path = None , metadata_path = None, subtypes_
         # Step 1: Construct a mapping from file_name to entity_submitter_id
         file_to_id = {}
         for item in meta_data:
-            file_name = item["file_name"]
+            file_name = item["file_name"][:-4] # remove the .tsv extension
             entity_id = item["associated_entities"][0]["entity_submitter_id"]
             file_to_id[file_name] = entity_id
 
         # Step 2: For each file name in metadata["sequence_names"], find its corresponding entity_submitter_id
         patient_id = []
         for file_name in entries:
-            # Extract the last part of the path which corresponds to the file name
-            last_part = file_name.split('/')[-1]
-            if last_part in file_to_id:
-                patient_id.append(file_to_id[last_part])
-            else:
-                patient_id.append(None)  # or some default value indicating no match found
+            if file_name.stem in file_to_id.keys():
+                patient_id.append(file_to_id[file_name.stem])
+
+        breakpoint()
 
         subtypes_table = pd.read_csv(subtypes_table, index_col= 0)
 
         subtypes_dict = {str(index)[:12]: subtype for index, subtype in subtypes_table.itertuples()}
         subtypes = [subtypes_dict.get(identifier[:12], None) for identifier in patient_id]
 
-
-
-
     ###########################################
     ####### Numerical feature selection  ######
     ###########################################
     
-
     # Load data and perform dataset-specific processing
     if dataset_type in['genomic','transcriptomic'] :
         names = get_gene_names_from_file(os.path.join(path,entries[0])).iloc[:,0]

@@ -28,7 +28,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math 
-from einops import rearrange
 
 from torch.nn import TransformerEncoder, TransformerEncoderLayer
 class VectorQuantizer(nn.Module):
