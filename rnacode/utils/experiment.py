@@ -30,7 +30,6 @@ Note:
 """
 
 
-from .. import config
 
 import sys
 import pickle
@@ -38,10 +37,10 @@ import pickle
 sys.path.append('..')
 #from utils import data_handler
 from ..data import data_handler
-from .. import config
 from . import visualisation, helpers, monitoring
 from ..models import model
 
+from .. import DEVICE
 
 # data manipulation
 import pandas as pd

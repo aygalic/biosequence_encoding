@@ -42,7 +42,6 @@ It assumes the existence of certain methods and attributes in the model being mo
 
 
 
-from .. import config
 from .helpers import encode_recon_dataset
 from .visualisation import callback_viz
 from . import helpers
@@ -64,7 +63,6 @@ from sklearn.metrics import fowlkes_mallows_score, homogeneity_completeness_v_me
 
 
 from .. import DEVICE
-#DEVICE = torch.device(config["DEVICE"])
 
 
 class Monitor():
@@ -81,7 +79,7 @@ class Monitor():
         #self.checkpoints = [math.floor(x) for x in np.logspace(1,4)] # for 10K epoch
         self.checkpoints = [math.floor(x) for x in np.logspace(1,3)] # for 1K epoch
         self.feature_num = None
-        self.DEVICE = torch.device(config["DEVICE"])
+        self.DEVICE = DEVICE
         self.train_res_recon_error = []
         self.perplexities = []
         self.frames = []

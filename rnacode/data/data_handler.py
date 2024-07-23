@@ -27,23 +27,19 @@ Dependencies:
     - mygene
 """
 
-from ..utils import feature_selection
-
-import os
-import pandas as pd
-import numpy as np
 import json
-
-from sklearn.preprocessing import normalize, MinMaxScaler
-
-from typing import Optional, List
-
-
-
-from . import BRCA_DATA_PATH, BRCA_METADATA_FILE, BRCA_SUBTYPES_FILE
+import os
+from typing import List, Optional
 
 # for translation of gene symbols
 import mygene
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler, normalize
+
+from ..utils import feature_selection
+from . import BRCA_DATA_PATH, BRCA_METADATA_FILE, BRCA_SUBTYPES_FILE
+
 mg = mygene.MyGeneInfo()
 
 
