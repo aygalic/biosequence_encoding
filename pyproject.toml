@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "rna_code"
+version = "0.1.0"
+description = "Transcriptomics analysis pipeline, from data to biological insights."
+authors = ["aygalic <aygalic@hotmail.fr>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+torch = "^2.4.0"
+numpy = "^2.1.1"
+pandas = "^2.2.2"
+matplotlib = "^3.9.2"
+seaborn = "^0.13.2"
+scikit-learn = "^1.5.1"
+scipy = "^1.14.1"
+tqdm = "^4.66.5"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
