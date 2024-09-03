@@ -18,3 +18,5 @@ config_custom.json
 /data/**.pyc
 __pycache__
 .venv
+/data/*
+!/data/.gitkeep
