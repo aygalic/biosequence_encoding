@@ -23,215 +23,16 @@ Example Usage:
     model = Autoencoder(shape=input_shape, latent_dim=64, variational='VAE')
     output = model(input_data)
 """
-
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import math 
-
 from torch.nn import TransformerEncoder, TransformerEncoderLayer
-class VectorQuantizer(nn.Module):
-    def __init__(self, num_embeddings, embedding_dim, commitment_cost):
-        super(VectorQuantizer, self).__init__()
-        
-        self._embedding_dim = embedding_dim
-        self._num_embeddings = num_embeddings
-        
-        self._embedding = nn.Embedding(self._num_embeddings, self._embedding_dim)
-        self._embedding.weight.data.uniform_(-1/self._num_embeddings, 1/self._num_embeddings)
-        self._commitment_cost = commitment_cost
 
-    def forward(self, inputs):
-        # convert inputs from BCHW -> BHWC
-        #inputs = rearrange(inputs, 'b c l -> b l c')
-        inputs = inputs.contiguous()
-        #inputs = inputs.permute(0, 2, 1).contiguous()
-        input_shape = inputs.shape
-        
-        # Flatten input
-        flat_input = inputs.view(-1, self._embedding_dim)
-        
-        # Calculate distances
-        distances = (torch.sum(flat_input**2, dim=1, keepdim=True) 
-                    + torch.sum(self._embedding.weight**2, dim=1)
-                    - 2 * torch.matmul(flat_input, self._embedding.weight.t()))
-            
-        # Encoding
-        encoding_indices = torch.argmin(distances, dim=1).unsqueeze(1)
-        encodings = torch.zeros(encoding_indices.shape[0], self._num_embeddings, device=inputs.device)
-        encodings.scatter_(1, encoding_indices, 1)
-        
-        # Quantize and unflatten
-        quantized = torch.matmul(encodings, self._embedding.weight).view(input_shape)
-        
-        # Loss
-        e_latent_loss = F.mse_loss(quantized.detach(), inputs)
-        q_latent_loss = F.mse_loss(quantized, inputs.detach())
-        loss = q_latent_loss + self._commitment_cost * e_latent_loss
-        
-        quantized = inputs + (quantized - inputs).detach()
-        #quantized = rearrange(quantized, 'b c l -> b l c')
-        quantized = quantized.contiguous()
-        
-        avg_probs = torch.mean(encodings, dim=0)
-        perplexity = torch.exp(-torch.sum(avg_probs * torch.log(avg_probs + 1e-10)))
-        
-        # convert quantized from BHWC -> BCHW
-        #return loss, quantized.permute(0, 3, 1, 2).contiguous(), perplexity, encodings
-        return loss, quantized, perplexity, encodings
-    
-class VectorQuantizerEMA(nn.Module):
-    def __init__(self, num_embeddings, embedding_dim, commitment_cost, decay, epsilon=1e-5):
-        super(VectorQuantizerEMA, self).__init__()
-        
-        self._embedding_dim = embedding_dim
-        self._num_embeddings = num_embeddings
-        
-        self._embedding = nn.Embedding(self._num_embeddings, self._embedding_dim)
-        self._embedding.weight.data.normal_()
-        self._commitment_cost = commitment_cost
-        
-        self.register_buffer('_ema_cluster_size', torch.zeros(num_embeddings))
-        self._ema_w = nn.Parameter(torch.Tensor(num_embeddings, self._embedding_dim))
-        self._ema_w.data.normal_()
-        
-        self._decay = decay
-        self._epsilon = epsilon
-
-    def forward(self, inputs):
-        # convert inputs from BCHW -> BHWC
-        #inputs = rearrange(inputs, 'b c l -> b l c')
-        inputs = inputs.contiguous()
-        #inputs = inputs.permute(0, 2, 1).contiguous()
-        input_shape = inputs.shape
-        
-        # Flatten input
-        flat_input = inputs.view(-1, self._embedding_dim)
-        
-        # Calculate distances
-        distances = (torch.sum(flat_input**2, dim=1, keepdim=True) 
-                    + torch.sum(self._embedding.weight**2, dim=1)
-                    - 2 * torch.matmul(flat_input, self._embedding.weight.t()))
-            
-        # Encoding
-        encoding_indices = torch.argmin(distances, dim=1).unsqueeze(1)
-        encodings = torch.zeros(encoding_indices.shape[0], self._num_embeddings, device=inputs.device)
-        encodings.scatter_(1, encoding_indices, 1)
-        
-        # Quantize and unflatten
-        quantized = torch.matmul(encodings, self._embedding.weight).view(input_shape)
-        
-        # Use EMA to update the embedding vectors
-        if self.training:
-            self._ema_cluster_size = self._ema_cluster_size * self._decay + \
-                                     (1 - self._decay) * torch.sum(encodings, 0)
-            
-            # Laplace smoothing of the cluster size
-            n = torch.sum(self._ema_cluster_size.data)
-            self._ema_cluster_size = (
-                (self._ema_cluster_size + self._epsilon)
-                / (n + self._num_embeddings * self._epsilon) * n)
-            
-            dw = torch.matmul(encodings.t(), flat_input)
-            self._ema_w = nn.Parameter(self._ema_w * self._decay + (1 - self._decay) * dw)
-            
-            self._embedding.weight = nn.Parameter(self._ema_w / self._ema_cluster_size.unsqueeze(1))
-        
-        # Loss
-        e_latent_loss = F.mse_loss(quantized.detach(), inputs)
-        loss = self._commitment_cost * e_latent_loss
-        
-        # Straight Through Estimator
-        quantized = inputs + (quantized - inputs).detach()
-        #quantized = rearrange(quantized, 'b c l -> b l c')
-        quantized = quantized.contiguous()
-        
-        avg_probs = torch.mean(encodings, dim=0)
-        perplexity = torch.exp(-torch.sum(avg_probs * torch.log(avg_probs + 1e-10)))
-               
-        # convert quantized from BHWC -> BCHW
-        #return loss, quantized.permute(0, 3, 1, 2).contiguous(), perplexity, encodings
-        return loss, quantized, perplexity, encodings   
-    
-class ResidualStack(nn.Module):
-    def __init__(self, encoder_dim):
-        super(ResidualStack, self).__init__()
-        
-        self.block = nn.Sequential(
-            nn.Linear(encoder_dim, 64),
-            nn.ReLU(True),
-            nn.Linear(64, encoder_dim),
-            nn.ReLU()
-        )
-    
-    def forward(self, x):
-        return x + self.block(x)
-    
-class vq_conversion(nn.Module):
-    def __init__(self, in_feature, out_features):
-        super(vq_conversion, self).__init__()
-
-        self.layer = nn.Sequential(
-            nn.Linear(in_feature, out_features)
-        )
-
-    def forward(self, x):
-        return self.layer(x)
-    
-
-class vq_pre_residual_stack_decoder(nn.Module):
-    def __init__(self, num_embeddings, encoder_dim, dropout):
-        super(vq_pre_residual_stack_decoder, self).__init__()
-
-        self.layer = nn.Sequential(
-            nn.Linear(num_embeddings, encoder_dim),
-            nn.GELU(),
-            nn.Dropout(dropout)
-            )
-            
-    def forward(self, x):
-        return self.layer(x)
-
-class MultiHeadSelfAttention(nn.Module):
-    def __init__(self, feature_size, num_heads, dropout):
-        super(MultiHeadSelfAttention, self).__init__()
-
-        self.feature_size = feature_size  # The input size (dimension) of each time step of each sequence
-        self.num_heads = num_heads  # Number of attention heads
-        self.dropout = dropout  # Dropout rate
-
-        # Define the encoder layer using PyTorch's TransformerEncoderLayer
-        self.encoder_layer = TransformerEncoderLayer(
-            d_model=self.feature_size,  # The feature size
-            nhead=self.num_heads,  # Number of heads in the multiheadattention models
-            dropout=self.dropout  # Dropout rate
-        )
-
-        self.transformer_encoder = TransformerEncoder(self.encoder_layer, num_layers=1)  # We use one layer here for simplicity
-
-    def forward(self, x):
-        """
-        Forward pass of the multi-head attention layer.
-
-        Arguments:
-        x -- A tensor of shape (batch_size, sequence_length, feature_size)
-
-        Returns:
-        out -- Multi-head self-attention applied output
-        """
-        # Transformer expects inputs of shape (sequence_length, batch_size, feature_size)
-        x = x.permute(1, 0, 2)
-
-        # Apply the transformer encoder
-        out = self.transformer_encoder(x)
-
-        # Return output to the original shape (batch_size, sequence_length, feature_size)
-        out = out.permute(1, 0, 2)
-        
-        return out
-
-
-
+from .self_attention import SelfAttention
+from .vector_quantizer import VectorQuantizer
+from .vector_quantizer_EMA import VectorQuantizerEMA
+from .vq_conversion import vq_conversion
+from .vq_pre_residual_stack_decoder import vq_pre_residual_stack_decoder
+from .multi_head_self_attention import MultiHeadSelfAttention
 
 class AttentionModule(nn.Module):
     def __init__(self, in_features):
@@ -247,32 +48,6 @@ class AttentionModule(nn.Module):
         attention_weights = self.attention(x)
         return attention_weights * x
     
-class SelfAttention(nn.Module):
-    def __init__(self, sequence_length, attention_size, attention_dropout = 0.2):
-        super(SelfAttention, self).__init__()
-        self.sequence_length = sequence_length
-        self.attention_size = attention_size
-        self.attention_dropout = attention_dropout
-        
-        self.query_layer = nn.Linear(sequence_length, attention_size, bias=False)
-        self.key_layer = nn.Linear(sequence_length, attention_size, bias=False)
-        self.value_layer = nn.Linear(sequence_length, sequence_length, bias=False)
-
-    def forward(self, x):
-        # x shape: (batch_size, 1, sequence_length)
-        query = self.query_layer(x)
-        key = self.key_layer(x)
-        value = self.value_layer(x)
-        
-        # Calculate attention scores
-        scores = torch.matmul(query, key.transpose(-2, -1)) / math.sqrt(self.attention_size)
-        attention = F.softmax(scores, dim=-1)
-        attention = F.dropout(attention, self.attention_dropout)
-        # Multiply scores with value layer
-        attended_values = torch.matmul(attention, value)
-        return attended_values
-    
-
 
 
 class Autoencoder(nn.Module):
@@ -339,10 +114,8 @@ class Autoencoder(nn.Module):
         self.variational = variational
         self.num_embeddings = num_embeddings
         self.decay = decay
-        
 
-
-        if self.transformer: 
+        if self.transformer:
 
             self.encoder_layers = TransformerEncoderLayer(d_model=self.input_shape, nhead=self.num_heads, dropout=self.dropout)
             self.encoder = nn.Sequential( 
@@ -533,7 +306,3 @@ class Autoencoder(nn.Module):
             z = self.encode(x)
             x_reconstructed = self.decode(z)
             return x_reconstructed
-    
-
-
-
