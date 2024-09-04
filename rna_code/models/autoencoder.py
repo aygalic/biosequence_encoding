@@ -1,6 +1,7 @@
 """
-This module defines a collection of neural network models and modules, primarily focusing on autoencoders, 
-including variational autoencoders (VAE) and vector quantized variational autoencoders (VQ-VAE), along with 
+This module defines a collection of neural network models and modules,
+primarily focusing on autoencoders, including variational autoencoders (VAE)
+and vector quantized variational autoencoders (VQ-VAE), along with
 additional attention mechanisms. The models are implemented using PyTorch.
 
 Classes:
@@ -12,12 +13,13 @@ Classes:
 - `MultiHeadSelfAttention`: Implements multi-head self-attention using PyTorch's TransformerEncoder.
 - `AttentionModule`: Basic attention module for feature weighting.
 - `SelfAttention`: Custom self-attention mechanism for sequence data.
-- `Autoencoder`: A flexible autoencoder class supporting various configurations including VAE, VQ-VAE, 
-  convolutional layers, and attention mechanisms.
+- `Autoencoder`: A flexible autoencoder class supporting various configurations including VAE,
+VQ-VAE, convolutional layers, and attention mechanisms.
 
-The module provides flexibility to construct various types of autoencoders with different architectures 
-and capabilities, suitable for a range of tasks from basic autoencoding to more complex generative modeling.
-Each class is equipped with forward methods for defining the data flow through the network.
+The module provides flexibility to construct various types of autoencoders with
+different architectures and capabilities, suitable for a range of tasks from basic
+auto-encoding to more complex generative modeling. Each class is equipped with
+forward methods for defining the data flow through the network.
 
 Example Usage:
     model = Autoencoder(shape=input_shape, latent_dim=64, variational='VAE')
@@ -27,12 +29,12 @@ import torch
 import torch.nn as nn
 from torch.nn import TransformerEncoder, TransformerEncoderLayer
 
+from .residual_stack import ResidualStack
 from .self_attention import SelfAttention
 from .vector_quantizer import VectorQuantizer
 from .vector_quantizer_EMA import VectorQuantizerEMA
 from .vq_conversion import vq_conversion
 from .vq_pre_residual_stack_decoder import vq_pre_residual_stack_decoder
-from .multi_head_self_attention import MultiHeadSelfAttention
 
 class AttentionModule(nn.Module):
     def __init__(self, in_features):
@@ -47,7 +49,6 @@ class AttentionModule(nn.Module):
     def forward(self, x):
         attention_weights = self.attention(x)
         return attention_weights * x
-    
 
 
 class Autoencoder(nn.Module):
@@ -71,14 +72,14 @@ class Autoencoder(nn.Module):
     
 
     def __init__(
-            self, 
-            shape, 
-            latent_dim=64, 
-            dropout = 0.1, 
-            slope = 0.05, 
+            self,
+            shape,
+            latent_dim=64,
+            dropout = 0.1,
+            slope = 0.05,
             num_layers = 3,
-            variational = None, 
-            convolution = False, 
+            variational = None,
+            convolution = False,
             transformer = False,
             attention_size = 64,
             num_heads = 64,

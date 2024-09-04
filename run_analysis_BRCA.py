@@ -1,17 +1,10 @@
 import os
 import sys
 import pandas as pd
-import pickle
-
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
-
 
 
 #sys.path.append('../')
-from rnacode.utils import visualisation
-from rnacode.data import data_handler 
+from rna_code.data import data_handler
 
 
 pd.options.display.width = 1000

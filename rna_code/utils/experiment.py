@@ -38,9 +38,9 @@ sys.path.append('..')
 #from utils import data_handler
 from ..data import data_handler
 from . import visualisation, helpers, monitoring
-from ..models import model
+from ..models import autoencoder
 
-from .. import DEVICE
+from .. import DEVICE, LOGFILE
 
 # data manipulation
 import pandas as pd
@@ -52,9 +52,6 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 from tqdm import tqdm
-
-DEVICE = torch.device(config["DEVICE"])
-LOGFILE = config["LOGFILE"]
 
 
 def log_experiment(record, csv_path=LOGFILE):
@@ -111,33 +108,6 @@ class Experiment():
         build_model: Initializes the model based on input shape and model parameters.
         run: Executes the training process and logs results if specified.
     """
-    def build_dataset(self, data_param):
-        data_param["verbose"] = self.verbose - 1
-        self.data, self.metadata = data_handler.generate_dataset_BRCA(**data_param)
-        self.input_shape = len(self.metadata["feature_names"])
-        print("input shape :", self.input_shape)
-
-    def load_dataset(self, data_param):
-        with open(data_param, 'rb') as f:
-            self.data, self.metadata = pickle.load(f)
-        self.input_shape = len(self.metadata["feature_names"])
-        print("input shape :", self.input_shape)
-
-    def build_model(self, shape, model_param):
-        if "transformer" in model_param:
-            if model_param["transformer"] == True:
-                num_heads_candidate = helpers.find_primes(self.input_shape)
-                if(len(num_heads_candidate) > 1):
-                    self.model_param["num_heads"] = num_heads_candidate[-1]
-                else:
-                    self.model_param["num_heads"] = num_heads_candidate[-2]
-
-        self.model = model.Autoencoder(shape = shape, **self.model_param)
-
-    
-
-
-
 
     def __init__(self, data_param, model_param, verbose = 1):
         # basic attributes
@@ -175,6 +145,36 @@ class Experiment():
         
         # useful for VQ-VAE
         self.data_variance = np.var(self.data)
+
+        
+    def build_dataset(self, data_param):
+        data_param["verbose"] = self.verbose - 1
+        self.data, self.metadata = data_handler.generate_dataset(**data_param)
+        self.input_shape = len(self.metadata["feature_names"])
+        print("input shape :", self.input_shape)
+
+    def load_dataset(self, data_param):
+        with open(data_param, 'rb') as f:
+            self.data, self.metadata = pickle.load(f)
+        self.input_shape = len(self.metadata["feature_names"])
+        print("input shape :", self.input_shape)
+
+    def build_model(self, shape, model_param):
+        if "transformer" in model_param:
+            if model_param["transformer"] == True:
+                num_heads_candidate = helpers.find_primes(self.input_shape)
+                if(len(num_heads_candidate) > 1):
+                    self.model_param["num_heads"] = num_heads_candidate[-1]
+                else:
+                    self.model_param["num_heads"] = num_heads_candidate[-2]
+
+        self.model = autoencoder.Autoencoder(shape = shape, **self.model_param)
+
+    
+
+
+
+
 
     
         
