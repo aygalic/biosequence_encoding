@@ -9,7 +9,6 @@ Key Functions:
     - load_patient_data: Loads patient data from a file.
     - get_gene_names_from_file: Retrieves gene names from a file.
     - load_metadata: Loads metadata from a specified file.
-    - filter_entries_by_phase: Filters file entries based on study phases.
     - retrive_position: Retrieves genomic positions for gene names.
     - generate_dataset: Generates a dataset with specified parameters for genomic, transcriptomic, or BRCA analysis.
 
@@ -30,6 +29,7 @@ Dependencies:
 import json
 import os
 from typing import List, Optional
+import logging
 
 # for translation of gene symbols
 import mygene
@@ -44,7 +44,8 @@ mg = mygene.MyGeneInfo()
 
 
 
-
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 def load_patient_data(filename: str, header: int = 0) -> pd.Series:
     """
@@ -106,34 +107,6 @@ def load_metadata(metadata_path, columns=None):
     """
     return pd.read_excel(metadata_path, header=1, usecols=columns if columns else range(1, 10))
 
-def filter_entries_by_phase(entries, retain_phases, verbose = 0):
-    """
-    Filter file entries based on specified study phases.
-
-    Args:
-        entries (list): List of file entries.
-        retain_phases (str): Study phases to retain ('1', '2', 'Both', or None).
-
-    Returns:
-        list: Filtered list of entries.
-    """
-
-    if retain_phases == "1":
-        return [e for e in entries if "Phase1" in e]
-    elif retain_phases == "2":
-        return [e for e in entries if "Phase2" in e]
-    elif(retain_phases == "Both"):
-        if verbose: print("Retaining patients that are included in phases 1 & 2")
-        phase_1_ids = [p.split(".")[1] for p in  entries if "Phase1" in p]
-        phase_2_ids = [p.split(".")[1] for p in  entries if "Phase2" in p]
-        common_ids = set(phase_1_ids) & set(phase_2_ids) # set intersection
-        return [entry for entry in entries if any(f".{common_id}." in entry for common_id in common_ids)]
-    elif(retain_phases == None):
-        if verbose: print("not applying any filtering over phases")
-        return entries
-    else:
-        if verbose: print("Warning: 'retain_phases' argment wrong.") # couldn't use warning due to conflicts
-        return entries
 
 def retrive_position(names, drop_na=False, verbose=0):
     """
@@ -161,10 +134,9 @@ def retrive_position(names, drop_na=False, verbose=0):
 
 def generate_dataset(
         dataset_type, path = None , metadata_path = None, subtypes_table = None,
-        subsample=None, retain_phases=None, MAD_threshold=None, LS_threshold=None,
-        expression_threshold=None, normalization=False, time_points=["BL"],
-        keep_only_protein_coding = None, log1p=True, min_max=True, keep_only_symbols=False,
-        drop_ambiguous_pos=False, sort_symbols=False, select_subtypes=None,
+        subsample=None, MAD_threshold=None, LS_threshold=None,
+        expression_threshold=None, normalization=False,
+        keep_only_protein_coding = None, log1p=True, min_max=True, sort_symbols=False,
         verbose=0):
     
     """
@@ -201,20 +173,10 @@ def generate_dataset(
     loading data, metadata processing, feature selection, and normalization.
 
     """
+    assert dataset_type in ["BRCA"]
 
-    if dataset_type in ["transcriptomic", "genomic"] :
-        # Rooting path
-        if path is None:
-            path = BRCA_DATA_PATH 
-            metadata_path = BRCA_METADATA_FILE
 
-        # we load metadata, so we can have access to additional information not included in the filename
-        meta_data = pd.read_excel(metadata_path, header=1, usecols=range(1, 10))
-        data_array_header = 0
-        if dataset_type == 'genomic': dataset_of_interest = "genes"
-        elif dataset_type == 'transcriptomic': dataset_of_interest = "transcripts"
-
-    elif dataset_type == 'BRCA':
+    if dataset_type == 'BRCA':
         if path is None:
             path = BRCA_DATA_PATH
             metadata_path = BRCA_METADATA_FILE
@@ -230,9 +192,6 @@ def generate_dataset(
     # Loading entries names 
     entries = os.listdir(path)
 
-    # adding consistent path for each entry 
-    if dataset_type in ["transcriptomic", "genomic"] :
-        entries = [os.path.join(path, e) for e in entries]
     if dataset_type == 'BRCA':
         # entries are contained into their own subdir.
         
@@ -250,32 +209,6 @@ def generate_dataset(
     if subsample is not None: entries = entries[:subsample]
 
 
-
-    ###########################################
-    ########### filtering patients  ###########
-    ###########################################
-
-    # apply filterring for PPMI dataset
-    if dataset_type in ["transcriptomic", "genomic"] :
-        entries = filter_entries_by_phase(entries, retain_phases)
-
-        if(time_points is not None):
-            if verbose: print("retaining all patient who have at least passed the", time_points,"Visit...")
-            entries = [p for p in  entries if p.split(".")[2] in time_points] 
-
-        # sanity check : are the patient numbers actually numeric ? 
-        entries = [e for e in entries if e.split(".")[1].isnumeric() ]
-
-        # sanity check : don't load patient where some values are missing
-        Na_s =  meta_data[meta_data.isna().any(axis=1)]["Patient Number"]
-        entries = [e for e in entries if e.split(".")[1] not in str(Na_s) ]
-
-        if(select_subtypes is not None):
-            meta_data = meta_data[meta_data["Disease Status"].isin(select_subtypes)]
-            id_pd = meta_data["Patient Number"].tolist()
-            entries = [e for e in entries if int(e.split(".")[1]) in id_pd]
-
-
     ###########################################
     ############ loading patients  ############
     ###########################################
@@ -285,21 +218,12 @@ def generate_dataset(
     data_array = np.array([load_patient_data(e, header = data_array_header) for e in entries])
     if verbose: print("loaded ",len(data_array), "samples")
 
-
-
     ###########################################
     ################ subtypes  ################
     ###########################################
 
-    if dataset_type in ["transcriptomic", "genomic"] :
-        patient_id = [int(p.split(".")[1]) for p in entries]
-        # only keep metadata for selected patients
-        meta_data = meta_data.set_index('Patient Number')
-        meta_data = meta_data.reindex(index=patient_id)
-        meta_data = meta_data.reset_index()
-        subtypes = meta_data["Disease Status"]
 
-    elif dataset_type == "BRCA":
+    if dataset_type == "BRCA":
         # Step 1: Construct a mapping from file_name to entity_submitter_id
         file_to_id = {}
         for item in meta_data:
@@ -313,8 +237,6 @@ def generate_dataset(
             if file_name.stem in file_to_id.keys():
                 patient_id.append(file_to_id[file_name.stem])
 
-        breakpoint()
-
         subtypes_table = pd.read_csv(subtypes_table, index_col= 0)
 
         subtypes_dict = {str(index)[:12]: subtype for index, subtype in subtypes_table.itertuples()}
@@ -323,12 +245,9 @@ def generate_dataset(
     ###########################################
     ####### Numerical feature selection  ######
     ###########################################
-    
-    # Load data and perform dataset-specific processing
-    if dataset_type in['genomic','transcriptomic'] :
-        names = get_gene_names_from_file(os.path.join(path,entries[0])).iloc[:,0]
+    logger.debug("Numerical feature selection")
 
-    elif dataset_type == 'BRCA':
+    if dataset_type == 'BRCA':
         names = pd.DataFrame(get_gene_names_from_file(entries[0], header = 1, skiprows = [2,3,4,5]))
 
     # numerical feature selection
@@ -357,37 +276,12 @@ def generate_dataset(
 
 
     ###########################################
-    ######### Feature name Formating  #########
+    ######### Feature name Formatting  ########
     ###########################################
+    logger.debug("Feature name formatting")
 
-
-    # Load data and perform dataset-specific processing
-    if dataset_type == 'genomic':
-        names = pd.DataFrame(names)
-        # formatting gene names to get rid of the version number
-        names['query'] = [n.split(".")[0] for n in names["Name"]]
-        query_result = retrive_position(names, drop_na = True, verbose = verbose - 1)
-        # Merge the original names DataFrame with the query results
-        names = names.merge(query_result, on='query', how='left')
-        names.reset_index(inplace=True)
-
-    elif dataset_type == 'transcriptomic':
-        names = pd.DataFrame([n.split("|") for n in names])
-        names = names.set_axis([
-            #'trascript_id',  # we turn transcript_id into name for cross compatibility
-            'name', 
-            'gene_id', 
-            'idk', 
-            'idk', 
-            'transcript_variant', 
-            'symbol', 
-            'length', 
-            'untranslated_region_3', 
-            'coding_region', 
-            'untranslated_region_5', 
-            'idk'], axis=1)
         
-    elif dataset_type == 'BRCA':
+    if dataset_type == 'BRCA':
         names['query'] = names['gene_id'].apply(lambda x: x.split(".")[0])
         query_result = retrive_position(names, drop_na = False, verbose = verbose - 1)
         # Merge the original names DataFrame with the query results
@@ -401,20 +295,9 @@ def generate_dataset(
     ###########################################
     ######## logical feature selection  #######
     ###########################################
+    logger.debug("logical feature selection ")
 
     # logic based feature selection
-
-    if(keep_only_symbols == True and dataset_type == 'genomic'):
-        gene_selected = [False if s.startswith('ENSG') else True for s in names['name']]
-        if verbose: print("removing", len(gene_selected) - sum(gene_selected), "not found symbols from the dataset, out of ", len(gene_selected))
-        data_array = data_array[:,gene_selected]
-        names = names[gene_selected]
-
-    if(drop_ambiguous_pos == True and dataset_type == 'genomic'):
-        gene_selected = names["genomic_pos"].isna()
-        if verbose: print("removing", len(gene_selected) - sum(gene_selected), "ambigously positioned symbols from the dataset")
-        data_array = data_array[:,gene_selected]
-        names = names[gene_selected]
 
     if(keep_only_protein_coding and dataset_type == 'BRCA' ):
         gene_selected = names["gene_type"] == "protein_coding"
