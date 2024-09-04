@@ -1,10 +1,9 @@
 
 .DS_Store
-draft*
+
 workfiles
 src/.Rhistory
 __pycache__
-.vscode/settings.json
 .vscode
 external_aproach/VQ_VAE_disc
 *.csv
@@ -20,3 +19,6 @@ __pycache__
 .venv
 /data/*
 !/data/.gitkeep
+
+cache
+
