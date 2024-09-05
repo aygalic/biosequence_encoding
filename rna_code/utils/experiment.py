@@ -246,7 +246,7 @@ class Experiment():
         
         if log:
             if type(self.data_param) == dict:
-                record = {**self.data_param, **self.model_param, **self.monitor.metrics}
+                record = {**self.data_param, **self.model_param, **self.monitor.metrics[-1]}
             elif type(self.data_param) == str:
                 record = {"data" : self.data_param, **self.model_param, **self.monitor.metrics[-1]}
             log_experiment(record)

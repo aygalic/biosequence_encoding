@@ -8,7 +8,6 @@ This includes options for sub-sampling, phase retention, numerical and logical f
 Key Functions:
     - load_patient_data: Loads patient data from a file.
     - get_gene_names_from_file: Retrieves gene names from a file.
-    - load_metadata: Loads metadata from a specified file.
     - retrive_position: Retrieves genomic positions for gene names.
     - generate_dataset: Generates a dataset with specified parameters for genomic, transcriptomic, or BRCA analysis.
 
@@ -92,20 +91,6 @@ def get_gene_names_from_file(filename: str, header: int = 0, skiprows: Optional[
         print(f"Error parsing file {filename}: {e}")
 
 
-def load_metadata(metadata_path, columns=None):
-    """
-    Wrapper to load metadata from the given file path.
-
-    Args:
-        metadata_path (str): Path to the metadata file.
-        columns (list, optional): Specific columns to load from the file.
-
-    Returns:
-        pd.DataFrame: DataFrame containing the loaded metadata.
-    """
-    return pd.read_excel(metadata_path, header=1, usecols=columns if columns else range(1, 10))
-
-
 def retrive_position(names, drop_na=False, verbose=0):
     """
     Retrieve genomic positions for a list of gene names.
@@ -151,15 +136,9 @@ def generate_dataset(
         LS_threshold (float, optional): Threshold for Laplacian Score-based feature selection.
         expression_threshold (float, optional): Threshold for expression level-based gene selection.
         normalization (bool, optional): If True, normalizes the data.
-        time_points (list of str, optional): Specific time points to include in the analysis.
-        MT_removal (bool, optional): If True, removes mitochondrial genes from the dataset.
         log1p (bool, optional): If True, applies log(1 + x) transformation to the data.
         min_max (bool, optional): If True, scales the data using Min-Max normalization.
-        keep_only_symbols (bool, optional): For genomic data, if True, retains only symbol-named genes.
-        drop_ambiguous_pos (bool, optional): For genomic data, if True, drops genes with ambiguous genomic positions.
         sort_symbols (bool, optional): For genomic data, if True, sorts genes based on their genomic position.
-        select_subtypes (list of str, optional): Filters the data to include only specified subtypes.
-        gene_selection_file (str, optional): Filepath to a gene selection file.
         verbose (int, optional): Verbosity level.
 
     Returns:
