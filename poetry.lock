@@ -1470,6 +1470,25 @@ qa = ["flake8 (==5.0.4)", "mypy (==0.971)", "types-setuptools (==67.2.0.1)"]
 testing = ["docopt", "pytest"]
 
 [[package]]
+name = "pdoc"
+version = "14.6.1"
+description = "API Documentation for Python Projects"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pdoc-14.6.1-py3-none-any.whl", hash = "sha256:efbed433655264392c60551615a3d42b8f21e492373419756d20234c667b54bc"},
+    {file = "pdoc-14.6.1.tar.gz", hash = "sha256:ee598f30d5c55dd4702086dabc412a26022acc35aa88aa382cda8ac655fead98"},
+]
+
+[package.dependencies]
+Jinja2 = ">=2.11.0"
+MarkupSafe = "*"
+pygments = ">=2.12.0"
+
+[package.extras]
+dev = ["hypothesis", "mypy", "pdoc-pyo3-sample-library (==1.0.11)", "pygments (>=2.14.0)", "pytest", "pytest-cov", "pytest-timeout", "ruff", "tox", "types-pygments"]
+
+[[package]]
 name = "pexpect"
 version = "4.9.0"
 description = "Pexpect allows easy control of interactive console applications."
@@ -2309,4 +2328,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "dfa1d75fceb47e3b331c3f2e901bf76ea0fa04918bf9d426c6dd1ffd87fc8b93"
+content-hash = "ace17d412ca0215564ff5ec3b6b87605a6b10edd8404aafae7ac8cf1da46cd71"
