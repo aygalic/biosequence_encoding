@@ -169,8 +169,14 @@ class Experiment():
 
         trainer = pl.Trainer(max_epochs=10, callbacks=[monitor_callback])
         trainer.fit(self.model, data_module)
-        
-        visualisation.post_training_viz(self.data, self.dataloader, self.model, DEVICE, self.monitor.train_res_recon_error, labels = self.metadata["subtypes"])
+        visualisation.post_training_viz(
+            data = self.data,
+            dataloader = self.dataloader,
+            model =  self.model,
+            DEVICE = DEVICE,
+            loss_hist = monitor_callback.loss_values,
+            labels = self.metadata["subtypes"]
+            )
 
 
     def run(self, log = True):

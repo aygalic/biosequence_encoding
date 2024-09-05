@@ -21,6 +21,13 @@ class MonitorCallback(Callback):
         self.verbose = verbose
         self.metrics = []
         self.frames = []
+        self.loss_values = []
+
+
+    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx):
+        # Capture the loss at the end of each training batch
+        if "loss" in outputs:
+            self.loss_values.append(outputs["loss"].item())
 
     def on_train_epoch_end(self, trainer, pl_module):
         epoch = trainer.current_epoch
