@@ -31,6 +31,7 @@ Note:
 
 
 
+from pathlib import Path
 import sys
 import pickle
 import pytorch_lightning as pl
@@ -55,34 +56,12 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 
-def log_experiment(record, csv_path=LOGFILE):
-    """
-    Logs the experiment results to a CSV file.
+from rna_code.utils.monitor_callback import MonitorCallback
+from rna_code.data.data_module import DataModule
+from rna_code import CACHE_PATH
 
-    Args:
-        record (dict): A dictionary containing the experiment's results and parameters.
-        csv_path (str): Filepath to the CSV file where the log will be stored.
 
-    Note:
-        If the CSV file does not exist, it creates a new file. If it exists, the new record is appended.
-    """
-    # Create a DataFrame from the new record
-    new_df = pd.DataFrame([record])
-    
-    # Check if the CSV file exists
-    try:
-        # Read the existing data
-        existing_df = pd.read_csv(csv_path)
-        
-        # Concatenate the new data with the existing data
-        # This aligns data by columns names, inserting NaNs where columns do not match
-        combined_df = pd.concat([existing_df, new_df], ignore_index=True, sort=False)
-    except FileNotFoundError:
-        # If the CSV doesn't exist, the new data is all we need to write
-        combined_df = new_df
-    
-    # Write the combined DataFrame back to CSV
-    combined_df.to_csv(csv_path, index=False)
+
 
 
 class Experiment():
@@ -133,7 +112,7 @@ class Experiment():
         
         if isinstance(self.data_param, dict):
             self.build_dataset(self.data_param)
-        elif isinstance(self.data_param, str):
+        elif isinstance(self.data_param, str) or isinstance(self.data_param, Path):
             self.load_dataset(self.data_param)
         # here we need to capture the shape of the input before building the model.
         self.build_model(shape = self.input_shape, model_param = self.model_param)
@@ -155,8 +134,12 @@ class Experiment():
         print("input shape :", self.input_shape)
 
     def load_dataset(self, data_param):
-        with open(data_param, 'rb') as f:
-            self.data, self.metadata = pickle.load(f)
+        data_path =  data_param / 'data_array.npy'
+        metadata_path = data_param / 'meta_data.json'
+        self.data = np.load(data_path)
+        with metadata_path.open('rb') as f:
+            self.metadata = pickle.load(f)
+
         self.input_shape = len(self.metadata["feature_names"])
         print("input shape :", self.input_shape)
 
@@ -171,11 +154,25 @@ class Experiment():
 
         self.model = autoencoder.Autoencoder(shape = shape, **self.model_param)
 
-    def lightning_run(self):
-        data_module = autoencoder.AutoencoderDataModule()
-        trainer = pl.Trainer(max_epochs=10)
-        trainer.fit(self.model, data_module)
 
+
+    def lightning_run(self):
+        data_module = DataModule()
+        data_module.setup(stage=None)
+        labels = data_module.train_meta_data["subtypes"]
+        #breakpoint()
+        labels = [label if label is not np.nan else "None" for label in labels]
+        unique_labels = {l:i for (i,l) in enumerate(np.unique(labels))}
+        processed_labels = [unique_labels[l] for l in labels]
+
+        monitor_callback = MonitorCallback(data_module.train_dataloader(), processed_labels, n_clusters=10)
+
+        trainer = pl.Trainer(max_epochs=10, callbacks=[monitor_callback])
+        trainer.fit(self.model, data_module)
+        
+        visualisation.post_training_viz(self.data, self.dataloader, self.model, DEVICE, self.monitor.train_res_recon_error, labels = self.metadata["subtypes"])
+
+        breakpoint()
 
     def run(self, log = True):
         """
@@ -248,6 +245,34 @@ class Experiment():
                 record = {**self.data_param, **self.model_param, **self.monitor.metrics[-1]}
             elif type(self.data_param) == str:
                 record = {"data" : self.data_param, **self.model_param, **self.monitor.metrics[-1]}
-            log_experiment(record)
+            Experiment._log_experiment(record)
 
+    @staticmethod
+    def _log_experiment(record, csv_path=LOGFILE):
+        """
+        Logs the experiment results to a CSV file.
 
+        Args:
+            record (dict): A dictionary containing the experiment's results and parameters.
+            csv_path (str): Filepath to the CSV file where the log will be stored.
+
+        Note:
+            If the CSV file does not exist, it creates a new file. If it exists, the new record is appended.
+        """
+        # Create a DataFrame from the new record
+        new_df = pd.DataFrame([record])
+        
+        # Check if the CSV file exists
+        try:
+            # Read the existing data
+            existing_df = pd.read_csv(csv_path)
+            
+            # Concatenate the new data with the existing data
+            # This aligns data by columns names, inserting NaNs where columns do not match
+            combined_df = pd.concat([existing_df, new_df], ignore_index=True, sort=False)
+        except FileNotFoundError:
+            # If the CSV doesn't exist, the new data is all we need to write
+            combined_df = new_df
+        
+        # Write the combined DataFrame back to CSV
+        combined_df.to_csv(csv_path, index=False)

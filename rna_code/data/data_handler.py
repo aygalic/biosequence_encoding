@@ -318,6 +318,13 @@ def generate_dataset(
 
     if verbose: print("number of seq in the dataset :", len(data_array))
 
+ 
+    
+    
+    df = pd.DataFrame(
+        data = data_array,
+        index = [str(e).split('/')[9] for e in entries],
+        columns = names["gene_id"])
 
     metadata = {"name" : dataset_type,
                 "feature_names" : names,
@@ -326,5 +333,14 @@ def generate_dataset(
                 "n_seq" : len(entries),
                 "meta_data" : meta_data,
                 "subtypes" : subtypes} 
-    
-    return data_array, metadata
+
+
+    meta_dict = {
+        "meta_data" : meta_data,
+        "subtypes" : subtypes,
+    }
+    meta_df = pd.DataFrame(
+        meta_dict,
+        index = [str(e).split('/')[9] for e in entries])
+
+    return df, meta_df

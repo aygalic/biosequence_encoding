@@ -25,17 +25,13 @@ Example Usage:
     model = Autoencoder(shape=input_shape, latent_dim=64, variational='VAE')
     output = model(input_data)
 """
-from pathlib import Path
 import torch
-from torch.utils.data import Dataset
 
 import numpy as np
-import pickle
 import torch.nn as nn
 import torch.nn.functional as F
 
 from torch.nn import TransformerEncoder, TransformerEncoderLayer
-from torch.utils.data import DataLoader, TensorDataset, random_split
 
 import pytorch_lightning as pl
 
@@ -46,7 +42,6 @@ from .vector_quantizer_EMA import VectorQuantizerEMA
 from .vq_conversion import vq_conversion
 from .vq_pre_residual_stack_decoder import vq_pre_residual_stack_decoder
 from .attention_module import AttentionModule
-from rna_code import CACHE_PATH
 
 
 class Autoencoder(pl.LightningModule):
@@ -326,48 +321,4 @@ class Autoencoder(pl.LightningModule):
             x_reconstructed = self.decode(z)
             return x_reconstructed
 
-
-class AutoencoderDataModule(pl.LightningDataModule):
-    def __init__(
-            self,
-            data_dir: Path = CACHE_PATH / "data",
-            batch_size: int = 32,
-            val_split: float = 0.2):
-        super().__init__()
-        self.data_dir = data_dir
-        self.batch_size = batch_size
-        self.val_split = val_split
-
-    def setup(self, stage: str):
-        data_path =  self.data_dir / 'data_array.npy'
-        metadata_path = self.data_dir / 'meta_data.json'
-        data_array = np.load(data_path)
-        with metadata_path.open('rb') as f:
-            self.meta_data = pickle.load(f)
-
-        # Convert NumPy array to PyTorch tensor
-        data_tensor = torch.from_numpy(data_array).float()
-        
-        feature_num = data_tensor.shape[1]
-
-        data_tensor= data_tensor.reshape(-1,1,feature_num)
-        full_dataset = TensorDataset(data_tensor)
-        
-        # Split dataset
-        dataset_size = len(full_dataset)
-        val_size = int(self.val_split * dataset_size)
-        train_size = dataset_size - val_size
-        
-        self.train_dataset, self.val_dataset = random_split(
-            full_dataset, [train_size, val_size]
-        )
-
-    def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True)
-
-    def val_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=self.batch_size)
-
-    def test_dataloader(self):
-        return DataLoader(self.test_dataset, batch_size=self.batch_size)
 

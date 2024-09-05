@@ -7,7 +7,6 @@ import numpy as np
 from rna_code import CACHE_PATH
 from rna_code.utils.experiment import Experiment
 
-
 logging.basicConfig(
     level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -42,7 +41,8 @@ data_param = {
     "MAD_threshold" : 1, 
 }
 
+data_path  = CACHE_PATH / "data"
 
-e = Experiment(data_param=data_param, model_param=config)
+e = Experiment(data_param=data_path,  model_param=config)
 #e.run()
 e.lightning_run()
