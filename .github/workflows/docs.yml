@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:  # Add this line to enable manual triggering
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -41,11 +41,11 @@ jobs:
         run: poetry install --no-interaction
 
       - name: Build documentation
-        run: |
-          source .venv/bin/activate
-          poetry run pdoc ./autoencoder_optimiser -o docs/
+        run: poetry run pdoc ./rna_code -o docs/
 
-      - uses: actions/upload-pages-artifact@v2
+      - name: Upload artifact
+        if: env.ACT != 'true'
+        uses: actions/upload-pages-artifact@v2
         with:
           path: docs/
 
