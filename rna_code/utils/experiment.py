@@ -33,6 +33,7 @@ Note:
 
 import sys
 import pickle
+import pytorch_lightning as pl
 
 sys.path.append('..')
 #from utils import data_handler
@@ -170,7 +171,12 @@ class Experiment():
 
         self.model = autoencoder.Autoencoder(shape = shape, **self.model_param)
 
-    
+    def lightning_run(self):
+        data_module = autoencoder.AutoencoderDataModule()
+        trainer = pl.Trainer(max_epochs=10)
+        trainer.fit(self.model, data_module)
+
+
     def run(self, log = True):
         """
         Runs the experiment with the specified model and dataset.

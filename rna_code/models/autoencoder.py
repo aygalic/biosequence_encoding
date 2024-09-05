@@ -25,9 +25,19 @@ Example Usage:
     model = Autoencoder(shape=input_shape, latent_dim=64, variational='VAE')
     output = model(input_data)
 """
+from pathlib import Path
 import torch
+from torch.utils.data import Dataset
+
+import numpy as np
+import pickle
 import torch.nn as nn
+import torch.nn.functional as F
+
 from torch.nn import TransformerEncoder, TransformerEncoderLayer
+from torch.utils.data import DataLoader, TensorDataset, random_split
+
+import pytorch_lightning as pl
 
 from .residual_stack import ResidualStack
 from .self_attention import SelfAttention
@@ -35,41 +45,11 @@ from .vector_quantizer import VectorQuantizer
 from .vector_quantizer_EMA import VectorQuantizerEMA
 from .vq_conversion import vq_conversion
 from .vq_pre_residual_stack_decoder import vq_pre_residual_stack_decoder
-
-class AttentionModule(nn.Module):
-    def __init__(self, in_features):
-        super(AttentionModule, self).__init__()
-        self.attention = nn.Sequential(
-            nn.Linear(in_features, in_features),
-            nn.Tanh(),
-            nn.Linear(in_features, 1),
-            nn.Softmax(dim=1)  # Softmax over the sequence dimension.
-        )
-
-    def forward(self, x):
-        attention_weights = self.attention(x)
-        return attention_weights * x
+from .attention_module import AttentionModule
+from rna_code import CACHE_PATH
 
 
-class Autoencoder(nn.Module):
-    def find_calculated_length(self):
-            # Create a mock tensor. Assuming it's a 1D signal, the "1" size is for the channel dimension.
-            # The batch size here is 1, and it could be any number since it doesn't affect the calculation.
-            mock_input = torch.rand(1, 1, self.input_shape)  # Adapt the shape according to your specific use case
-
-            # Pass the mock input through the encoder layers before flattening.
-            with torch.no_grad():  # We do not need gradients for this operation
-                self.eval()  # Set the model to evaluation mode
-                for layer in self.encoder:
-                    if isinstance(layer, nn.Flatten):
-                        break  # Stop right before the Flatten layer
-                    mock_input = layer(mock_input)  # Pass the mock input through
-
-            # The resulting mock_input contains the size after all transformations
-            calculated_length = mock_input.size()  # Extract the length (size of the spatial dimension)
-
-            return calculated_length[2]
-    
+class Autoencoder(pl.LightningModule):
 
     def __init__(
             self,
@@ -159,7 +139,7 @@ class Autoencoder(nn.Module):
 
             self.encoder = nn.Sequential(*encoder_layers)
             
-            self.calculated_length = self.find_calculated_length()
+            self.calculated_length = self._find_calculated_length()
 
             # Decoder
             decoder_layers = []
@@ -237,6 +217,42 @@ class Autoencoder(nn.Module):
             self.pre_vq_decoder = vq_pre_residual_stack_decoder(self.num_embeddings, self.latent_dim, self.dropout)
             self.decoder_residual_stack = ResidualStack(self.latent_dim)
 
+    def training_step(self, batch, batch_idx):
+        x = batch[0] if isinstance(batch, list) else batch
+        # Forward pass
+        if self.variational == "VAE":
+            x_reconstructed, mu, log_var = self(x)
+            # Calculate VAE loss
+            recon_loss = F.mse_loss(x_reconstructed, x)
+            kl_loss = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
+            loss = recon_loss + kl_loss
+        elif self.variational == "VQ-VAE":
+            vq_loss, x_reconstructed, perplexity, _, _ = self(x)
+            recon_loss = F.mse_loss(x_reconstructed, x)
+            loss = recon_loss + vq_loss
+        else:
+            x_reconstructed = self(x)
+            loss = F.mse_loss(x_reconstructed, x)
+
+        self.log('train_loss', loss)
+        return loss
+    
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        return optimizer
+
+    
+    def _find_calculated_length(self):
+            mock_input = torch.rand(1, 1, self.input_shape)  
+            with torch.no_grad():
+                self.eval()
+                for layer in self.encoder:
+                    if isinstance(layer, nn.Flatten):
+                        break 
+                    mock_input = layer(mock_input)
+            calculated_length = mock_input.size()
+            return calculated_length[2]
+    
     def add_attention(self):
         """Integrate the attention module after the encoder and before the decoder."""
         self.use_attention = True
@@ -268,7 +284,6 @@ class Autoencoder(nn.Module):
 
 
     def decode(self, x):
-
         # VQ-VAE have to pre-decode the quantized space since it isn't the same dimension as the latent space 
         if self.variational == "VQ-VAE":
             x = self.pre_vq_decoder(x)
@@ -283,6 +298,9 @@ class Autoencoder(nn.Module):
         return mu + eps*std
         
     def forward(self, x):
+        #breakpoint()
+
+        #x = x[0]
         # Apply attention here if using convolution
         if self.use_self_attention:
             x = self.attention_module(x)
@@ -307,3 +325,49 @@ class Autoencoder(nn.Module):
             z = self.encode(x)
             x_reconstructed = self.decode(z)
             return x_reconstructed
+
+
+class AutoencoderDataModule(pl.LightningDataModule):
+    def __init__(
+            self,
+            data_dir: Path = CACHE_PATH / "data",
+            batch_size: int = 32,
+            val_split: float = 0.2):
+        super().__init__()
+        self.data_dir = data_dir
+        self.batch_size = batch_size
+        self.val_split = val_split
+
+    def setup(self, stage: str):
+        data_path =  self.data_dir / 'data_array.npy'
+        metadata_path = self.data_dir / 'meta_data.json'
+        data_array = np.load(data_path)
+        with metadata_path.open('rb') as f:
+            self.meta_data = pickle.load(f)
+
+        # Convert NumPy array to PyTorch tensor
+        data_tensor = torch.from_numpy(data_array).float()
+        
+        feature_num = data_tensor.shape[1]
+
+        data_tensor= data_tensor.reshape(-1,1,feature_num)
+        full_dataset = TensorDataset(data_tensor)
+        
+        # Split dataset
+        dataset_size = len(full_dataset)
+        val_size = int(self.val_split * dataset_size)
+        train_size = dataset_size - val_size
+        
+        self.train_dataset, self.val_dataset = random_split(
+            full_dataset, [train_size, val_size]
+        )
+
+    def train_dataloader(self):
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True)
+
+    def val_dataloader(self):
+        return DataLoader(self.val_dataset, batch_size=self.batch_size)
+
+    def test_dataloader(self):
+        return DataLoader(self.test_dataset, batch_size=self.batch_size)
+

@@ -16,11 +16,9 @@ logger = logging.getLogger(__name__)
 logger.info("Loading data..")
 
 data_path = CACHE_PATH / "data"/ 'data_array.npy'
-data_path.parent.mkdir(parents=True, exist_ok=True)
 data_array = np.load(data_path)
 
 metadata_path = CACHE_PATH / "data"/ 'meta_data.json'
-metadata_path.parent.mkdir(parents=True, exist_ok=True)
 with metadata_path.open('rb') as f:
     meta_data = pickle.load(f)
 
@@ -46,4 +44,5 @@ data_param = {
 
 
 e = Experiment(data_param=data_param, model_param=config)
-e.run()
+#e.run()
+e.lightning_run()
