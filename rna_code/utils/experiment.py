@@ -171,13 +171,6 @@ class Experiment():
         self.model = autoencoder.Autoencoder(shape = shape, **self.model_param)
 
     
-
-
-
-
-
-    
-        
     def run(self, log = True):
         """
         Runs the experiment with the specified model and dataset.
