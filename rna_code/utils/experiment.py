@@ -172,7 +172,6 @@ class Experiment():
         
         visualisation.post_training_viz(self.data, self.dataloader, self.model, DEVICE, self.monitor.train_res_recon_error, labels = self.metadata["subtypes"])
 
-        breakpoint()
 
     def run(self, log = True):
         """

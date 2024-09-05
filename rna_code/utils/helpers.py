@@ -93,7 +93,7 @@ def encode_recon_dataset(dataloader, model, DEVICE):
     """
     en_lat = []
     en_reconstruction = []
-
+    model = model.to(DEVICE)
     model.eval()
     for _, inputs in enumerate(dataloader):
         if model.variational == "VAE":
