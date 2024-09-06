@@ -29,7 +29,7 @@ class Experiment():
             data_param : dict,
             model_param : dict
             ) -> None:
-        
+
         self.data_param = data_param
         self.model_param = model_param
         # FIXME n_epoch is not actually a model param, this was made to simplify code
@@ -46,8 +46,8 @@ class Experiment():
         Training, visualization and logging.
         """
         monitor_callback = MonitorCallback(
-            self.data_module.full_data_loader(), 
-            self.data_module.full_meta_data["subtypes"], 
+            self.data_module.full_data_loader(),
+            self.data_module.full_meta_data["subtypes"],
             n_clusters=4)
 
         trainer = pl.Trainer(max_epochs=10, callbacks=[monitor_callback])
@@ -80,7 +80,7 @@ class Experiment():
         new_df = pd.DataFrame([record])
         try:
             existing_df = pd.read_csv(csv_path)
-            combined_df = pd.concat([existing_df, new_df], ignore_index=True, sort=False)
+            combined_df = pd.concat([existing_df, new_df], ignore_index=True)
         except FileNotFoundError:
             combined_df = new_df
         csv_path.parent.mkdir(parents=True, exist_ok=True)
