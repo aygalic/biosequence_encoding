@@ -1,19 +1,34 @@
 """
-This module contains a collection of visualization functions designed to aid in the analysis and interpretation of machine learning model outputs, particularly focusing on aspects like training process, latent space characteristics, and dataset features. It includes functionalities for creating various plots and animations to visually represent model performance metrics, PCA results, dataset characteristics, and reconstruction quality.
+This module contains a collection of visualization functions designed to aid in the
+analysis and interpretation of machine learning model outputs, particularly focusing
+on aspects like training process, latent space characteristics, and dataset features.
+It includes functionalities for creating various plots and animations to visually
+represent model performance metrics, PCA results, dataset characteristics, and
+reconstruction quality.
 
 Functions:
 
-- `callback_viz`: Creates a multi-faceted visualization during model training callbacks, featuring training loss, heatmaps, and PCA scatter plots.
+- `callback_viz`: Creates a multi-faceted visualization during model training callbacks,
+featuring training loss, heatmaps, and PCA scatter plots.
 
-- `post_training_viz`: Generates comprehensive visualizations after model training, including PCA scatter plots, heatmaps of original data, encoded space, reconstructions, and training loss.
+- `post_training_viz`: Generates comprehensive visualizations after model training,
+including PCA scatter plots, heatmaps of original data, encoded space, reconstructions,
+and training loss.
 
-- `post_training_animation`: Produces an animation to visualize the evolution of PCA results over the course of training epochs.
+- `post_training_animation`: Produces an animation to visualize the evolution of PCA
+results over the course of training epochs.
 
-- `dataset_plot`: Plots the entire dataset as a heatmap and provides a kernel density estimation plot for the total gene expression, facilitating an understanding of dataset-wide gene expression patterns.
+- `dataset_plot`: Plots the entire dataset as a heatmap and provides a kernel density
+estimation plot for the total gene expression, facilitating an understanding of dataset-
+wide gene expression patterns.
 
-These functions are intended to provide intuitive and informative visual cues that help in assessing model behavior and performance, understanding data distributions, and identifying key characteristics of the latent space and reconstructed outputs.
+These functions are intended to provide intuitive and informative visual cues that help
+in assessing model behavior and performance, understanding data distributions, and
+identifying key characteristics of the latent space and reconstructed outputs.
 
-Typical use cases include monitoring model training progress, evaluating model performance, and exploring data characteristics for insights that guide further model development and refinement.
+Typical use cases include monitoring model training progress, evaluating model
+performance, and exploring data characteristics for insights that guide further model
+development and refinement.
 """
 
 
@@ -101,7 +116,7 @@ def post_training_viz(data, dataloader, model, DEVICE, loss_hist, labels):
     pca.fit(encode_out)
     pca_result = pca.transform(encode_out)
 
-    x = iter(dataloader).__next__()
+    x, _ = iter(dataloader).__next__()
 
     if model.variational == "VAE":
             x_reconstructed, _, _ = model.forward(x.to(DEVICE))

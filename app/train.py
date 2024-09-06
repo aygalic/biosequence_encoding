@@ -22,5 +22,7 @@ config = {
 
 data_path  = CACHE_PATH / "data"
 
-e = Experiment(data_param=data_path,  model_param=config)
+data_param = {"Path":data_path}
+
+e = Experiment(data_param=data_param,  model_param=config)
 e.run()
