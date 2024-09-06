@@ -15,7 +15,7 @@ class MonitorCallback(Callback):
     def __init__(self, dataloader, labels, n_clusters, checkpoints=None, verbose=1):
         super().__init__()
         self.dataloader = dataloader
-        self.labels = labels
+        self.labels = MonitorCallback._labels_to_int(labels)
         self.n_clusters = n_clusters
         self.checkpoints = checkpoints or [int(x) for x in np.logspace(1, 3, num=10, dtype=int)]
         self.verbose = verbose
@@ -107,6 +107,12 @@ class MonitorCallback(Callback):
         plt.close()
 
         print(f"Epoch {epoch}: ARI = {self.metrics[-1]['ari']:.4f}")
+
+    @staticmethod
+    def _labels_to_int(labels: list[int]) -> list[int]:
+        unique_labels = {label:i for (i,label) in enumerate(np.unique(labels))}
+        processed_labels = [unique_labels[label] for label in labels]
+        return processed_labels
 
 # Usage example:
 # monitor_callback = MonitorCallback(dataloader, labels, n_clusters=10)

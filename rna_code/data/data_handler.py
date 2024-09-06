@@ -217,7 +217,7 @@ def generate_dataset(
         subtypes_table = pd.read_csv(subtypes_table, index_col= 0)
 
         subtypes_dict = {str(index)[:12]: subtype for index, subtype in subtypes_table.itertuples()}
-        subtypes = [subtypes_dict.get(identifier[:12], None) for identifier in patient_id]
+        subtypes = [subtypes_dict.get(identifier[:12], "Unknown") for identifier in patient_id]
 
     ###########################################
     ####### Numerical feature selection  ######

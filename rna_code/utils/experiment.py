@@ -1,6 +1,5 @@
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
 
@@ -22,19 +21,18 @@ class Experiment():
         self.model_param = model_param
         # FIXME n_epoch is not actually a model param, this was made to simplify code
         self.n_epoch = self.model_param.pop("n_epoch", 1000)
-
         self.data_module = DataModule(data_param)
         self.data_module.setup(stage=None)
         self.input_shape = self.data_module.feature_num
         self.model = autoencoder.Autoencoder(shape = self.input_shape, **self.model_param)
 
-    def run(self):
-        labels = self.data_module.full_meta_data["subtypes"]
-        labels = [label if label is not np.nan else "None" for label in labels]
-        unique_labels = {l:i for (i,l) in enumerate(np.unique(labels))}
-        processed_labels = [unique_labels[l] for l in labels]
 
-        monitor_callback = MonitorCallback(self.data_module.full_data_loader(), processed_labels, n_clusters=10)
+    def run(self):
+
+        monitor_callback = MonitorCallback(
+            self.data_module.full_data_loader(), 
+            self.data_module.full_meta_data["subtypes"], 
+            n_clusters=10)
 
         trainer = pl.Trainer(max_epochs=10, callbacks=[monitor_callback])
         trainer.fit(self.model, self.data_module)
@@ -44,7 +42,7 @@ class Experiment():
             model =  self.model,
             DEVICE = DEVICE,
             loss_hist = monitor_callback.loss_values,
-            labels = labels
+            labels = self.data_module.full_meta_data["subtypes"]
             )
         
         print(monitor_callback.metrics[-1])
