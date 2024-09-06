@@ -11,7 +11,7 @@ from rna_code.utils.monitor_callback import MonitorCallback
 
 from .. import DEVICE, LOGFILE
 from ..models import autoencoder
-from . import visualisation
+from . import visualization
 
 
 class Experiment():
@@ -53,7 +53,7 @@ class Experiment():
         trainer = pl.Trainer(max_epochs=10, callbacks=[monitor_callback])
         trainer.fit(self.model, self.data_module)
 
-        visualisation.post_training_viz(
+        visualization.post_training_viz(
             data = self.data_module.data_array,
             dataloader = self.data_module.full_data_loader(),
             model =  self.model,
