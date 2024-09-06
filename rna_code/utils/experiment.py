@@ -1,3 +1,6 @@
+"""Experiment module, in charge of handling data loading, model training and monitoring
+according to provided parameters.
+"""
 from pathlib import Path
 
 import pandas as pd
@@ -12,11 +15,21 @@ from . import visualisation
 
 
 class Experiment():
+    """Experiment class handling data, model training and monitoring.
+
+    Parameters
+    ----------
+    data_param : dict
+        Data related parameters.
+    model_param : dict
+        Model related parameters.
+    """
     def __init__(
             self,
             data_param : dict,
             model_param : dict
             ) -> None:
+        
         self.data_param = data_param
         self.model_param = model_param
         # FIXME n_epoch is not actually a model param, this was made to simplify code
@@ -24,18 +37,22 @@ class Experiment():
         self.data_module = DataModule(data_param)
         self.data_module.setup(stage=None)
         self.input_shape = self.data_module.feature_num
-        self.model = autoencoder.Autoencoder(shape = self.input_shape, **self.model_param)
+        self.model = autoencoder.Autoencoder(self.input_shape, **self.model_param)
 
 
-    def run(self):
+    def run(self) -> None:
+        """Run experiment.
 
+        Training, visualization and logging.
+        """
         monitor_callback = MonitorCallback(
             self.data_module.full_data_loader(), 
             self.data_module.full_meta_data["subtypes"], 
-            n_clusters=10)
+            n_clusters=4)
 
         trainer = pl.Trainer(max_epochs=10, callbacks=[monitor_callback])
         trainer.fit(self.model, self.data_module)
+
         visualisation.post_training_viz(
             data = self.data_module.data_array,
             dataloader = self.data_module.full_data_loader(),
@@ -44,10 +61,10 @@ class Experiment():
             loss_hist = monitor_callback.loss_values,
             labels = self.data_module.full_meta_data["subtypes"]
             )
-        
         print(monitor_callback.metrics[-1])
         record = {**self.data_param, **self.model_param, **monitor_callback.metrics[-1]}
         Experiment._log_experiment(record)
+
 
     @staticmethod
     def _log_experiment(record : dict, csv_path : Path = LOGFILE):
