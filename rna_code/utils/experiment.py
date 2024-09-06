@@ -48,12 +48,7 @@ class Experiment():
             )
         
         print(monitor_callback.metrics[-1])
-
-        if isinstance(self.data_param, dict):
-            record = {**self.data_param, **self.model_param, **monitor_callback.metrics[-1]}
-        elif isinstance(self.data_param, str)  or isinstance(self.data_param, Path):
-            record = {"data" : self.data_param, **self.model_param, **monitor_callback.metrics[-1]}
-
+        record = {**self.data_param, **self.model_param, **monitor_callback.metrics[-1]}
         Experiment._log_experiment(record)
 
     @staticmethod
