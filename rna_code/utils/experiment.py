@@ -1,4 +1,3 @@
-import pickle
 from pathlib import Path
 
 import numpy as np
@@ -10,7 +9,7 @@ from rna_code.utils.monitor_callback import MonitorCallback
 
 from .. import DEVICE, LOGFILE
 from ..models import autoencoder
-from . import helpers, visualisation
+from . import visualisation
 
 
 class Experiment():
@@ -27,8 +26,7 @@ class Experiment():
         self.data_module = DataModule(data_param)
         self.data_module.setup(stage=None)
         self.input_shape = self.data_module.feature_num
-        self._build_model(shape = self.input_shape, model_param = self.model_param)
-
+        self.model = autoencoder.Autoencoder(shape = self.input_shape, **self.model_param)
 
     def run(self):
         labels = self.data_module.full_meta_data["subtypes"]
@@ -57,16 +55,6 @@ class Experiment():
             record = {"data" : self.data_param, **self.model_param, **monitor_callback.metrics[-1]}
 
         Experiment._log_experiment(record)
-
-    def _build_model(self, shape, model_param):
-        if model_param.get("transformer", False):
-            num_heads_candidate = helpers.find_primes(self.input_shape)
-            if(len(num_heads_candidate) > 1):
-                self.model_param["num_heads"] = num_heads_candidate[-1]
-            else:
-                self.model_param["num_heads"] = num_heads_candidate[-2]
-
-        self.model = autoencoder.Autoencoder(shape = shape, **self.model_param)
 
     @staticmethod
     def _log_experiment(record : dict, csv_path : Path = LOGFILE):

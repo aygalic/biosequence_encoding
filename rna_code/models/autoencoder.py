@@ -35,6 +35,8 @@ from torch.nn import TransformerEncoder, TransformerEncoderLayer
 
 import pytorch_lightning as pl
 
+from rna_code.utils import helpers
+
 from .residual_stack import ResidualStack
 from .self_attention import SelfAttention
 from .vector_quantizer import VectorQuantizer
@@ -92,6 +94,12 @@ class Autoencoder(pl.LightningModule):
         self.decay = decay
 
         if self.transformer:
+            if self.num_heads is None:
+                num_heads_candidate = helpers.find_primes(self.input_shape)
+                if(len(num_heads_candidate) > 1):
+                    self.num_heads = num_heads_candidate[-1]
+                else:
+                    self.num_heads = num_heads_candidate[-2]
 
             self.encoder_layers = TransformerEncoderLayer(d_model=self.input_shape, nhead=self.num_heads, dropout=self.dropout)
             self.encoder = nn.Sequential( 
