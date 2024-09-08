@@ -64,6 +64,9 @@ class Experiment():
         print(monitor_callback.metrics[-1])
         record = {**self.data_param, **self.model_param, **monitor_callback.metrics[-1]}
         Experiment._log_experiment(record)
+        visualization.post_training_animation(
+            monitor = monitor_callback,
+            metadata = self.data_module.full_meta_data)
 
 
     @staticmethod
