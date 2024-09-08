@@ -32,23 +32,19 @@ development and refinement.
 """
 
 
-from .helpers import encode_recon_dataset
+import sys
 
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
+import seaborn as sns
 
-
-import sys
-sys.path.append('../src')
-
-from sklearn.decomposition import PCA
+from .helpers import encode_recon_dataset
 
 from matplotlib.animation import FuncAnimation
-from IPython.display import HTML
+from sklearn.decomposition import PCA
 
+from .. import OUTPUT_PATH
 
-# new plots for the pytorch refacto
 def callback_viz(pca_result, encoded_set, stack, loss_hist, labels):
     """
     Generates a 1x4 subplot visualization during model training callbacks.
@@ -76,7 +72,6 @@ def callback_viz(pca_result, encoded_set, stack, loss_hist, labels):
     axs[1].set_title('Stacked heatmap of two samples')
     axs[1].set_xticks([])
     axs[1].set_yticks([])
-
 
     sns.heatmap(encoded_set, ax = axs[2], cbar=False)
     axs[2].set_title('Heatmap of hole quantized dataset')
@@ -129,8 +124,6 @@ def post_training_viz(data, dataloader, model, DEVICE, loss_hist, labels):
 
     # stacking a single observation as well as its reconstruction in order to evaluate the results
     stack = np.vstack([x[0], x_reconstructed[0]])
-
-
 
     # prepping a 1x4 plot to monitor the model through training
     fig, axs = plt.subplots(2, 3, figsize=(12, 6))
@@ -185,32 +178,13 @@ def post_training_animation(monitor, metadata):
         HTML: An HTML representation of the animation for displaying in Jupyter notebooks.
     """
     fig, ax = plt.subplots()
-    # Define an update function for the animation
     def update(frame):
         ax.clear()
         ax.set_title(f'Frame {frame}')
-        
-        # Get the PCA result for the current frame
         pca_result = monitor.frames[frame]
-        
-        # Scatter plot of PCA results with color based on index
         sns.scatterplot(x=pca_result[:, 1], y=pca_result[:, 2], hue=metadata["subtypes"])
-
-    # Create the animation
     ani = FuncAnimation(fig, update, frames=len(monitor.frames), repeat=True)
-
-    # Display the animation as HTML
-    HTML(ani.to_jshtml())
-
-
-
-
-
-
-
-
-
-
+    ani.save(OUTPUT_PATH/'animation.mp4')
 
 
 def dataset_plot(data):
