@@ -266,7 +266,7 @@ def post_training_animation(monitor, metadata):
     fig.show()
 
     # Save as HTML (can be opened in a web browser)
-    fig.write_html(DOCS_PATH / "pca_animation.html")
+    fig.write_html(DOCS_PATH / "readme" / "pca_animation.html")
 
 def dataset_plot(data):
     """

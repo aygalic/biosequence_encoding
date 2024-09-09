@@ -21,7 +21,7 @@ jobs:
         run: |
           ls -R docs/readme
           echo "Contents of docs/readme:"
-          cat docs/readme/*
+          head docs/readme/*
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
