@@ -46,9 +46,14 @@ class Experiment():
         Training, visualization and logging.
         """
         monitor_callback = MonitorCallback(
-            self.data_module.full_data_loader(),
-            self.data_module.full_meta_data["subtypes"],
-            n_clusters=4)
+             dataloader=self.data_module.full_data_loader(),
+             labels=self.data_module.full_meta_data["subtypes"],
+             n_clusters=5,
+             compute_on='batch',
+             verbose=1
+        )
+
+
 
         trainer = pl.Trainer(max_epochs=10, callbacks=[monitor_callback])
         trainer.fit(self.model, self.data_module)
