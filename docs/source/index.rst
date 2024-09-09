@@ -18,4 +18,4 @@ Indices and tables
 Additional Resources
 ====================
 
-* `PCA Animation <pca_animation.html>`_
+* `PCA Animation <pca_anim.html>`_
