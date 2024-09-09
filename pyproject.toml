@@ -19,6 +19,7 @@ mygene = "^3.2.2"
 ipython = "^8.27.0"
 pytorch-lightning = "^2.4.0"
 sphinx = "^8.0.2"
+plotly = "^5.24.0"
 
 
 [tool.poetry.group.dev.dependencies]
