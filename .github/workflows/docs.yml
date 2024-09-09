@@ -1,4 +1,4 @@
-name: website
+name: Combined Workflow
 
 on:
   push:
@@ -7,10 +7,12 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
-  build:
+  build-and-deploy-docs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -49,21 +51,35 @@ jobs:
           poetry run sphinx-apidoc -o docs/source ./rna_code
           poetry run sphinx-build docs/source docs/build
 
-      - name: Upload artifact
-        if: env.ACT != 'true'
-        uses: actions/upload-pages-artifact@v2
+      - name: Deploy Sphinx docs to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          path: docs/build
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/build
+          destination_dir: docs
+          keep_files: true
 
-  deploy:
-    needs: build
+  deploy-standalone-html:
     runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - id: deployment
-        uses: actions/deploy-pages@v2
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: List contents of docs/readme
+        run: |
+          ls -R docs/readme
+          echo "Contents of docs/readme:"
+          head docs/readme/*
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/readme
+          destination_dir: .
+          keep_files: true
+          force_orphan: false
+          enable_jekyll: false
+          full_commit_message: ${{ github.event.head_commit.message }}
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
