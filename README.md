@@ -70,8 +70,8 @@ Here you can see the result of a Genetic search over the BRCA dataset. This spec
 
 
 
-[View PCA Animation](https://aygalic.github.io/genome_analysis_parkinson/pca_animation.html)
+[View PCA Animation](https://aygalic.github.io/biosequence_encoding/pca_animation.html)
 
-![View PCA Animation](https://aygalic.github.io/genome_analysis_parkinson/pca_animation.html)
+![View PCA Animation](https://aygalic.github.io/biosequence_encoding/pca_animation.html)
 
 
