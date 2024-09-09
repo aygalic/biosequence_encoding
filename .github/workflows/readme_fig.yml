@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - 'docs/readme/**'
+  workflow_dispatch:
+
 
 jobs:
   deploy-standalone-html:
