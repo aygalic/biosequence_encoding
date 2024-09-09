@@ -45,9 +45,7 @@ from sklearn.decomposition import PCA
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-
-
-from .. import OUTPUT_PATH
+from .. import DOCS_PATH
 
 def callback_viz(pca_result, encoded_set, stack, loss_hist, labels):
     """
@@ -268,7 +266,7 @@ def post_training_animation(monitor, metadata):
     fig.show()
 
     # Save as HTML (can be opened in a web browser)
-    fig.write_html("pca_animation.html")
+    fig.write_html(DOCS_PATH / "pca_animation.html")
 
 def dataset_plot(data):
     """

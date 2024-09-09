@@ -68,4 +68,10 @@ You can Find example for training in the `model_training` folder, where both Gen
 
 Here you can see the result of a Genetic search over the BRCA dataset. This specific animation is used to show the overfitting issue and the need for the number of epoch to be a criteria of selection.
 
-![Alt text](img/animation.gif)
+
+
+[View PCA Animation](https://aygalic.github.io/genome_analysis_parkinson/pca_animation.html)
+
+![View PCA Animation](https://aygalic.github.io/genome_analysis_parkinson/pca_animation.html)
+
+

@@ -8,3 +8,4 @@ OUTPUT_PATH = HOME_PATH / '..' / "outputs"
 DEVICE = torch.device("mps")
 LOGFILE = OUTPUT_PATH / "log.txt"
 CACHE_PATH = HOME_PATH / "cache"
+DOCS_PATH = HOME_PATH / "docs"
