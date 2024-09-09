@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>rna_code.utils package &#8212; Your Project Name  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/basic.css?v=c058f7c8" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=27fed22d" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="rna_code.models package" href="rna_code.models.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="rna-code-utils-package">
+<h1>rna_code.utils package<a class="headerlink" href="#rna-code-utils-package" title="Link to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-rna_code.utils.benchmark">
+<span id="rna-code-utils-benchmark-module"></span><h2>rna_code.utils.benchmark module<a class="headerlink" href="#module-rna_code.utils.benchmark" title="Link to this heading">¶</a></h2>
+<p>This module provides utility functions for model analysis and data characterization.</p>
+<p>Functions:</p>
+<ul>
+<li><p><cite>count_parameters(model)</cite>:
+Calculates and prints the total number of parameters and the number of trainable parameters in a given PyTorch model. This function is useful for understanding the complexity and capacity of the model.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>model (torch.nn.Module): The PyTorch model for which parameters are counted.</p>
+</dd>
+<dt>Returns:</dt><dd><p>tuple: A tuple containing the total number of parameters and the number of trainable parameters in the model.</p>
+</dd>
+</dl>
+</li>
+<li><p><cite>hopkins(data, n=None)</cite>:
+Computes the Hopkins statistic for a given dataset to assess its cluster tendency or the likelihood of data containing meaningful clusters. A value close to 1 indicates high cluster tendency, while a value around 0.5 suggests random distribution.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>data (numpy.ndarray): The dataset for which the Hopkins statistic is to be calculated.
+n (int, optional): The number of points to sample. If None, uses the length of the dataset.</p>
+</dd>
+<dt>Returns:</dt><dd><p>float: The Hopkins statistic for the dataset.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>These functions are essential tools for model analysis, helping to assess model size and complexity, as well as evaluating the data’s inherent clustering tendency.</p>
+<dl class="simple">
+<dt>Example Usage:</dt><dd><p>model = SomePyTorchModel()
+total_params, trainable_params = count_parameters(model)
+hopkins_statistic = hopkins(some_dataset)</p>
+</dd>
+</dl>
+<dl class="py function">
+<dt class="sig sig-object py" id="rna_code.utils.benchmark.count_parameters">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.benchmark.</span></span><span class="sig-name descname"><span class="pre">count_parameters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.benchmark.count_parameters" title="Link to this definition">¶</a></dt>
+<dd><p>for torch models, print number of param.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="rna_code.utils.benchmark.hopkins">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.benchmark.</span></span><span class="sig-name descname"><span class="pre">hopkins</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.benchmark.hopkins" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+<section id="module-rna_code.utils.experiment">
+<span id="rna-code-utils-experiment-module"></span><h2>rna_code.utils.experiment module<a class="headerlink" href="#module-rna_code.utils.experiment" title="Link to this heading">¶</a></h2>
+<p>Experiment module, in charge of handling data loading, model training and monitoring
+according to provided parameters.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="rna_code.utils.experiment.Experiment">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">rna_code.utils.experiment.</span></span><span class="sig-name descname"><span class="pre">Experiment</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_param</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_param</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.experiment.Experiment" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Experiment class handling data, model training and monitoring.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_param</strong> (<em>dict</em>) – Data related parameters.</p></li>
+<li><p><strong>model_param</strong> (<em>dict</em>) – Model related parameters.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.experiment.Experiment.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#rna_code.utils.experiment.Experiment.run" title="Link to this definition">¶</a></dt>
+<dd><p>Run experiment.</p>
+<p>Training, visualization and logging.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-rna_code.utils.feature_selection">
+<span id="rna-code-utils-feature-selection-module"></span><h2>rna_code.utils.feature_selection module<a class="headerlink" href="#module-rna_code.utils.feature_selection" title="Link to this heading">¶</a></h2>
+<p>Feature Selection Module</p>
+<p>This module provides a set of functions for feature selection in datasets, particularly focusing on genomic data.
+It includes various statistical and machine learning methods to identify the most significant features for modeling.</p>
+<p>Methods:
+- MAD_selection: Selects features based on Median Absolute Deviation (MAD).
+- laplacian_score: Computes the Laplacian Score for each feature in the dataset.
+- LS_selection: Selects features based on Laplacian Score.
+- expression_selection: Selects features based on gene expression levels.
+- LASSO_selection: Selects features using LASSO regression.</p>
+<p>Each method applies different criteria to determine the importance or relevance of features in the dataset,
+enabling users to reduce the dimensionality of their data for more efficient and effective analysis.</p>
+<p>Usage:
+Import the module and use its functions to perform feature selection on your dataset.
+Each function accepts a dataset (numpy array) and specific parameters related to its selection criteria.</p>
+<p class="rubric">Example</p>
+<p>import feature_selection as fs
+selected_features = fs.MAD_selection(data_array, threshold=0.5)</p>
+<p>The module also includes visualization tools (when verbose is enabled) for understanding
+the distribution of feature scores and the effect of the selection threshold.</p>
+<p>Note:
+The module is designed with genomic datasets in mind, but it may be applicable to other types of numerical datasets.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="rna_code.utils.feature_selection.LASSO_selection">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.feature_selection.</span></span><span class="sig-name descname"><span class="pre">LASSO_selection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sgdc_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">class_balancing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.feature_selection.LASSO_selection" title="Link to this definition">¶</a></dt>
+<dd><p>Selects features using LASSO regression.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_array</strong> (<em>numpy.ndarray</em>) – The dataset to process.</p></li>
+<li><p><strong>labels</strong> (<em>numpy.ndarray</em>) – The labels associated with the data.</p></li>
+<li><p><strong>sgdc_params</strong> (<em>dict</em><em>, </em><em>optional</em>) – Parameters for the SGDClassifier.</p></li>
+<li><p><strong>class_balancing</strong> (<em>str</em><em>, </em><em>optional</em>) – Method for class balancing.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of boolean values indicating selected features.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="rna_code.utils.feature_selection.LS_selection">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.feature_selection.</span></span><span class="sig-name descname"><span class="pre">LS_selection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.feature_selection.LS_selection" title="Link to this definition">¶</a></dt>
+<dd><p>Selects features based on Laplacian Score.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_array</strong> (<em>numpy.ndarray</em>) – The dataset to process.</p></li>
+<li><p><strong>threshold</strong> (<em>float</em>) – The threshold for feature selection.</p></li>
+<li><p><strong>k</strong> (<em>int</em>) – Number of neighbors for the KNN graph.</p></li>
+<li><p><strong>verbose</strong> (<em>int</em>) – Controls the verbosity of the function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of boolean values indicating selected features.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="rna_code.utils.feature_selection.MAD_selection">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.feature_selection.</span></span><span class="sig-name descname"><span class="pre">MAD_selection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ceiling</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.feature_selection.MAD_selection" title="Link to this definition">¶</a></dt>
+<dd><p>Selects features based on Median Absolute Deviation (MAD).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_array</strong> (<em>numpy.ndarray</em>) – The dataset to process.</p></li>
+<li><p><strong>threshold</strong> (<em>float</em>) – The lower threshold for feature selection.</p></li>
+<li><p><strong>ceiling</strong> (<em>float</em>) – The upper limit for feature selection.</p></li>
+<li><p><strong>verbose</strong> (<em>int</em>) – Controls the verbosity of the function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of boolean values indicating selected features.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="rna_code.utils.feature_selection.expression_selection">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.feature_selection.</span></span><span class="sig-name descname"><span class="pre">expression_selection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.feature_selection.expression_selection" title="Link to this definition">¶</a></dt>
+<dd><p>Selects features based on gene expression levels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_array</strong> (<em>numpy.ndarray</em>) – The dataset to process.</p></li>
+<li><p><strong>threshold</strong> (<em>float</em>) – The threshold for feature selection.</p></li>
+<li><p><strong>verbose</strong> (<em>int</em>) – Controls the verbosity of the function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of boolean values indicating selected features.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="rna_code.utils.feature_selection.laplacian_score">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.feature_selection.</span></span><span class="sig-name descname"><span class="pre">laplacian_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.feature_selection.laplacian_score" title="Link to this definition">¶</a></dt>
+<dd><p>Computes the Laplacian Score for each feature of the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> (<em>numpy.ndarray</em>) – The dataset (samples x features).</p></li>
+<li><p><strong>k</strong> (<em>int</em>) – Number of neighbors for the KNN graph.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array of Laplacian scores for each feature.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-rna_code.utils.helpers">
+<span id="rna-code-utils-helpers-module"></span><h2>rna_code.utils.helpers module<a class="headerlink" href="#module-rna_code.utils.helpers" title="Link to this heading">¶</a></h2>
+<p>Helpers Module</p>
+<p>This module provides a collection of utility functions and classes to assist in various tasks
+related to Pytorch-based machine learning experiments.</p>
+<p>It includes tools for dataset handling, data formatting, encoding and reconstructing datasets,
+experiment configuration generation, and finding prime numbers. These utilities are designed to
+streamline the process of preparing data for model training and evaluation, as well as facilitating
+the experimentation with different model configurations.</p>
+<p>Functions:
+- format_dataset: Formats a given dataset for training with a PyTorch model.
+- encode_recon_dataset: Encodes and reconstructs a dataset using a provided model.
+- generate_config: Generates a list of configurations for machine learning experiments.
+- find_primes: Finds prime numbers up to a given number.</p>
+<p>Classes:
+- Mydatasets: A custom PyTorch Dataset class for handling datasets.</p>
+<p>The module primarily supports tasks in data preprocessing and experiment setup in a machine learning context.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="rna_code.utils.helpers.Mydatasets">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">rna_code.utils.helpers.</span></span><span class="sig-name descname"><span class="pre">Mydatasets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.helpers.Mydatasets" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Dataset</span></code></p>
+<p>A custom PyTorch Dataset class for handling datasets.</p>
+<p>This class is designed to work with datasets in a format suitable for PyTorch models,
+allowing for transformations and easy integration with PyTorch DataLoader.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data1</strong> – The primary dataset.</p></li>
+<li><p><strong>transform</strong> (<em>optional</em>) – A function/transform that takes in a sample and returns a transformed version.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="rna_code.utils.helpers.encode_recon_dataset">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.helpers.</span></span><span class="sig-name descname"><span class="pre">encode_recon_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">DEVICE</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.helpers.encode_recon_dataset" title="Link to this definition">¶</a></dt>
+<dd><p>Encodes and reconstructs a dataset using a provided model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataloader</strong> – The DataLoader containing the dataset to be processed.</p></li>
+<li><p><strong>model</strong> – The model to be used for encoding and reconstruction.</p></li>
+<li><p><strong>DEVICE</strong> – The device (CPU/GPU) on which the model is running.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing the encoded and reconstructed outputs of the dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="rna_code.utils.helpers.find_primes">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.helpers.</span></span><span class="sig-name descname"><span class="pre">find_primes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.helpers.find_primes" title="Link to this definition">¶</a></dt>
+<dd><p>Finds prime numbers up to a given number.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>n</strong> (<em>int</em>) – The upper limit for finding prime numbers.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of prime numbers up to ‘n’.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="rna_code.utils.helpers.format_dataset">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.helpers.</span></span><span class="sig-name descname"><span class="pre">format_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.helpers.format_dataset" title="Link to this definition">¶</a></dt>
+<dd><p>Formats a given dataset for training with a PyTorch model, providing a dataloader object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> – The dataset to be formatted.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing the formatted dataset and the corresponding DataLoader.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="rna_code.utils.helpers.generate_config">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.helpers.</span></span><span class="sig-name descname"><span class="pre">generate_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">static_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.helpers.generate_config" title="Link to this definition">¶</a></dt>
+<dd><p>Generate a list of configurations for ML experiments, combining static and dynamic parameters.</p>
+<p>Args:
+static_params (dict): Parameters that stay the same for each configuration.
+dynamic_params (dict): Dictionary of parameter names to lists of possible values.</p>
+<blockquote>
+<div><p>This includes both single-value parameters and coupled parameters (as tuples).</p>
+</div></blockquote>
+<p>Returns:
+list: A list of configuration dictionaries.</p>
+</dd></dl>
+
+</section>
+<section id="module-rna_code.utils.monitor_callback">
+<span id="rna-code-utils-monitor-callback-module"></span><h2>rna_code.utils.monitor_callback module<a class="headerlink" href="#module-rna_code.utils.monitor_callback" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="rna_code.utils.monitor_callback.MetricsComputer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">rna_code.utils.monitor_callback.</span></span><span class="sig-name descname"><span class="pre">MetricsComputer</span></span><a class="headerlink" href="#rna_code.utils.monitor_callback.MetricsComputer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.monitor_callback.MetricsComputer.compute_hopkins">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compute_hopkins</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#rna_code.utils.monitor_callback.MetricsComputer.compute_hopkins" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.monitor_callback.MetricsComputer.compute_metrics">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compute_metrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">encoded_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_labels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_clusters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#rna_code.utils.monitor_callback.MetricsComputer.compute_metrics" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="rna_code.utils.monitor_callback.MonitorCallback">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">rna_code.utils.monitor_callback.</span></span><span class="sig-name descname"><span class="pre">MonitorCallback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataLoader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_clusters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_intervals</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_on</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'epoch'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.monitor_callback.MonitorCallback" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Callback</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.monitor_callback.MonitorCallback.compute_and_visualize">
+<span class="sig-name descname"><span class="pre">compute_and_visualize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trainer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pl_module</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.monitor_callback.MonitorCallback.compute_and_visualize" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.monitor_callback.MonitorCallback.get_encoded_data">
+<span class="sig-name descname"><span class="pre">get_encoded_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trainer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pl_module</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.monitor_callback.MonitorCallback.get_encoded_data" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.monitor_callback.MonitorCallback.on_train_batch_end">
+<span class="sig-name descname"><span class="pre">on_train_batch_end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trainer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pl_module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.monitor_callback.MonitorCallback.on_train_batch_end" title="Link to this definition">¶</a></dt>
+<dd><p>Called when the train batch ends.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The value <code class="docutils literal notranslate"><span class="pre">outputs[&quot;loss&quot;]</span></code> here will be the normalized value w.r.t <code class="docutils literal notranslate"><span class="pre">accumulate_grad_batches</span></code> of the
+loss returned from <code class="docutils literal notranslate"><span class="pre">training_step</span></code>.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.monitor_callback.MonitorCallback.on_train_epoch_end">
+<span class="sig-name descname"><span class="pre">on_train_epoch_end</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trainer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pl_module</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.monitor_callback.MonitorCallback.on_train_epoch_end" title="Link to this definition">¶</a></dt>
+<dd><p>Called when the train epoch ends.</p>
+<p>To access all batch outputs at the end of the epoch, you can cache step outputs as an attribute of the
+<code class="xref py py-class docutils literal notranslate"><span class="pre">pytorch_lightning.core.LightningModule</span></code> and access them in this hook:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyLightningModule</span><span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">LightningModule</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_step_outputs</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">training_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="o">...</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_step_outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">loss</span>
+
+
+<span class="k">class</span> <span class="nc">MyCallback</span><span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">Callback</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">on_train_epoch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trainer</span><span class="p">,</span> <span class="n">pl_module</span><span class="p">):</span>
+        <span class="c1"># do something with all training_step outputs, for example:</span>
+        <span class="n">epoch_mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">pl_module</span><span class="o">.</span><span class="n">training_step_outputs</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">pl_module</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">&quot;training_epoch_mean&quot;</span><span class="p">,</span> <span class="n">epoch_mean</span><span class="p">)</span>
+        <span class="c1"># free up the memory</span>
+        <span class="n">pl_module</span><span class="o">.</span><span class="n">training_step_outputs</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="rna_code.utils.monitor_callback.Visualizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">rna_code.utils.monitor_callback.</span></span><span class="sig-name descname"><span class="pre">Visualizer</span></span><a class="headerlink" href="#rna_code.utils.monitor_callback.Visualizer" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.monitor_callback.Visualizer.plot_metrics">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">plot_metrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.monitor_callback.Visualizer.plot_metrics" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.monitor_callback.Visualizer.visualize_clustering">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">visualize_clustering</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pca_result</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">true_labels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pred_labels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.monitor_callback.Visualizer.visualize_clustering" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-rna_code.utils.search">
+<span id="rna-code-utils-search-module"></span><h2>rna_code.utils.search module<a class="headerlink" href="#module-rna_code.utils.search" title="Link to this heading">¶</a></h2>
+<p>Implements a genetic algorithm for optimizing parameters in machine learning models.</p>
+<p>This class manages a population of parameter sets (individuals), evolving them over generations
+to optimize a fitness metric evaluated through experiments.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="rna_code.utils.search.search_param">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.search.</span></span><span class="sig-name descname"><span class="pre">search_param</span></span><a class="headerlink" href="#rna_code.utils.search.search_param" title="Link to this definition">¶</a></dt>
+<dd><p>Parameters related to the genetic algorithm’s operation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="rna_code.utils.search.data_param">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.search.</span></span><span class="sig-name descname"><span class="pre">data_param</span></span><a class="headerlink" href="#rna_code.utils.search.data_param" title="Link to this definition">¶</a></dt>
+<dd><p>Parameters for the dataset used in the experiment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="rna_code.utils.search.model_param">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.search.</span></span><span class="sig-name descname"><span class="pre">model_param</span></span><a class="headerlink" href="#rna_code.utils.search.model_param" title="Link to this definition">¶</a></dt>
+<dd><p>Parameters for the model used in the experiment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="rna_code.utils.search.dynamic_params">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.search.</span></span><span class="sig-name descname"><span class="pre">dynamic_params</span></span><a class="headerlink" href="#rna_code.utils.search.dynamic_params" title="Link to this definition">¶</a></dt>
+<dd><p>Parameters that are subject to mutation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="rna_code.utils.search.initial_population">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.search.</span></span><span class="sig-name descname"><span class="pre">initial_population</span></span><a class="headerlink" href="#rna_code.utils.search.initial_population" title="Link to this definition">¶</a></dt>
+<dd><p>The initial set of individuals for the genetic algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="rna_code.utils.search.alt_data_param">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.search.</span></span><span class="sig-name descname"><span class="pre">alt_data_param</span></span><a class="headerlink" href="#rna_code.utils.search.alt_data_param" title="Link to this definition">¶</a></dt>
+<dd><p>Alternative dataset parameters for additional testing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="rna_code.utils.search.best_performer">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.search.</span></span><span class="sig-name descname"><span class="pre">best_performer</span></span><a class="headerlink" href="#rna_code.utils.search.best_performer" title="Link to this definition">¶</a></dt>
+<dd><p>The best performing individual so far.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="rna_code.utils.search.best_performer_metric">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.search.</span></span><span class="sig-name descname"><span class="pre">best_performer_metric</span></span><a class="headerlink" href="#rna_code.utils.search.best_performer_metric" title="Link to this definition">¶</a></dt>
+<dd><p>The metric score of the best performer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="rna_code.utils.search.current_generation">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.search.</span></span><span class="sig-name descname"><span class="pre">current_generation</span></span><a class="headerlink" href="#rna_code.utils.search.current_generation" title="Link to this definition">¶</a></dt>
+<dd><p>The current generation count in the algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="rna_code.utils.search.performance_tracker">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.search.</span></span><span class="sig-name descname"><span class="pre">performance_tracker</span></span><a class="headerlink" href="#rna_code.utils.search.performance_tracker" title="Link to this definition">¶</a></dt>
+<dd><p>Tracks the best performance in each generation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="rna_code.utils.search.n_iter">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.search.</span></span><span class="sig-name descname"><span class="pre">n_iter</span></span><a class="headerlink" href="#rna_code.utils.search.n_iter" title="Link to this definition">¶</a></dt>
+<dd><p>Counter for the number of iterations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.search.add_alternative_dataset">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.search.</span></span><span class="sig-name descname"><span class="pre">add_alternative_dataset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.search.add_alternative_dataset" title="Link to this definition">¶</a></dt>
+<dd><p>Adds alternative dataset parameters for testing.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.search.calculate_fitness">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.search.</span></span><span class="sig-name descname"><span class="pre">calculate_fitness</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.search.calculate_fitness" title="Link to this definition">¶</a></dt>
+<dd><p>Evaluates and returns the fitness of an individual.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.search.select_parents">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.search.</span></span><span class="sig-name descname"><span class="pre">select_parents</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.search.select_parents" title="Link to this definition">¶</a></dt>
+<dd><p>Selects two parents from the population based on fitness.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.search.crossover">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.search.</span></span><span class="sig-name descname"><span class="pre">crossover</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.search.crossover" title="Link to this definition">¶</a></dt>
+<dd><p>Creates a new individual by combining attributes of two parents.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.search.mutate">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.search.</span></span><span class="sig-name descname"><span class="pre">mutate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.search.mutate" title="Link to this definition">¶</a></dt>
+<dd><p>Applies mutation to an individual’s parameters.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.search.run">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.search.</span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.search.run" title="Link to this definition">¶</a></dt>
+<dd><p>Executes the genetic algorithm for the specified number of generations.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="rna_code.utils.search.genetic_search">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">rna_code.utils.search.</span></span><span class="sig-name descname"><span class="pre">genetic_search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">search_param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_param</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_population</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_params</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.search.genetic_search" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.search.genetic_search.add_alternative_dataset">
+<span class="sig-name descname"><span class="pre">add_alternative_dataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alt_data_param</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.search.genetic_search.add_alternative_dataset" title="Link to this definition">¶</a></dt>
+<dd><p>Adds alternative dataset parameters for additional testing during the fitness evaluation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>alt_data_param</strong> (<em>dict</em>) – Parameters for the alternative dataset.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.search.genetic_search.calculate_fitness">
+<span class="sig-name descname"><span class="pre">calculate_fitness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">individual</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.search.genetic_search.calculate_fitness" title="Link to this definition">¶</a></dt>
+<dd><p>Evaluates and returns the fitness of an individual based on an experiment.</p>
+<p>Fitness is determined by running an experiment with the individual’s parameters and
+measuring its performance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>individual</strong> (<em>dict</em>) – A set of parameters representing an individual in the population.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The fitness metric of the individual.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.search.genetic_search.crossover">
+<span class="sig-name descname"><span class="pre">crossover</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parent1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parent2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.search.genetic_search.crossover" title="Link to this definition">¶</a></dt>
+<dd><p>Creates a new individual by combining attributes of two parents.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parent1</strong> (<em>dict</em>) – The first parent’s parameters.</p></li>
+<li><p><strong>parent2</strong> (<em>dict</em>) – The second parent’s parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A new individual created from the parents.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.search.genetic_search.mutate">
+<span class="sig-name descname"><span class="pre">mutate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">individual</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.search.genetic_search.mutate" title="Link to this definition">¶</a></dt>
+<dd><p>Applies mutation to an individual’s parameters.</p>
+<p>Selects a parameter at random and changes its value, based on available choices in dynamic_params.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>individual</strong> (<em>dict</em>) – The individual to be mutated.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The mutated individual.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.search.genetic_search.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.search.genetic_search.run" title="Link to this definition">¶</a></dt>
+<dd><p>Executes the genetic algorithm, evolving the population over specified generations.</p>
+<p>In each generation, selects parents, performs crossover and mutation,
+and updates the population for the next generation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="rna_code.utils.search.genetic_search.select_parents">
+<span class="sig-name descname"><span class="pre">select_parents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">population</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.search.genetic_search.select_parents" title="Link to this definition">¶</a></dt>
+<dd><p>Selects two parents from the population based on their fitness.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>population</strong> (<em>list</em>) – The current population of individuals.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple of two individuals selected as parents.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-rna_code.utils.visualization">
+<span id="rna-code-utils-visualization-module"></span><h2>rna_code.utils.visualization module<a class="headerlink" href="#module-rna_code.utils.visualization" title="Link to this heading">¶</a></h2>
+<p>This module contains a collection of visualization functions designed to aid in the
+analysis and interpretation of machine learning model outputs, particularly focusing
+on aspects like training process, latent space characteristics, and dataset features.
+It includes functionalities for creating various plots and animations to visually
+represent model performance metrics, PCA results, dataset characteristics, and
+reconstruction quality.</p>
+<p>Functions:</p>
+<ul class="simple">
+<li><p><cite>callback_viz</cite>: Creates a multi-faceted visualization during model training callbacks,</p></li>
+</ul>
+<p>featuring training loss, heatmaps, and PCA scatter plots.</p>
+<ul class="simple">
+<li><p><cite>post_training_viz</cite>: Generates comprehensive visualizations after model training,</p></li>
+</ul>
+<p>including PCA scatter plots, heatmaps of original data, encoded space, reconstructions,
+and training loss.</p>
+<ul class="simple">
+<li><p><cite>post_training_animation</cite>: Produces an animation to visualize the evolution of PCA</p></li>
+</ul>
+<p>results over the course of training epochs.</p>
+<ul class="simple">
+<li><p><cite>dataset_plot</cite>: Plots the entire dataset as a heatmap and provides a kernel density</p></li>
+</ul>
+<p>estimation plot for the total gene expression, facilitating an understanding of dataset-
+wide gene expression patterns.</p>
+<p>These functions are intended to provide intuitive and informative visual cues that help
+in assessing model behavior and performance, understanding data distributions, and
+identifying key characteristics of the latent space and reconstructed outputs.</p>
+<p>Typical use cases include monitoring model training progress, evaluating model
+performance, and exploring data characteristics for insights that guide further model
+development and refinement.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="rna_code.utils.visualization.callback_viz">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.visualization.</span></span><span class="sig-name descname"><span class="pre">callback_viz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pca_result</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoded_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_hist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.visualization.callback_viz" title="Link to this definition">¶</a></dt>
+<dd><p>Generates a 1x4 subplot visualization during model training callbacks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pca_result</strong> (<em>numpy.ndarray</em>) – PCA results for plotting.</p></li>
+<li><p><strong>encoded_set</strong> (<em>numpy.ndarray</em>) – Encoded dataset for heat map visualization.</p></li>
+<li><p><strong>stack</strong> (<em>numpy.ndarray</em>) – Stacked array of an observation and its reconstruction.</p></li>
+<li><p><strong>loss_hist</strong> (<em>list</em>) – History of training loss values.</p></li>
+<li><p><strong>labels</strong> (<em>list</em>) – Labels for data points, used in PCA scatter plot.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Displays:</dt><dd><p>A figure with four subplots: training loss, heatmap of samples, heatmap of the entire encoded dataset, and a PCA scatter plot.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="rna_code.utils.visualization.dataset_plot">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.visualization.</span></span><span class="sig-name descname"><span class="pre">dataset_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.visualization.dataset_plot" title="Link to this definition">¶</a></dt>
+<dd><p>Plots the entire dataset as a heatmap and provides a density plot of the total gene expression.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>numpy.ndarray</em>) – Dataset to be visualized.</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Displays:</dt><dd><p>A figure with two subplots: a heatmap of gene expression across cells and a KDE plot showing the density of total gene expression.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="rna_code.utils.visualization.post_training_animation">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.visualization.</span></span><span class="sig-name descname"><span class="pre">post_training_animation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">monitor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.visualization.post_training_animation" title="Link to this definition">¶</a></dt>
+<dd><p>Creates a smooth animation showing the evolution of PCA results over training epochs using Plotly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>monitor</strong> (<em>Monitor</em>) – Monitor object containing PCA results for each epoch.</p></li>
+<li><p><strong>metadata</strong> (<em>dict</em>) – Metadata containing labels for the data points.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="rna_code.utils.visualization.post_training_viz">
+<span class="sig-prename descclassname"><span class="pre">rna_code.utils.visualization.</span></span><span class="sig-name descname"><span class="pre">post_training_viz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">DEVICE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_hist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#rna_code.utils.visualization.post_training_viz" title="Link to this definition">¶</a></dt>
+<dd><p>Generates 2x3 visualizations after model training, including PCA, heatmaps, and loss plots.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>numpy.ndarray</em>) – Original dataset.</p></li>
+<li><p><strong>dataloader</strong> (<em>DataLoader</em>) – DataLoader object for the dataset.</p></li>
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – Trained model for encoding and reconstruction.</p></li>
+<li><p><strong>DEVICE</strong> (<em>torch.device</em>) – Device on which the model is running.</p></li>
+<li><p><strong>loss_hist</strong> (<em>list</em>) – History of training loss values.</p></li>
+<li><p><strong>labels</strong> (<em>list</em>) – Labels for data points, used in PCA scatter plot.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Displays:</dt><dd><p>A figure with six subplots: two rows with training loss plot, heatmaps of the original dataset, encoded space, reconstruction, and a PCA scatter plot.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-rna_code.utils">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-rna_code.utils" title="Link to this heading">¶</a></h2>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Your Project Name</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">rna_code</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="rna_code.html">rna_code package</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="modules.html">rna_code</a><ul>
+  <li><a href="rna_code.html">rna_code package</a><ul>
+      <li>Previous: <a href="rna_code.models.html" title="previous chapter">rna_code.models package</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Your Name.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.0.2</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+      |
+      <a href="_sources/rna_code.utils.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

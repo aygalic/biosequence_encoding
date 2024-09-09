@@ -1,0 +1,20 @@
+rna\_code package
+=================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   rna_code.data
+   rna_code.models
+   rna_code.utils
+
+Module contents
+---------------
+
+.. automodule:: rna_code
+   :members:
+   :undoc-members:
+   :show-inheritance:

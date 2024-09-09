@@ -1,0 +1,29 @@
+rna\_code.data package
+======================
+
+Submodules
+----------
+
+rna\_code.data.data\_handler module
+-----------------------------------
+
+.. automodule:: rna_code.data.data_handler
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+rna\_code.data.data\_module module
+----------------------------------
+
+.. automodule:: rna_code.data.data_module
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: rna_code.data
+   :members:
+   :undoc-members:
+   :show-inheritance:

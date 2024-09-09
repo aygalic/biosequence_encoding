@@ -1,0 +1,85 @@
+rna\_code.models package
+========================
+
+Submodules
+----------
+
+rna\_code.models.attention\_module module
+-----------------------------------------
+
+.. automodule:: rna_code.models.attention_module
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+rna\_code.models.autoencoder module
+-----------------------------------
+
+.. automodule:: rna_code.models.autoencoder
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+rna\_code.models.multi\_head\_self\_attention module
+----------------------------------------------------
+
+.. automodule:: rna_code.models.multi_head_self_attention
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+rna\_code.models.residual\_stack module
+---------------------------------------
+
+.. automodule:: rna_code.models.residual_stack
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+rna\_code.models.self\_attention module
+---------------------------------------
+
+.. automodule:: rna_code.models.self_attention
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+rna\_code.models.vector\_quantizer module
+-----------------------------------------
+
+.. automodule:: rna_code.models.vector_quantizer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+rna\_code.models.vector\_quantizer\_EMA module
+----------------------------------------------
+
+.. automodule:: rna_code.models.vector_quantizer_EMA
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+rna\_code.models.vq\_conversion module
+--------------------------------------
+
+.. automodule:: rna_code.models.vq_conversion
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+rna\_code.models.vq\_pre\_residual\_stack\_decoder module
+---------------------------------------------------------
+
+.. automodule:: rna_code.models.vq_pre_residual_stack_decoder
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: rna_code.models
+   :members:
+   :undoc-members:
+   :show-inheritance:
