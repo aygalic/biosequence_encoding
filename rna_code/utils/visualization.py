@@ -40,8 +40,12 @@ import seaborn as sns
 
 from .helpers import encode_recon_dataset
 
-from matplotlib.animation import FuncAnimation
 from sklearn.decomposition import PCA
+
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
+
 
 from .. import OUTPUT_PATH
 
@@ -166,26 +170,105 @@ def post_training_viz(data, dataloader, model, DEVICE, loss_hist, labels):
 
 
 
+
 def post_training_animation(monitor, metadata):
     """
-    Creates an animation showing the evolution of PCA results over training epochs.
+    Creates a smooth animation showing the evolution of PCA results over training epochs using Plotly.
 
     Args:
         monitor (Monitor): Monitor object containing PCA results for each epoch.
         metadata (dict): Metadata containing labels for the data points.
-
-    Returns:
-        HTML: An HTML representation of the animation for displaying in Jupyter notebooks.
     """
-    fig, ax = plt.subplots()
-    def update(frame):
-        ax.clear()
-        ax.set_title(f'Frame {frame}')
-        pca_result = monitor.frames[frame]
-        sns.scatterplot(x=pca_result[:, 1], y=pca_result[:, 2], hue=metadata["subtypes"])
-    ani = FuncAnimation(fig, update, frames=len(monitor.frames), repeat=True)
-    ani.save(OUTPUT_PATH/'animation.mp4')
+    # Create figure
+    fig = make_subplots()
 
+    # Create a trace for each subtype
+    subtypes = set(metadata["subtypes"])
+    traces = {subtype: go.Scatter(
+        x=[], y=[],
+        mode='markers',
+        name=subtype,
+        text=[],  # for hover text
+        hoverinfo='text'
+    ) for subtype in subtypes}
+
+    # Create frames
+    frames = []
+    for i, pca_result in enumerate(monitor.frames):
+        frame_data = []
+        for subtype in subtypes:
+            mask = [s == subtype for s in metadata["subtypes"]]
+            x = pca_result[mask, 1]
+            y = pca_result[mask, 2]
+            text = [f"Epoch: {i}, Subtype: {subtype}" for _ in x]
+            frame_data.append(go.Scatter(x=x, y=y, mode='markers', name=subtype, text=text, hoverinfo='text'))
+        frames.append(go.Frame(data=frame_data, name=str(i)))
+
+    # Add traces to figure
+    for trace in traces.values():
+        fig.add_trace(trace)
+
+    # Update layout
+    fig.update_layout(
+        updatemenus=[{
+            'buttons': [
+                {
+                    'args': [None, {'frame': {'duration': 500, 'redraw': True}, 'fromcurrent': True}],
+                    'label': 'Play',
+                    'method': 'animate',
+                },
+                {
+                    'args': [[None], {'frame': {'duration': 0, 'redraw': True}, 'mode': 'immediate', 'transition': {'duration': 0}}],
+                    'label': 'Pause',
+                    'method': 'animate',
+                }
+            ],
+            'direction': 'left',
+            'pad': {'r': 10, 't': 87},
+            'showactive': False,
+            'type': 'buttons',
+            'x': 0.1,
+            'xanchor': 'right',
+            'y': 0,
+            'yanchor': 'top'
+        }],
+        sliders=[{
+            'active': 0,
+            'yanchor': 'top',
+            'xanchor': 'left',
+            'currentvalue': {
+                'font': {'size': 20},
+                'prefix': 'Epoch:',
+                'visible': True,
+                'xanchor': 'right'
+            },
+            'transition': {'duration': 300, 'easing': 'cubic-in-out'},
+            'pad': {'b': 10, 't': 50},
+            'len': 0.9,
+            'x': 0.1,
+            'y': 0,
+            'steps': [
+                {
+                    'args': [[f.name], {'frame': {'duration': 300, 'redraw': True}, 'mode': 'immediate', 'transition': {'duration': 300}}],
+                    'label': f.name,
+                    'method': 'animate'
+                } for f in frames
+            ]
+        }]
+    )
+
+    # Update axes
+    fig.update_xaxes(title='PCA 1')
+    fig.update_yaxes(title='PCA 2')
+
+    # Add frames to figure
+    fig.frames = frames
+
+    # Show figure
+    fig.show()
+
+    # Save as HTML (can be opened in a web browser)
+    fig.write_html("pca_animation.html")
 
 def dataset_plot(data):
     """
@@ -213,4 +296,3 @@ def dataset_plot(data):
     plt.ylabel('Density')
     plt.tight_layout()  # Ensure plots don't overlap
     plt.show()
-
