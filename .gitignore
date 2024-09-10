@@ -1,8 +1,5 @@
-
 .DS_Store
-
 workfiles
-src/.Rhistory
 __pycache__
 .vscode
 external_aproach/VQ_VAE_disc
@@ -21,5 +18,5 @@ __pycache__
 !/data/.gitkeep
 
 cache
-outputs/
+outputs/*
 *lightning_logs
