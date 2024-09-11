@@ -42,28 +42,6 @@ class MetricsComputer:
         # Implement Hopkins statistic calculation here
         return 0.5  # Placeholder value
 
-class Visualizer:
-    @staticmethod
-    def visualize_clustering(pca_result: np.ndarray, true_labels: List[int], pred_labels: List[int], epoch: int):
-        fig, axs = plt.subplots(1, 2, figsize=(12, 6))
-        sns.scatterplot(x=pca_result[:, 0], y=pca_result[:, 1], hue=true_labels, ax=axs[0]).set(title='True Labels')
-        sns.scatterplot(x=pca_result[:, 0], y=pca_result[:, 1], hue=pred_labels, ax=axs[1]).set(title='Found Labels')
-        plt.savefig(f'clustering_visualization_epoch_{epoch}.png')
-        plt.close()
-
-    @staticmethod
-    def plot_metrics(metrics: List[Dict[str, float]], epoch: int):
-        metrics_df = pd.DataFrame(metrics)
-        plt.figure(figsize=(12, 6))
-        for column in metrics_df.columns:
-            plt.plot(metrics_df.index, metrics_df[column], label=column)
-        plt.legend()
-        plt.title('Clustering Metrics Over Epochs')
-        plt.xlabel('Epoch')
-        plt.ylabel('Metric Value')
-        plt.savefig(f'metrics_plot_epoch_{epoch}.png')
-        plt.close()
-
 class MonitorCallback(Callback):
     def __init__(self,
                  dataloader: torch.utils.data.DataLoader,
@@ -76,7 +54,10 @@ class MonitorCallback(Callback):
         self.dataloader = dataloader
         self.labels = self._labels_to_int(labels)
         self.n_clusters = n_clusters
-        self.evaluation_intervals = evaluation_intervals or np.unique([int(x) for x in np.logspace(1, 3, num=50)])
+        if evaluation_intervals is None:
+            self.evaluation_intervals = np.unique([int(x) for x in np.logspace(1, 3, num=50)])
+        else:
+            self.evaluation_intervals = evaluation_intervals 
         self.compute_on = compute_on
         self.verbose = verbose
         self.metrics = []
@@ -91,14 +72,14 @@ class MonitorCallback(Callback):
         if "loss" in outputs:
             self.loss_values.append(outputs["loss"].item())
         
-        if self.compute_on == 'batch' and (self.global_batch_count) in self.evaluation_intervals:
-            self.compute_and_visualize(trainer, pl_module)
+        if self.compute_on == 'batch' and self.global_batch_count in self.evaluation_intervals:
+            self._compute_metrics(trainer, pl_module)
 
     def on_train_epoch_end(self, trainer, pl_module):
-        if self.compute_on == 'epoch' and (trainer.current_epoch + 1) in self.evaluation_intervals:
-            self.compute_and_visualize(trainer, pl_module)
+        if self.compute_on == 'epoch' and trainer.current_epoch in self.evaluation_intervals:
+            self._compute_metrics(trainer, pl_module)
 
-    def compute_and_visualize(self, trainer, pl_module):
+    def _compute_metrics(self, trainer, pl_module):
         pl_module.eval()
         encode_out = self.get_encoded_data(trainer, pl_module)
 
@@ -110,10 +91,6 @@ class MonitorCallback(Callback):
         self.frames.append(np.column_stack((np.full(pca_result.shape[0], len(self.frames)), pca_result)))
 
         if self.verbose >= 1:
-            Visualizer.visualize_clustering(pca_result, self.labels, 
-                                            KMeans(n_clusters=self.n_clusters).fit_predict(encode_out), 
-                                            trainer.current_epoch)
-            Visualizer.plot_metrics(self.metrics, trainer.current_epoch)
             print(f"Epoch {trainer.current_epoch}: ARI = {metrics['ari']:.4f}")
 
         pl_module.train()

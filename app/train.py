@@ -17,7 +17,7 @@ config = {
     "num_layers" :  3,
     "kernel_size" : 7,
     "padding" : 3,
-    "n_epoch" : 12
+    "n_epoch" : 15
 }
 
 data_path  = CACHE_PATH / "data"

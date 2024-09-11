@@ -187,6 +187,15 @@ def post_training_animation(monitor, metadata):
         hoverinfo='text'
     ) for subtype in subtypes}
 
+    # Find global min and max for x and y axes
+    all_x = []
+    all_y = []
+    for pca_result in monitor.frames:
+        all_x.extend(pca_result[:, 1])
+        all_y.extend(pca_result[:, 2])
+    x_min, x_max = min(all_x), max(all_x)
+    y_min, y_max = min(all_y), max(all_y)
+
     # Create frames
     frames = []
     for i, pca_result in enumerate(monitor.frames):
@@ -197,7 +206,10 @@ def post_training_animation(monitor, metadata):
             y = pca_result[mask, 2]
             text = [f"Epoch: {i}, Subtype: {subtype}" for _ in x]
             frame_data.append(go.Scatter(x=x, y=y, mode='markers', name=subtype, text=text, hoverinfo='text'))
-        frames.append(go.Frame(data=frame_data, name=str(i)))
+        frames.append(go.Frame(data=frame_data, name=str(i), layout=go.Layout(
+            xaxis=dict(range=[x_min, x_max]),
+            yaxis=dict(range=[y_min, y_max])
+        )))
 
     # Add traces to figure
     for trace in traces.values():
@@ -208,7 +220,7 @@ def post_training_animation(monitor, metadata):
         updatemenus=[{
             'buttons': [
                 {
-                    'args': [None, {'frame': {'duration': 500, 'redraw': True}, 'fromcurrent': True}],
+                    'args': [None, {'frame': {'duration': 300, 'redraw': True, 'easing': 'linear'}, 'fromcurrent': True}],
                     'label': 'Play',
                     'method': 'animate',
                 },
@@ -237,7 +249,7 @@ def post_training_animation(monitor, metadata):
                 'visible': True,
                 'xanchor': 'right'
             },
-            'transition': {'duration': 300, 'easing': 'cubic-in-out'},
+            'transition': {'duration': 300, 'easing': 'linear'},
             'pad': {'b': 10, 't': 50},
             'len': 0.9,
             'x': 0.1,
@@ -249,7 +261,9 @@ def post_training_animation(monitor, metadata):
                     'method': 'animate'
                 } for f in frames
             ]
-        }]
+        }],
+        xaxis=dict(range=[x_min, x_max]),
+        yaxis=dict(range=[y_min, y_max])
     )
 
     # Update axes

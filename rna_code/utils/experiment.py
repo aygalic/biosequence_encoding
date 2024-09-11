@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytorch_lightning as pl
+import numpy as np
 
 from rna_code.data.data_module import DataModule
 from rna_code.utils.monitor_callback import MonitorCallback
@@ -50,6 +51,7 @@ class Experiment():
              labels=self.data_module.full_meta_data["subtypes"],
              n_clusters=5,
              compute_on='batch',
+             evaluation_intervals = np.unique([int(x) for x in np.logspace(1, 3, num=50)]),
              verbose=0
         )
 
