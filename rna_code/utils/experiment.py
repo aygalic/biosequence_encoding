@@ -32,8 +32,8 @@ class Experiment():
 
         self.data_param = data_param
         self.model_param = model_param
-        # FIXME n_epoch is not actually a model param, this was made to simplify code
-        self.n_epoch = self.model_param.pop("n_epoch", 1000)
+
+        self.n_epoch = self.model_param.pop("n_epoch", 10)
         self.data_module = DataModule(data_param)
         self.data_module.setup(stage=None)
         self.input_shape = self.data_module.feature_num
@@ -50,12 +50,12 @@ class Experiment():
              labels=self.data_module.full_meta_data["subtypes"],
              n_clusters=5,
              compute_on='batch',
-             verbose=1
+             verbose=0
         )
 
 
 
-        trainer = pl.Trainer(max_epochs=10, callbacks=[monitor_callback])
+        trainer = pl.Trainer(max_epochs=self.n_epoch, callbacks=[monitor_callback])
         trainer.fit(self.model, self.data_module)
 
         visualization.post_training_viz(

@@ -31,9 +31,6 @@ performance, and exploring data characteristics for insights that guide further 
 development and refinement.
 """
 
-
-import sys
-
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -45,7 +42,7 @@ from sklearn.decomposition import PCA
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from .. import DOCS_PATH
+from .. import STATIC_OUTPUT_PATH
 
 def callback_viz(pca_result, encoded_set, stack, loss_hist, labels):
     """
@@ -266,7 +263,7 @@ def post_training_animation(monitor, metadata):
     fig.show()
 
     # Save as HTML (can be opened in a web browser)
-    savepath = DOCS_PATH / "readme" 
+    savepath = STATIC_OUTPUT_PATH
     savepath.mkdir(parents=True, exist_ok=True)
     fig.write_html(savepath / "pca_animation.html")
 
