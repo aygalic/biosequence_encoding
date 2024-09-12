@@ -36,7 +36,10 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler, normalize
 
-from ..utils import feature_selection
+from .feature_selection.statistical_selector import StatisticalSelector
+from .feature_selection.laplacian_selector import LaplacianSelector
+from .feature_selection.lasso_selector import LassoSelector
+
 from . import BRCA_DATA_PATH, BRCA_METADATA_FILE, BRCA_SUBTYPES_FILE
 
 mg = mygene.MyGeneInfo()
@@ -227,11 +230,12 @@ def generate_dataset(
     if dataset_type == 'BRCA':
         names = pd.DataFrame(get_gene_names_from_file(entries[0], header = 1, skiprows = [2,3,4,5]))
 
-    # numerical feature selection
+    # statistical feature selection
+    statistical_selector = StatisticalSelector()
 
     if(expression_threshold is not None):
         if verbose: print("selecting genes based on expression threshold: ",expression_threshold, "...")
-        gene_selected = feature_selection.expression_selection(data_array, expression_threshold, verbose)
+        gene_selected = statistical_selector.expression_selection(data_array, expression_threshold, verbose)
         if verbose: print("removing", len(gene_selected) - sum(gene_selected), "genes under the expression threshold from the dataset")
         data_array = data_array[:,gene_selected]
         names = names[gene_selected]
@@ -239,14 +243,15 @@ def generate_dataset(
     if(MAD_threshold is not None):
         MAD_ceiling = 150
         if verbose: print("selecting genes based on median absolute deviation window: [",MAD_threshold,",", MAD_ceiling, "] ...")
-        gene_selected = feature_selection.MAD_selection(data_array, MAD_threshold, verbose = verbose)
+        gene_selected = statistical_selector.MAD_selection(data_array, MAD_threshold, verbose = verbose)
         if verbose: print("removing", len(gene_selected) - sum(gene_selected), "genes out of the MAD window from the dataset")
         data_array = data_array[:,gene_selected]
         names = names[gene_selected]
-
+        
+    laplacian_selector = LaplacianSelector()
     if(LS_threshold is not None):
         if verbose: print("selecting genes based on Laplacian Score (LS) threshold: ",LS_threshold, "...")
-        gene_selected = feature_selection.LS_selection(data_array, LS_threshold, 5, verbose)
+        gene_selected = laplacian_selector.LS_selection(data_array, LS_threshold, 5, verbose)
         if verbose: print("removing", len(gene_selected) - sum(gene_selected), "genes under the LS threshold from the dataset")
         data_array = data_array[:,gene_selected]
         names = names[gene_selected]
