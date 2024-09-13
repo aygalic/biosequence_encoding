@@ -1,10 +1,17 @@
-from scipy.spatial.distance import pdist, squareform
-from .base_feature_selector import BaseFeatureSelector
+import logging
 import numpy as np
+from scipy.spatial.distance import pdist, squareform
+
+from .base_feature_selector import BaseFeatureSelector
 
 
 class LaplacianSelector(BaseFeatureSelector):
-    def laplacian_score(self, X, k=5):
+    def __init__(self, threshold : float | None = None, k : int = 5):
+        super().__init__(threshold)
+        self.k = k
+        self._plot_title = "Distribution of Laplacian Score (LS)"
+
+    def laplacian_score(self, X):
         """
         Computes the Laplacian Score for each feature of the dataset.
 
@@ -16,13 +23,11 @@ class LaplacianSelector(BaseFeatureSelector):
             numpy.ndarray: Array of Laplacian scores for each feature.
         """
         dists = squareform(pdist(X, metric='euclidean'))
-        dists_knn = np.sort(dists)[:, 1:k+1]
+        dists_knn = np.sort(dists)[:, 1:self.k+1]
         sigma = np.mean(dists_knn)
         W = np.exp(-dists ** 2 / (2 * sigma ** 2))
-        
         D = np.diag(np.sum(W, axis=1))
         L = D - W
-        
         D_inverse_sqrt = np.diag(1 / np.sqrt(np.diag(D)))
         S = D_inverse_sqrt @ L @ D_inverse_sqrt
         
@@ -33,7 +38,7 @@ class LaplacianSelector(BaseFeatureSelector):
         
         return fraternities
 
-    def ls_selection(self, data_array, threshold, k=5, verbose=0):
+    def select_features(self, data_array):
         """
         Selects features based on Laplacian Score.
 
@@ -46,11 +51,9 @@ class LaplacianSelector(BaseFeatureSelector):
         Returns:
             list: A list of boolean values indicating selected features.
         """
-        scores = self.laplacian_score(data_array, k)
-        
-        if verbose:
-            self._plot_distribution(scores, threshold, 'Distribution of Laplacian Score (LS)', 
-                                    'Scores Value', range_values=[0, 0.01])
-        
-        return [threshold < val < 100 for val in scores]
-
+        self.scores = self.laplacian_score(data_array)
+        selection = [self.threshold < val < 100 for val in self.scores]
+        logging.info(
+            "removing %i genes outside the Laplacian score window from the dataset",
+            len(selection)-sum(selection))
+        return selection
