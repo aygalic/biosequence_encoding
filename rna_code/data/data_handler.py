@@ -195,7 +195,7 @@ def generate_dataset(
     ###########################################
 
     # load the dataset into an array 
-    logging.info("loading samples...") 
+    logging.info("loading samples...")
     data_array = np.array([load_patient_data(e, header = data_array_header) for e in entries])
     logging.info("loaded %i samples.",len(data_array))
 
@@ -264,9 +264,6 @@ def generate_dataset(
         # Merge the original names DataFrame with the query results
         names = names.merge(query_result, on='query', how='left')
         names.reset_index(inplace=True)
-
-    else:
-        raise ValueError("Invalid dataset type. Choose 'genomic', 'transcriptomic' or 'BRCA'.")
 
 
     ###########################################
