@@ -66,7 +66,7 @@ def load_patient_data(filename: str, header: int = 0) -> pd.Series:
         data = pd.read_table(filename, header=header)
         return data.iloc[:, 3]
     except FileNotFoundError:
-        print(f"File not found: {filename}")
+        logging.warning(f"File not found: {filename}")
 
 
 def get_gene_names_from_file(filename: str, header: int = 0, skiprows: Optional[List[int]] = None) -> pd.DataFrame:
@@ -90,9 +90,9 @@ def get_gene_names_from_file(filename: str, header: int = 0, skiprows: Optional[
         names = pd.read_table(filename, header=header, skiprows=skiprows)
         return names
     except FileNotFoundError:
-        print(f"File not found: {filename}")
+        logging.warning(f"File not found: {filename}")
     except pd.errors.ParserError as e:
-        print(f"Error parsing file {filename}: {e}")
+        logging.warning(f"Error parsing file {filename}: {e}")
 
 
 def retrive_position(names, drop_na=False, verbose=0):
@@ -107,12 +107,12 @@ def retrive_position(names, drop_na=False, verbose=0):
     Returns:
         pd.DataFrame: DataFrame with retrieved genomic positions and symbols.
     """
-    if verbose: print("retriving",len(names), "symbols for genes")
+    logging.debug("retriving %i symbols for genes",len(names))
     query_result = mg.querymany(names['query'], fields = ['genomic_pos', 'symbol'], scopes='ensembl.gene', species='human', verbose = False, as_dataframe = True)
     query_result = query_result.reset_index()
-    if verbose: print("Found",len(query_result), "symbols before duplicate removal")
+    logging.debug("Found %i symbols before duplicate removal", len(query_result))
     query_result = query_result.drop_duplicates(subset = ["query"])
-    if verbose: print(len(query_result), "symbols after duplicate removal")
+    logging.debug(len(query_result), "symbols after duplicate removal")
     if drop_na:
         query_result['name'] = [q if(pd.isna(s)) else s for (s,q) in zip(query_result["symbol"],query_result["query"])]
     return query_result
@@ -168,7 +168,7 @@ def generate_dataset(
         data_array_header = 5
         dataset_of_interest = "augmented_star_gene_counts"
 
-    if verbose: print("path:",path)
+    logging.debug("path: %s", path)
     
     # Loading entries names 
     entries = os.listdir(path)
@@ -195,9 +195,9 @@ def generate_dataset(
     ###########################################
 
     # load the dataset into an array 
-    if verbose: print("loading samples...") 
+    logging.info("loading samples...") 
     data_array = np.array([load_patient_data(e, header = data_array_header) for e in entries])
-    if verbose: print("loaded ",len(data_array), "samples")
+    logging.info("loaded %i samples.",len(data_array))
 
     ###########################################
     ################ subtypes  ################
@@ -278,11 +278,11 @@ def generate_dataset(
 
     if(keep_only_protein_coding and dataset_type == 'BRCA' ):
         gene_selected = names["gene_type"] == "protein_coding"
-        if verbose: print("removing", len(gene_selected) - sum(gene_selected), "Non coding genes from dataset")
+        logging.info("removing %i non coding genes from dataset", len(gene_selected) - sum(gene_selected))
         data_array = data_array[:,gene_selected]
         names = names[gene_selected]
 
-    print("number of genes selected : ", len(data_array[0]))
+    logger.debug("number of genes selected : %i", len(data_array[0]))
 
 
     ###########################################
@@ -290,7 +290,7 @@ def generate_dataset(
     ###########################################
 
     if(sort_symbols and dataset_type in ['genomic', 'BRCA'] ):
-        if verbose: print("sorting based on genomic position chr then transcript start...")
+        logging.info("sorting based on genomic position chr then transcript start...")
         # reset the indexes because of all the previous transformations we have done
         names = names.reset_index(drop=True)
         names = names.sort_values(['genomic_pos.chr', 'genomic_pos.start'], ascending=[True, True])
@@ -303,37 +303,25 @@ def generate_dataset(
     ###########################################
     
     if(normalization == True): 
-        if verbose: print("normalizing data...")
+        logging.info("normalizing data...")
         data_array = normalize(data_array)
 
     if(log1p == True): 
-        if verbose: print("log(1 + x) transformation...")
+        logging.info("log(1 + x) transformation...")
         data_array = np.log1p(data_array)
 
     # after log1p transform because it already provide us with a very good dataset 
     if(min_max == True):
-        if verbose: print("scaling to [0, 1]...")
+        logging.info("scaling to [0, 1]...")
         scaler = MinMaxScaler(feature_range=(0, 1), clip = True)
         data_array = scaler.fit_transform(data_array)
 
-    if verbose: print("number of seq in the dataset :", len(data_array))
-
- 
-    
+    logging.info("number of seq in the dataset : %i", len(data_array))
     
     df = pd.DataFrame(
         data = data_array,
         index = [str(e).split('/')[9] for e in entries],
         columns = names["gene_id"])
-
-    metadata = {"name" : dataset_type,
-                "feature_names" : names,
-                "seq_names" : entries,
-                "n_features" : len(data_array[0]),
-                "n_seq" : len(entries),
-                "meta_data" : meta_data,
-                "subtypes" : subtypes} 
-
 
     meta_dict = {
         "meta_data" : meta_data,
