@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import List, Optional, Any
 import logging
 import pandas as pd
@@ -13,7 +13,6 @@ class BaseInterface(ABC):
         self.data_path = data_path
         self.metadata_path = metadata_path
         self.subsample : int | None = None
-
         self.entries : list = []
         self.meta_data : Any
         self.names : Any
