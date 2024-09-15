@@ -18,13 +18,21 @@ from .interface.BRCA_interface import BRCAInterface
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+DEFAULT_MAD_THRESHOLD = 1
+DEFAULT_LS_THRESHOLD = 0.002
+DEFAULT_EXPRESSION_THRESHOLD = None
+DEFAULT_NORMALIZATION = False
+DEFAULT_KEEP_ONLY_PROTEIN_CODING = False
+DEFAULT_LOG1P = True
+DEFAULT_MINMAX = False
+DEFAULT_SORTING = False
 
 class DatasetBuilder:
     def __init__(
             self,
             dataset_type : Literal['BRCA'],
-            selection_thresholds : dict[str, float] = {},
-            additional_processing_steps : dict[str, bool] = {}
+            selection_thresholds : dict[str, float] = None,
+            additional_processing_steps : dict[str, bool] = None
             ) -> None:
         self.data_interface : base_interface
         match dataset_type:
@@ -32,15 +40,20 @@ class DatasetBuilder:
                 self.data_interface = BRCAInterface()
             case _:
                 raise NotImplementedError
-        self.MAD_threshold = selection_thresholds.get("MAD_threshold", None)
-        self.LS_threshold = selection_thresholds.get("LS_threshold", None)
-        self.expression_threshold = selection_thresholds.get("expression_threshold", None)
 
-        self.normalization = additional_processing_steps.get("normalization", False)
-        self.keep_only_protein_coding = additional_processing_steps.get("keep_only_protein_coding", False)
-        self.log1p = additional_processing_steps.get("log1p", False)
-        self.min_max = additional_processing_steps.get("min_max", False)
-        self.sort_symbols = additional_processing_steps.get("sort_symbols", False)
+        if selection_thresholds is None:
+            selection_thresholds = {}
+        self.MAD_threshold = selection_thresholds.get("MAD_threshold", DEFAULT_MAD_THRESHOLD)
+        self.LS_threshold = selection_thresholds.get("LS_threshold", DEFAULT_LS_THRESHOLD)
+        self.expression_threshold = selection_thresholds.get("expression_threshold", DEFAULT_EXPRESSION_THRESHOLD)
+
+        if additional_processing_steps is None:
+            additional_processing_steps = {}
+        self.normalization = additional_processing_steps.get("normalization", DEFAULT_NORMALIZATION)
+        self.keep_only_protein_coding = additional_processing_steps.get("keep_only_protein_coding", DEFAULT_KEEP_ONLY_PROTEIN_CODING)
+        self.log1p = additional_processing_steps.get("log1p", DEFAULT_LOG1P)
+        self.min_max = additional_processing_steps.get("min_max", DEFAULT_MINMAX)
+        self.sort_symbols = additional_processing_steps.get("sort_symbols", DEFAULT_SORTING)
 
         self.data_array : np.ndarray
         self.names : pd.DataFrame
@@ -94,7 +107,6 @@ class DatasetBuilder:
             # reset the indexes because of all the previous transformations we have done
             self.names = self.names.reset_index(drop=True)
             self.names = self.names.sort_values(['genomic_pos.chr', 'genomic_pos.start'], ascending=[True, True])
-            # Extract the sorted rows as a NumPy array
             self.data_array = self.data_array[:, self.names.index]
 
         if self.normalization:
