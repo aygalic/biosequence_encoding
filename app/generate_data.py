@@ -5,7 +5,7 @@ import pickle
 import numpy as np
 
 from rna_code import CACHE_PATH
-from rna_code.data import data_handler
+from rna_code.data.dataset_builder import DatasetBuilder
 
 logging.basicConfig(
     level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -14,11 +14,13 @@ logger = logging.getLogger(__name__)
 
 logger.info("Generating data..")
 
-df, meta_data = data_handler.generate_dataset(
-            dataset_type = "BRCA",
-            LS_threshold= 0.0020,
-            MAD_threshold = 1,
-        )
+thresholds = {
+    "LS_threshold" : 0.0020,
+    "MAD_threshold" : 1,
+}
+
+builder = DatasetBuilder(dataset_type = "BRCA", selection_thresholds=thresholds)
+df, meta_data = builder.generate_dataset()
 
 
 logger.info("Saving data..")

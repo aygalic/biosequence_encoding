@@ -4,7 +4,6 @@ from .. import BRCA_DATA_PATH, BRCA_METADATA_FILE, BRCA_SUBTYPES_FILE
 from .base_interface import BaseInterface
 import json
 import logging
-import os
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -60,10 +59,6 @@ class BRCAInterface(BaseInterface):
         self.names = pd.DataFrame(self.get_gene_names_from_file(self.entries[0], header = 1, skiprows = [2,3,4,5]))
         self.find_subtypes()
         self._retrieve_gene_position()
-            
-    @property
-    def dataset(self):
-        return self.data_array
     
     @property
     def entry_names(self):

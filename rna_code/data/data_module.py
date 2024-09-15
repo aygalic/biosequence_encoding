@@ -1,11 +1,14 @@
 from pathlib import Path
+
 import numpy as np
-import torch
-import pytorch_lightning as pl
-from torch.utils.data import DataLoader, TensorDataset, random_split
-from rna_code import CACHE_PATH
 import pandas as pd
-from ..data import data_handler
+import pytorch_lightning as pl
+import torch
+from torch.utils.data import DataLoader, TensorDataset, random_split
+
+from rna_code import CACHE_PATH
+
+from .dataset_builder import DatasetBuilder
 
 
 class DataModule(pl.LightningDataModule):
@@ -33,7 +36,8 @@ class DataModule(pl.LightningDataModule):
             self.meta_data = pd.read_csv(metadata_path, index_col=0)
 
         else:
-            self.data_array, self.meta_data = data_handler.generate_dataset(**self.data_param)
+            builder = DatasetBuilder(dataset_type="BRCA")
+            self.data_array, self.meta_data = builder.generate_dataset(**self.data_param)
 
         data_tensor = torch.from_numpy(self.data_array).float()
 
