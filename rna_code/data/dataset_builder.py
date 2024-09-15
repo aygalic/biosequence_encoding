@@ -24,7 +24,7 @@ DEFAULT_EXPRESSION_THRESHOLD = None
 DEFAULT_NORMALIZATION = False
 DEFAULT_KEEP_ONLY_PROTEIN_CODING = False
 DEFAULT_LOG1P = True
-DEFAULT_MINMAX = False
+DEFAULT_MINMAX = True
 DEFAULT_SORTING = False
 
 class DatasetBuilder:
@@ -104,8 +104,6 @@ class DatasetBuilder:
     def _feature_transformation(self) -> None:
         if self.sort_symbols:
             logging.info("sorting based on genomic position chr then transcript start...")
-            # reset the indexes because of all the previous transformations we have done
-            self.names = self.names.reset_index(drop=True)
             self.names = self.names.sort_values(['genomic_pos.chr', 'genomic_pos.start'], ascending=[True, True])
             self.data_array = self.data_array[:, self.names.index]
 
