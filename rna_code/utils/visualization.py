@@ -31,18 +31,20 @@ performance, and exploring data characteristics for insights that guide further 
 development and refinement.
 """
 
+import logging
+
 import matplotlib.pyplot as plt
 import numpy as np
+import plotly.graph_objects as go
 import seaborn as sns
-
-from .helpers import encode_recon_dataset
-
+from plotly.subplots import make_subplots
 from sklearn.decomposition import PCA
 
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-
 from .. import STATIC_OUTPUT_PATH
+from .helpers import encode_recon_dataset
+
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
+
 
 def callback_viz(pca_result, encoded_set, stack, loss_hist, labels):
     """
@@ -104,7 +106,6 @@ def post_training_viz(data, dataloader, model, DEVICE, loss_hist, labels):
         A figure with six subplots: two rows with training loss plot, heatmaps of the original dataset, encoded space, reconstruction, and a PCA scatter plot.
     """
     encode_out, reconstruction_out = encode_recon_dataset(dataloader, model, DEVICE)
-
     # PCA of the latent space
     pca = PCA(n_components=2)
     pca.fit(encode_out)
