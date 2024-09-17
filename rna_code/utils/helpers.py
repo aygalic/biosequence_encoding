@@ -118,9 +118,10 @@ def encode_recon_dataset(dataloader, model, DEVICE):
 
         
     encode_out = np.array(en_lat)
-    if(not model.convolution):
-        encode_out = encode_out.squeeze(axis=1)
-    reconstruction_out = np.array(en_reconstruction).squeeze(axis=1)
+    #if(not model.convolution):
+    #    encode_out = encode_out.squeeze(axis=1)
+    #breakpoint()
+    reconstruction_out = np.array(en_reconstruction)#.squeeze(axis=1)
 
     return encode_out, reconstruction_out
 
@@ -171,18 +172,3 @@ def generate_config(static_params, dynamic_params):
 
     return configurations
 
-def find_primes(n):
-    """
-    Finds prime numbers up to a given number.
-
-    Args:
-        n (int): The upper limit for finding prime numbers.
-
-    Returns:
-        List: A list of prime numbers up to 'n'.
-    """
-    primes = []
-    for i in range(1,n+1):
-        if n % i == 0:
-            primes.append(i)
-    return primes
