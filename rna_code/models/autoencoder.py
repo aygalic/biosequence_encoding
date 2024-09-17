@@ -27,7 +27,6 @@ Example Usage:
 """
 import torch
 
-import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -38,9 +37,7 @@ import pytorch_lightning as pl
 from rna_code.utils import helpers
 
 from .residual_stack import ResidualStack
-from .self_attention import SelfAttention
 from .vector_quantizer import VectorQuantizer
-from .vector_quantizer_EMA import VectorQuantizerEMA
 from .vq_conversion import vq_conversion
 from .vq_pre_residual_stack_decoder import vq_pre_residual_stack_decoder
 from .attention_module import AttentionModule
@@ -57,9 +54,6 @@ class Autoencoder(pl.LightningModule):
             num_layers = 3,
             variational = None,
             convolution = False,
-            transformer = False,
-            attention_size = 64,
-            num_heads = 64,
             kernel_size = None,
             padding = None,
             num_embeddings = 512,
@@ -80,37 +74,9 @@ class Autoencoder(pl.LightningModule):
         self.kernel_size = kernel_size
         self.padding = padding
 
-        # Attention
-        self.transformer = transformer
-        self.num_heads = num_heads
-        self.attention_size = attention_size
-
-        self.use_attention = False
-        self.use_self_attention = False
-
         # VAE/VQ-VAE
         self.variational = variational
         self.num_embeddings = num_embeddings
-        self.decay = decay
-
-        if self.transformer:
-            if self.num_heads is None:
-                num_heads_candidate = helpers.find_primes(self.input_shape)
-                if(len(num_heads_candidate) > 1):
-                    self.num_heads = num_heads_candidate[-1]
-                else:
-                    self.num_heads = num_heads_candidate[-2]
-
-            self.encoder_layers = TransformerEncoderLayer(d_model=self.input_shape, nhead=self.num_heads, dropout=self.dropout)
-            self.encoder = nn.Sequential( 
-                TransformerEncoder(self.encoder_layers, num_layers=self.num_layers),
-                nn.LazyLinear(self.latent_dim)
-            )
-
-            decoder_layers = TransformerEncoderLayer(d_model=self.input_shape, nhead=self.num_heads, dropout=self.dropout)
-            self.decoder = nn.Sequential(
-                TransformerEncoder(decoder_layers, num_layers=self.num_layers),
-                nn.Linear(self.input_shape, self.input_shape))  
 
         if convolution:
             if kernel_size is None:
@@ -178,14 +144,12 @@ class Autoencoder(pl.LightningModule):
             # Encoder
             encoder_layers = []
             layer_sizes = [self.input_shape] + [1024 // (2 ** i) for i in range(num_layers - 1)] + [latent_dim]
-
             for i in range(num_layers):
                 encoder_layers.extend([
                     nn.Linear(layer_sizes[i], layer_sizes[i+1]),
                     nn.LeakyReLU(slope),
                     nn.Dropout(dropout)
                 ])
-
             self.encoder = nn.Sequential(*encoder_layers)
 
             # Decoder
@@ -213,10 +177,7 @@ class Autoencoder(pl.LightningModule):
             # for VQ-VAE, we have a series of new element that need to be added to support the quantization
             self.encoder_residual_stack = ResidualStack(self.latent_dim)
             self.pre_vq_conv = vq_conversion(self.latent_dim, num_embeddings)
-            if self.decay > 0.0:
-                self.vq_vae = VectorQuantizerEMA(num_embeddings, embedding_dim, commitment_cost, self.decay)
-            else:
-                self.vq_vae = VectorQuantizer(num_embeddings, embedding_dim, commitment_cost)
+            self.vq_vae = VectorQuantizer(num_embeddings, embedding_dim, commitment_cost)
             self.pre_vq_decoder = vq_pre_residual_stack_decoder(self.num_embeddings, self.latent_dim, self.dropout)
             self.decoder_residual_stack = ResidualStack(self.latent_dim)
 
@@ -244,7 +205,6 @@ class Autoencoder(pl.LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-5)
         return optimizer
 
-    
     def _find_calculated_length(self):
             mock_input = torch.rand(1, 1, self.input_shape)  
             with torch.no_grad():
@@ -256,17 +216,6 @@ class Autoencoder(pl.LightningModule):
             calculated_length = mock_input.size()
             return calculated_length[2]
     
-    def add_attention(self):
-        """Integrate the attention module after the encoder and before the decoder."""
-        self.use_attention = True
-        # Attention for the convolutional path
-
-        self.attention_module = AttentionModule(in_features = self.latent_dim)  
-        
-    def add_self_attention(self, attention_dropout = 0.2):
-        self.use_self_attention = True
-        self.attention_module = SelfAttention(self.input_shape, self.attention_size, attention_dropout)
-
 
     def encode(self, x):
         x = self.encoder(x)
@@ -301,13 +250,6 @@ class Autoencoder(pl.LightningModule):
         return mu + eps*std
         
     def forward(self, x):
-        #breakpoint()
-
-        #x = x[0]
-        # Apply attention here if using convolution
-        if self.use_self_attention:
-            x = self.attention_module(x)
-
 
         if self.variational == "VAE":
             mu, log_var = self.encode(x)
@@ -325,6 +267,7 @@ class Autoencoder(pl.LightningModule):
             return loss, x_recon, perplexity, encodings, quantized
 
         else:
+            breakpoint()
             z = self.encode(x)
             x_reconstructed = self.decode(z)
             return x_reconstructed
