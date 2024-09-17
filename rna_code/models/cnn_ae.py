@@ -30,22 +30,24 @@ class CNNAutoencoder(Autoencoder):
             num_embeddings = num_embeddings,
             embedding_dim = embedding_dim,
             commitment_cost = commitment_cost)
-        
-
         if kernel_size is None:
             self.kernel_size = 7
+        else:
+            self.kernel_size = kernel_size
         if padding is None:
             self.padding = 3
-
+        else:
+            self.padding = padding
         self.in_channels = 1  # Starting with one input channel
         self.out_channels : int
-        self.calculated_length : int 
+        self.calculated_length : int
+        print(f'{shape=}')
 
 
     def build_encoder(self):
         # Encoder
         encoder_layers = []
-
+        encoder_layers.append(nn.Unflatten(1, (self.in_channels, self.input_shape)))
         for i in range(self.num_layers):
             out_channels = 32 * (2 ** i)
             encoder_layers.extend([
@@ -54,53 +56,42 @@ class CNNAutoencoder(Autoencoder):
                 nn.Dropout(self.dropout),
                 nn.MaxPool1d(2)
             ])
-
             self.in_channels = out_channels
-
         encoder_layers.extend([
             nn.Flatten(),
             nn.LazyLinear(self.latent_dim),
             nn.LeakyReLU(self.slope)
         ])
-
         self.encoder = nn.Sequential(*encoder_layers)
 
     def build_decoder(self):
-
         self.calculated_length = self._find_calculated_length()
-
         # Decoder
         decoder_layers = []
-        in_features = self.latent_dim
-
         decoder_layers.extend([
-            nn.Linear(in_features, self.in_channels * self.calculated_length),
+            nn.Linear(self.latent_dim, self.in_channels * self.calculated_length),
             nn.Unflatten(1, (self.in_channels, self.calculated_length))
         ])
-
-        #in_channels = 128
         for i in reversed(range(self.num_layers)):
             out_channels = 32 * (2 ** i)
             decoder_layers.extend([
                 nn.Upsample(scale_factor=2),
                 nn.ConvTranspose1d(self.in_channels, out_channels, kernel_size=self.kernel_size, stride=2, padding=self.padding),
                 nn.LeakyReLU(self.slope),
-                nn.Dropout(self.dropout)
+                nn.Dropout(self.dropout),
             ])
-            in_channels = out_channels
-
+            self.in_channels = out_channels
         # Last layer of decoder to reconstruct the input
         decoder_layers.extend([
-            nn.Upsample(scale_factor=2),
-            nn.ConvTranspose1d(in_channels, 1, kernel_size=self.kernel_size, stride=2, padding=self.padding),
+            nn.ConvTranspose1d(self.in_channels, 1, kernel_size=self.kernel_size, stride=2, padding=self.padding),
+            nn.Flatten(),
             nn.LazyLinear(self.input_shape),
             nn.Sigmoid()
         ])
-
         self.decoder = nn.Sequential(*decoder_layers)
         
     def _find_calculated_length(self):
-        mock_input = torch.rand(1, 1, self.input_shape)  
+        mock_input = torch.rand(1, self.input_shape)
         with torch.no_grad():
             self.eval()
             for layer in self.encoder:
@@ -109,3 +100,9 @@ class CNNAutoencoder(Autoencoder):
                 mock_input = layer(mock_input)
         calculated_length = mock_input.size()
         return calculated_length[2]
+    
+class DebugModule(nn.Module):
+    def forward(self, x):
+        print(x.shape)
+        breakpoint()
+        return x

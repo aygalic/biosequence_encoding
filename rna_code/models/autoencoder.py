@@ -62,12 +62,9 @@ class Autoencoder(pl.LightningModule, ABC):
     @abstractmethod
     def build_decoder(self):
         """build decoder"""
-        
-        
 
     def training_step(self, batch, batch_idx):
         x = batch[0] if isinstance(batch, list) else batch
-
         if self.variational == "VAE":
             x_reconstructed, mu, log_var = self(x)
             # Calculate VAE loss
@@ -89,21 +86,14 @@ class Autoencoder(pl.LightningModule, ABC):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-5)
         return optimizer
 
-    
-
     def encode(self, x):
         x = self.encoder(x)
-        
         if self.variational == "VAE":
             mean, logvar = self.mu_layer(x), self.logvar_layer(x)
             return mean, logvar
-        
         elif self.variational == "VQ-VAE":
             x = self.encoder_residual_stack(x)
-
-        else:
-            return x
-        
+        return x
 
     def decode(self, x):
         # VQ-VAE have to pre-decode the quantized space since it isn't the same
@@ -131,9 +121,7 @@ class Autoencoder(pl.LightningModule, ABC):
             z = self.encoder(x)
             z = self.pre_vq_conv(z)
             loss, quantized, perplexity, encodings = self.vq_vae(z)
-
             x_recon = self.decode(quantized)
-            
             return loss, x_recon, perplexity, encodings, quantized
 
         else:

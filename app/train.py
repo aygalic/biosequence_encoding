@@ -22,7 +22,7 @@ config = {
     "n_epoch" : 1
 }
 
-config = {
+config_ = {
     "dropout" : 0.5,
     "latent_dim" : 16,
     "model_type" : "MLP",
