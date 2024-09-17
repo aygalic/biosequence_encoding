@@ -42,7 +42,7 @@ class DataModule(pl.LightningDataModule):
         data_tensor = torch.from_numpy(self.data_array).float()
 
         self.feature_num = data_tensor.shape[1]
-        data_tensor = data_tensor.reshape(-1, 1, self.feature_num)
+        #data_tensor = data_tensor.reshape(-1, 1, self.feature_num)
 
         # Create a dataset with both data and metadata
         self.full_dataset = TensorDataset(data_tensor, torch.arange(len(self.meta_data)))

@@ -11,7 +11,8 @@ from rna_code.data.data_module import DataModule
 from rna_code.utils.monitor_callback import MonitorCallback
 
 from .. import DEVICE, LOGFILE
-from ..models import autoencoder
+
+from ..models.model_builder import ModelBuilder
 from . import visualization
 
 
@@ -38,7 +39,10 @@ class Experiment():
         self.data_module = DataModule(data_param)
         self.data_module.setup(stage=None)
         self.input_shape = self.data_module.feature_num
-        self.model = autoencoder.Autoencoder(self.input_shape, **self.model_param)
+
+
+        self.model_builder = ModelBuilder(self.input_shape, self.model_param)
+        self.model : pl.LightningModule 
 
 
     def run(self) -> None:
@@ -46,6 +50,8 @@ class Experiment():
 
         Training, visualization and logging.
         """
+        self.model = self.model_builder.generate_model()
+
         monitor_callback = MonitorCallback(
              dataloader=self.data_module.full_data_loader(),
              labels=self.data_module.full_meta_data["subtypes"],
@@ -54,8 +60,6 @@ class Experiment():
              evaluation_intervals = np.unique([int(x) for x in np.logspace(1, 3, num=50)]),
              verbose=0
         )
-
-
 
         trainer = pl.Trainer(max_epochs=self.n_epoch, callbacks=[monitor_callback])
         trainer.fit(self.model, self.data_module)
