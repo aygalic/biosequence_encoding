@@ -40,9 +40,8 @@ class Experiment():
         self.data_module.setup(stage=None)
         self.input_shape = self.data_module.feature_num
 
-
         self.model_builder = ModelBuilder(self.input_shape, self.model_param)
-        self.model : pl.LightningModule 
+        self.model : pl.LightningModule
 
 
     def run(self) -> None:
@@ -52,15 +51,15 @@ class Experiment():
         """
         self.model = self.model_builder.generate_model()
 
+        monitoring_interval = np.unique([int(x) for x in np.logspace(1, 3, num=50)])
         monitor_callback = MonitorCallback(
              dataloader=self.data_module.full_data_loader(),
              labels=self.data_module.full_meta_data["subtypes"],
              n_clusters=5,
              compute_on='batch',
-             evaluation_intervals = np.unique([int(x) for x in np.logspace(1, 3, num=50)]),
+             evaluation_intervals = monitoring_interval,
              verbose=0
         )
-
         trainer = pl.Trainer(max_epochs=self.n_epoch, callbacks=[monitor_callback])
         trainer.fit(self.model, self.data_module)
         visualization.post_training_viz(
