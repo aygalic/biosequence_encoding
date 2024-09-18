@@ -21,7 +21,7 @@ class ModelBuilder:
             case _:
                 raise NotImplementedError
             
-        model = constructor(self.shape, **self.model_params)
+        model = constructor(shape = self.shape, **self.model_params)
         model.build_encoder()
         model.build_decoder()
         return model

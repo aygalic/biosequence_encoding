@@ -8,28 +8,11 @@ class CNNAutoencoder(Autoencoder):
 
     def __init__(
             self,
-            shape,
-            latent_dim=64,
-            dropout = 0.1,
-            slope = 0.05,
-            num_layers = 3,
-            variational = None,
             kernel_size = None,
             padding = None,
-            num_embeddings = 512,
-            embedding_dim = 512,
-            commitment_cost = 1):
+            **kwargs):
         
-        super().__init__(
-            shape = shape,
-            latent_dim=latent_dim,
-            dropout = dropout,
-            slope = slope,
-            num_layers = num_layers,
-            variational = variational,
-            num_embeddings = num_embeddings,
-            embedding_dim = embedding_dim,
-            commitment_cost = commitment_cost)
+        super().__init__(**kwargs)
         if kernel_size is None:
             self.kernel_size = 7
         else:
@@ -41,7 +24,6 @@ class CNNAutoencoder(Autoencoder):
         self.in_channels = 1  # Starting with one input channel
         self.out_channels : int
         self.calculated_length : int
-        print(f'{shape=}')
 
 
     def build_encoder(self):
