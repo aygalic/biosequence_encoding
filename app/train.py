@@ -23,11 +23,12 @@ config = {
 }
 
 config = {
-    "dropout" : 0.5,
-    "latent_dim" : 16,
+    "dropout" : 0.1,
+    "latent_dim" : 32,
     "model_type" : "MLP",
-    "num_layers" :  6,
-    "n_epoch" : 5
+    "num_layers" :  8,
+    "n_epoch" : 10,
+    "variational" : "VQ-VAE",
 }
 
 data_path  = CACHE_PATH / "data"

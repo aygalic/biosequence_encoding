@@ -97,21 +97,12 @@ def encode_recon_dataset(dataloader, model, DEVICE):
     model.eval()
     #breakpoint()
     for inputs, _ in dataloader:
-        if model.variational == "VQ-VAE":
-            # for VQ-VAE the latent space is the quantized space, not the encodings.
-            _, data_recon, _, _, quantized = model(inputs.to(DEVICE))
-            latent_1 = quantized
-        else:
-            latent_1 = model.encode(inputs.to(DEVICE))
-            data_recon = model(inputs.to(DEVICE))
-
-        
-        for elem in latent_1.cpu().detach().numpy():
+        latent = model.encode(inputs.to(DEVICE))
+        data_recon = model(inputs.to(DEVICE))
+        for elem in latent.cpu().detach().numpy():
             en_lat.append(elem)
-
         for elem in data_recon.cpu().detach().numpy():
             en_reconstruction.append(elem)
-
     encode_out = np.array(en_lat)
     reconstruction_out = np.array(en_reconstruction)
     return encode_out, reconstruction_out

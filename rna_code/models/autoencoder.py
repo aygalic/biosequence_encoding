@@ -50,6 +50,8 @@ class Autoencoder(pl.LightningModule, ABC):
             self.log_var : torch.Tensor
         
         elif self.variational == "VQ-VAE":
+            self.vq_loss: torch.Tensor
+            self.perplexity: torch.Tensor
             self.encoder_residual_stack = ResidualStack(self.latent_dim)
             self.pre_vq_conv = vq_conversion(self.latent_dim, self.embedding_dim)
             self.vq_vae = VectorQuantizer(num_embeddings, embedding_dim, commitment_cost)
@@ -64,38 +66,43 @@ class Autoencoder(pl.LightningModule, ABC):
     def build_decoder(self):
         """build decoder"""
 
-    def encode(self, x):
-        x = self.encoder(x)
-        if self.variational == "VAE":
-            self.mu, self.log_var = self.mu_layer(x), self.logvar_layer(x)
-            x = self.reparameterize(self.mu, self.log_var)
-        elif self.variational == "VQ-VAE":
-            x = self.encoder_residual_stack(x)
-            x = self.pre_vq_conv(x)
-        return x
-
-    def decode(self, x):
-        if self.variational == "VQ-VAE":
-            x = self.pre_vq_decoder(x)
-            x = self.decoder_residual_stack(x)
-        return self.decoder(x)
-
     def reparameterize(self, mu, log_var):
         std = torch.exp(0.5 * log_var)
         eps = torch.randn_like(std)
         return mu + eps * std
-        
+    
+    def encode(self, x):
+        x = self.encoder(x)
+        if self.variational == "VAE":
+            mu = self.mu_layer(x)
+            return mu
+        elif self.variational == "VQ-VAE":
+            x = self.encoder_residual_stack(x)
+            x = self.pre_vq_conv(x)
+            _, quantized, _, encodings = self.vq_vae(x)
+            return quantized
+
+        return x
+
     def forward(self, x):
         if self.variational == "VAE":
-            z = self.encode(x)
-            x_reconstructed = self.decode(z)
+            x = self.encoder(x)
+            self.mu, self.log_var = self.mu_layer(x), self.logvar_layer(x)
+            z = self.reparameterize(self.mu, self.log_var)
+            x_reconstructed = self.decoder(z)
             return x_reconstructed
         
         elif self.variational == "VQ-VAE":
-            z = self.encode(x)
-            loss, quantized, perplexity, encodings = self.vq_vae(z)
-            x_recon = self.decode(quantized)
-            return loss, x_recon, perplexity, encodings, quantized
+            x = self.encoder(x)
+            x = self.encoder_residual_stack(x)
+            x = self.pre_vq_conv(x)
+
+            self.vq_loss, quantized, self.perplexity, encodings = self.vq_vae(x)
+            x_recon = self.pre_vq_decoder(quantized)
+            #x_recon = self.decoder_residual_stack(x)
+            x_recon = self.decoder_residual_stack(x_recon)
+            x_recon = self.decoder(x_recon)
+            return x_recon
 
         else:
             z = self.encode(x)
@@ -112,9 +119,9 @@ class Autoencoder(pl.LightningModule, ABC):
             kl_loss = -0.5 * torch.sum(1 + self.log_var - self.mu.pow(2) - self.log_var.exp())
             loss = recon_loss + kl_loss
         elif self.variational == "VQ-VAE":
-            vq_loss, x_reconstructed, _, _, _ = self(x)
+            x_reconstructed = self(x)
             recon_loss = F.mse_loss(x_reconstructed, x)
-            loss = recon_loss + vq_loss
+            loss = recon_loss + self.vq_loss
         else:
             x_reconstructed = self(x)
             loss = F.mse_loss(x_reconstructed, x)

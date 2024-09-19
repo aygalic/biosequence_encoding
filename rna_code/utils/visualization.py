@@ -32,11 +32,7 @@ def post_training_viz(data, dataloader, model, DEVICE, loss_hist, labels):
     pca.fit(encode_out)
     pca_result = pca.transform(encode_out)
     x, _ = iter(dataloader).__next__()
-
-    if model.variational == "VQ-VAE":
-            _, x_reconstructed, _, _, _ = model(x.to(DEVICE))
-    else:
-        x_reconstructed = model(x.to(DEVICE))
+    x_reconstructed = model(x.to(DEVICE))
     x_reconstructed = x_reconstructed.cpu().detach().numpy()
     stack = np.vstack([x[0], x_reconstructed[0]])
     _, axs = plt.subplots(2, 3, figsize=(12, 6))
