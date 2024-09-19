@@ -108,7 +108,6 @@ def encode_recon_dataset(dataloader, model, DEVICE):
     return encode_out, reconstruction_out
 
 
-
 def generate_config(static_params, dynamic_params):
     """
     Generate a list of configurations for ML experiments, combining static and dynamic parameters.

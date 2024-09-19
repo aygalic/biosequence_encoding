@@ -81,33 +81,24 @@ class Autoencoder(pl.LightningModule, ABC):
             x = self.pre_vq_conv(x)
             _, quantized, _, encodings = self.vq_vae(x)
             return quantized
-
         return x
 
     def forward(self, x):
+        x = self.encoder(x)
+
         if self.variational == "VAE":
-            x = self.encoder(x)
             self.mu, self.log_var = self.mu_layer(x), self.logvar_layer(x)
-            z = self.reparameterize(self.mu, self.log_var)
-            x_reconstructed = self.decoder(z)
-            return x_reconstructed
-        
+            x = self.reparameterize(self.mu, self.log_var)
         elif self.variational == "VQ-VAE":
-            x = self.encoder(x)
             x = self.encoder_residual_stack(x)
             x = self.pre_vq_conv(x)
-
             self.vq_loss, quantized, self.perplexity, encodings = self.vq_vae(x)
-            x_recon = self.pre_vq_decoder(quantized)
-            #x_recon = self.decoder_residual_stack(x)
-            x_recon = self.decoder_residual_stack(x_recon)
-            x_recon = self.decoder(x_recon)
-            return x_recon
+            x = self.pre_vq_decoder(quantized)
+            x = self.decoder_residual_stack(x)
 
-        else:
-            z = self.encode(x)
-            x_reconstructed = self.decode(z)
-            return x_reconstructed
+        x_recon = self.decoder(x)
+        return x_recon
+
 
 
     def training_step(self, batch, batch_idx):
