@@ -8,8 +8,6 @@ class ModelBuilder:
             model_params: dict):
         self.shape = shape
         self.model_type = model_params.pop("model_type")
-        self.variational = model_params.pop("variational", "False")
-        assert self.variational in ["False", "VAE", "VQ-VAE"]
         self.model_params = model_params
 
     def generate_model(self):
