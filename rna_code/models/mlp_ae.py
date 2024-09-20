@@ -30,6 +30,7 @@ class MLPAutoencoder(Autoencoder):
                 nn.Dropout(self.dropout)
             ])
         decoder_layers.append(nn.Linear(self.layer_sizes[-1], self.layer_sizes[-1]),)
+        decoder_layers.append(nn.LeakyReLU(self.slope))
         decoder_layers.append(nn.Sigmoid())
         self.decoder = nn.Sequential(*decoder_layers)
 

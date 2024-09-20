@@ -1,83 +1,6 @@
-"""
-Helpers Module
-
-This module provides a collection of utility functions and classes to assist in various tasks 
-related to Pytorch-based machine learning experiments. 
-
-It includes tools for dataset handling, data formatting, encoding and reconstructing datasets, 
-experiment configuration generation, and finding prime numbers. These utilities are designed to 
-streamline the process of preparing data for model training and evaluation, as well as facilitating 
-the experimentation with different model configurations.
-
-Functions:
-- format_dataset: Formats a given dataset for training with a PyTorch model.
-- encode_recon_dataset: Encodes and reconstructs a dataset using a provided model.
-- generate_config: Generates a list of configurations for machine learning experiments.
-- find_primes: Finds prime numbers up to a given number.
-
-Classes:
-- Mydatasets: A custom PyTorch Dataset class for handling datasets.
-
-The module primarily supports tasks in data preprocessing and experiment setup in a machine learning context.
-"""
-
-#from .. import config
-
-import torch
 import numpy as np
-
 import itertools
-
-
-
-class Mydatasets(torch.utils.data.Dataset):
-    """
-    A custom PyTorch Dataset class for handling datasets.
-
-    This class is designed to work with datasets in a format suitable for PyTorch models, 
-    allowing for transformations and easy integration with PyTorch DataLoader.
-
-    Args:
-        data1: The primary dataset.
-        transform (optional): A function/transform that takes in a sample and returns a transformed version.
-    """
-    def __init__(self, data1 ,transform = None):
-        self.transform = transform
-        self.data1 = data1
-        self.datanum = len(data1)
-
-    def __len__(self):
-        return self.datanum
-
-    def __getitem__(self, idx):
-        
-        out_data1 = torch.tensor(self.data1[idx]).float() 
-        if self.transform:
-            out_data1 = self.transform(out_data1)
-
-        return out_data1
-
-def format_dataset(data):
-    """
-    Formats a given dataset for training with a PyTorch model, providing a dataloader object.
-
-    Args:
-        data: The dataset to be formatted.
-    Returns:
-        Tuple: A tuple containing the formatted dataset and the corresponding DataLoader.
-    """
-    print(data.shape)
-    feature_num = data.shape[1]
-    data = data.reshape(-1,1,feature_num)
-    print(data.shape)
-
-    batch_size = 32 # was 32 originally
-
-    print('train data:',len(data))
-    data_set = Mydatasets(data1 = data)
-    dataloader = torch.utils.data.DataLoader(data_set, batch_size = batch_size, shuffle=False)
-
-    return data_set, dataloader
+import torch
 
 def encode_recon_dataset(dataloader, model, DEVICE):
     """
@@ -95,10 +18,10 @@ def encode_recon_dataset(dataloader, model, DEVICE):
     en_reconstruction = []
     model = model.to(DEVICE)
     model.eval()
-    #breakpoint()
     for inputs, _ in dataloader:
-        latent = model.encode(inputs.to(DEVICE))
-        data_recon = model(inputs.to(DEVICE))
+        with torch.no_grad():
+            latent = model.encode(inputs.to(DEVICE))
+            data_recon = model(inputs.to(DEVICE))
         for elem in latent.cpu().detach().numpy():
             en_lat.append(elem)
         for elem in data_recon.cpu().detach().numpy():

@@ -54,23 +54,10 @@ class Autoencoder(pl.LightningModule, ABC):
             self.perplexity: torch.Tensor
             self.encoder_residual_stack = ResidualStack(self.latent_dim)
             self.pre_vq_conv = vq_conversion(self.latent_dim, self.embedding_dim)
-            self.vq_vae = VectorQuantizer(num_embeddings, embedding_dim, commitment_cost)
+            self.quantizer = VectorQuantizer(num_embeddings, embedding_dim, commitment_cost)
             self.pre_vq_decoder = vq_pre_residual_stack_decoder(self.embedding_dim, self.latent_dim, self.dropout)
             self.decoder_residual_stack = ResidualStack(self.latent_dim)
 
-    @abstractmethod
-    def build_encoder(self):
-        """build encoder"""
-        
-    @abstractmethod
-    def build_decoder(self):
-        """build decoder"""
-
-    def reparameterize(self, mu, log_var):
-        std = torch.exp(0.5 * log_var)
-        eps = torch.randn_like(std)
-        return mu + eps * std
-    
     def encode(self, x):
         x = self.encoder(x)
         if self.variational == "VAE":
@@ -79,43 +66,35 @@ class Autoencoder(pl.LightningModule, ABC):
         elif self.variational == "VQ-VAE":
             x = self.encoder_residual_stack(x)
             x = self.pre_vq_conv(x)
-            _, quantized, _, encodings = self.vq_vae(x)
+            _, quantized, _, encodings = self.quantizer(x)
             return quantized
         return x
 
     def forward(self, x):
         x = self.encoder(x)
-
         if self.variational == "VAE":
             self.mu, self.log_var = self.mu_layer(x), self.logvar_layer(x)
             x = self.reparameterize(self.mu, self.log_var)
         elif self.variational == "VQ-VAE":
             x = self.encoder_residual_stack(x)
             x = self.pre_vq_conv(x)
-            self.vq_loss, quantized, self.perplexity, encodings = self.vq_vae(x)
+            self.vq_loss, quantized, self.perplexity, encodings = self.quantizer(x)
             x = self.pre_vq_decoder(quantized)
             x = self.decoder_residual_stack(x)
-
         x_recon = self.decoder(x)
         return x_recon
 
 
-
     def training_step(self, batch, batch_idx):
-        x = batch[0] if isinstance(batch, list) else batch
+        #x = batch[0] if isinstance(batch, list) else batch
+        x = batch[0]
+        x_reconstructed = self(x)
+        loss = F.mse_loss(x_reconstructed, x)
         if self.variational == "VAE":
-            x_reconstructed = self(x)
-            # Calculate VAE loss
-            recon_loss = F.mse_loss(x_reconstructed, x)
             kl_loss = -0.5 * torch.sum(1 + self.log_var - self.mu.pow(2) - self.log_var.exp())
-            loss = recon_loss + kl_loss
+            loss += kl_loss
         elif self.variational == "VQ-VAE":
-            x_reconstructed = self(x)
-            recon_loss = F.mse_loss(x_reconstructed, x)
-            loss = recon_loss + self.vq_loss
-        else:
-            x_reconstructed = self(x)
-            loss = F.mse_loss(x_reconstructed, x)
+            loss += + self.vq_loss
 
         self.log('train_loss', loss)
         return loss
@@ -123,3 +102,17 @@ class Autoencoder(pl.LightningModule, ABC):
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-5)
         return optimizer
+    
+
+    def reparameterize(self, mu, log_var):
+        std = torch.exp(0.5 * log_var)
+        eps = torch.randn_like(std)
+        return mu + eps * std
+    
+    @abstractmethod
+    def build_encoder(self):
+        """build encoder"""
+        
+    @abstractmethod
+    def build_decoder(self):
+        """build decoder"""

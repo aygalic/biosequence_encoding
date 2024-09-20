@@ -99,7 +99,6 @@ class MonitorCallback(Callback):
         encoded_data = []
         for batch in self.dataloader:
             x = batch[0].to(pl_module.device)
-            
             with torch.no_grad():
                 encoded = pl_module.encode(x)
             encoded_data.append(encoded.cpu().numpy())
