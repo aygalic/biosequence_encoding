@@ -6,9 +6,9 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'Your Project Name'
-copyright = '2024, Your Name'
-author = 'Your Name'
+project = 'Auto Encoder playground'
+copyright = '2024, Aygalic Jara'
+author = 'Aygalic Jara'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
