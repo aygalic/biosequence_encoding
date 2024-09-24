@@ -1,4 +1,5 @@
 """Module for Lasso Regression based feature selection"""
+
 import logging
 from collections import Counter
 from typing import Literal
@@ -27,25 +28,24 @@ class LassoSelector(BaseFeatureSelector):
     class_balancing : Literal["match_smaller_sample", "balanced", None], optional
         How to solve class imbalance, by default None
     """
-    def __init__(
-            self,
-            labels : list | pd.Series,
-            threshold : float = 0,
-            sgdc_params : dict | None = None,
-            class_balancing : Literal["match_smaller_sample", "balanced", None] = None
-            ):
 
+    def __init__(
+        self,
+        labels: list | pd.Series,
+        threshold: float = 0,
+        sgdc_params: dict | None = None,
+        class_balancing: Literal["match_smaller_sample", "balanced", None] = None,
+    ):
         super().__init__(threshold)
         self.class_balancing = class_balancing
         self.labels = labels
         if sgdc_params is None:
             self.sgdc_params = {
-                'l1_ratio': np.linspace(0.1, 1, 10),
-                'alpha': np.linspace(0.1, 0.5, 10),
+                "l1_ratio": np.linspace(0.1, 1, 10),
+                "alpha": np.linspace(0.1, 0.5, 10),
             }
         else:
             self.sgdc_params = sgdc_params
-
 
     def select_features(self, data_array):
         """
@@ -72,13 +72,11 @@ class LassoSelector(BaseFeatureSelector):
         selection = [abs(coef) > 0 for coef in self.scores]
         logging.info(
             "removing %i genes under the LASSO threshold from the dataset",
-            len(selection)-sum(selection))
+            len(selection) - sum(selection),
+        )
         return selection
 
-    def _balance_classes(
-            self,
-            data_array : np.ndarray
-            ) -> tuple[np.ndarray, np.ndarray]:
+    def _balance_classes(self, data_array: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
         """Balance data based on sub-sampling dominant classes
 
         Parameters
@@ -98,14 +96,15 @@ class LassoSelector(BaseFeatureSelector):
         for key in cts:
             sample = sample_without_replacement(cts[key], minimum)
             patient_in_class = [label == key for label in self.labels]
-            balanced_data = np.append(balanced_data, data_array[patient_in_class,:][sample,:], axis=0)
+            balanced_data = np.append(
+                balanced_data, data_array[patient_in_class, :][sample, :], axis=0
+            )
             balanced_labels = np.append(balanced_labels, np.repeat(key, minimum))
         return balanced_data, balanced_labels
 
     def _perform_grid_search(
-            self,
-            data_array: np.ndarray,
-            labels : list | pd.Series) -> GridSearchCV:
+        self, data_array: np.ndarray, labels: list | pd.Series
+    ) -> GridSearchCV:
         """Parameter search
 
         Parameters
@@ -122,20 +121,17 @@ class LassoSelector(BaseFeatureSelector):
         """
         sgdc = SGDClassifier(
             loss="modified_huber",
-            penalty='elasticnet',
+            penalty="elasticnet",
             max_iter=20000,
-            class_weight="balanced" if self.class_balancing == "balanced" else None
+            class_weight="balanced" if self.class_balancing == "balanced" else None,
         )
         sgdc_gs = GridSearchCV(sgdc, self.sgdc_params, cv=5, verbose=3, n_jobs=4)
         sgdc_gs.fit(data_array, labels)
         return sgdc_gs
 
     def _print_results(
-            self,
-            labels: list | pd.Series,
-            predictions : list,
-            sgdc_gs : GridSearchCV
-            ) -> None:
+        self, labels: list | pd.Series, predictions: list, sgdc_gs: GridSearchCV
+    ) -> None:
         """Print grid search results
 
         Parameters
