@@ -1,21 +1,32 @@
-from abc import ABC
-from typing import List, Optional, Any
-import logging
-import pandas as pd
-import mygene
-from pathlib import Path
-class BaseInterface(ABC):
+"""Base class for interfacing app with file system."""
 
-    def __init__(
-            self,
-            data_path : Path,
-            metadata_path : Path):
+import logging
+from abc import ABC
+from pathlib import Path
+from typing import Any, List, Optional
+
+import mygene
+import pandas as pd
+
+
+class BaseInterface(ABC):
+    """Base class for interfacing app with file system
+
+    Parameters
+    ----------
+    data_path : Path
+        Data path
+    metadata_path : Path
+        Metadata file path
+    """
+
+    def __init__(self, data_path: Path, metadata_path: Path):
         self.data_path = data_path
         self.metadata_path = metadata_path
-        self.subsample : int | None = None
-        self.entries : list = []
-        self.meta_data : Any
-        self.names : Any
+        self.subsample: int | None = None
+        self.entries: list = []
+        self.meta_data: Any
+        self.names: Any
 
     @staticmethod
     def load_patient_data(filename: str, header: int = 0) -> pd.Series:
@@ -36,10 +47,12 @@ class BaseInterface(ABC):
             data = pd.read_table(filename, header=header)
             return data.iloc[:, 3]
         except FileNotFoundError:
-            logging.warning(f"File not found: {filename}")
+            logging.warning("File not found: %s", filename)
 
     @staticmethod
-    def get_gene_names_from_file(filename: str, header: int = 0, skiprows: Optional[List[int]] = None) -> pd.DataFrame:
+    def get_gene_names_from_file(
+        filename: str, header: int = 0, skiprows: Optional[List[int]] = None
+    ) -> pd.DataFrame:
         """
         Retrieve a list of gene names from a specified file.
 
@@ -60,12 +73,12 @@ class BaseInterface(ABC):
             names = pd.read_table(filename, header=header, skiprows=skiprows)
             return names
         except FileNotFoundError:
-            logging.warning(f"File not found: {filename}")
+            logging.warning("File not found: %s", filename)
         except pd.errors.ParserError as e:
-            logging.warning(f"Error parsing file {filename}: {e}")
+            logging.warning("Error parsing file: %s, %s", filename, e)
 
     @staticmethod
-    def retrive_position(names, drop_na=False):
+    def retrieve_position(names, drop_na=False):
         """
         Retrieve genomic positions for a list of gene names.
 
@@ -79,12 +92,22 @@ class BaseInterface(ABC):
         """
         mg_client = mygene.MyGeneInfo()
 
-        logging.debug("retriving %i symbols for genes",len(names))
-        query_result = mg_client.querymany(names['query'], fields = ['genomic_pos', 'symbol'], scopes='ensembl.gene', species='human', verbose = False, as_dataframe = True)
+        logging.debug("retrieving %i symbols for genes", len(names))
+        query_result = mg_client.querymany(
+            names["query"],
+            fields=["genomic_pos", "symbol"],
+            scopes="ensembl.gene",
+            species="human",
+            verbose=False,
+            as_dataframe=True,
+        )
         query_result = query_result.reset_index()
         logging.debug("Found %i symbols before duplicate removal", len(query_result))
-        query_result = query_result.drop_duplicates(subset = ["query"])
+        query_result = query_result.drop_duplicates(subset=["query"])
         logging.debug(len(query_result), "symbols after duplicate removal")
         if drop_na:
-            query_result['name'] = [q if(pd.isna(s)) else s for (s,q) in zip(query_result["symbol"],query_result["query"])]
+            query_result["name"] = [
+                q if (pd.isna(s)) else s
+                for (s, q) in zip(query_result["symbol"], query_result["query"])
+            ]
         return query_result

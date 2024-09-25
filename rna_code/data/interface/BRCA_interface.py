@@ -47,7 +47,7 @@ class BRCAInterface(BaseInterface):
     
     def _retrieve_gene_position(self):
         self.names['query'] = self.names['gene_id'].apply(lambda x: x.split(".")[0])
-        query_result = self.retrive_position(self.names)
+        query_result = self.retrieve_position(self.names)
         self.names = self.names.merge(query_result, on='query', how='left')
 
     def setup(self):
