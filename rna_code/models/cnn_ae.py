@@ -1,17 +1,25 @@
-import torch
+"""Convolutional implementation for Autoencoder"""
 
+import torch
 import torch.nn as nn
 
 from .autoencoder import Autoencoder
 
+
 class CNNAutoencoder(Autoencoder):
+    """Convolutional auto encoder.
+
+    Parameters
+    ----------
+    kernel_size : int | None, optional
+        Convolution kernel size, by default None
+    padding : int | None, optional
+        Padding for convolution, by default None
+    """
 
     def __init__(
-            self,
-            kernel_size = None,
-            padding = None,
-            **kwargs):
-        
+        self, kernel_size: int | None = None, padding: int | None = None, **kwargs
+    ):
         super().__init__(**kwargs)
         if kernel_size is None:
             self.kernel_size = 7
@@ -22,69 +30,95 @@ class CNNAutoencoder(Autoencoder):
         else:
             self.padding = padding
         self.in_channels = 1  # Starting with one input channel
-        self.out_channels : int
-        self.calculated_length : int
-
+        self.out_channels: int
+        self.calculated_length: int
 
     def build_encoder(self):
-        # Encoder
+        """Build convolutional layers for encoder"""
         encoder_layers = []
         encoder_layers.append(nn.Unflatten(1, (self.in_channels, self.input_shape)))
         for i in range(self.num_layers):
-            out_channels = 32 * (2 ** i)
-            encoder_layers.extend([
-                nn.Conv1d(self.in_channels, out_channels, kernel_size=self.kernel_size, stride=2, padding=self.padding),
-                nn.LeakyReLU(self.slope),
-                nn.Dropout(self.dropout),
-                nn.MaxPool1d(2)
-            ])
+            out_channels = 32 * (2**i)
+            encoder_layers.extend(
+                [
+                    nn.Conv1d(
+                        self.in_channels,
+                        out_channels,
+                        kernel_size=self.kernel_size,
+                        stride=2,
+                        padding=self.padding,
+                    ),
+                    nn.LeakyReLU(self.slope),
+                    nn.Dropout(self.dropout),
+                    nn.MaxPool1d(2),
+                ]
+            )
             self.in_channels = out_channels
-        encoder_layers.extend([
-            nn.Flatten(),
-            nn.LazyLinear(self.latent_dim),
-            nn.LeakyReLU(self.slope)
-        ])
+        encoder_layers.extend(
+            [nn.Flatten(), nn.LazyLinear(self.latent_dim), nn.LeakyReLU(self.slope)]
+        )
         self.encoder = nn.Sequential(*encoder_layers)
 
     def build_decoder(self):
+        """Build convolutional layers for decoder"""
+
         self.calculated_length = self._find_calculated_length()
-        # Decoder
+
         decoder_layers = []
-        decoder_layers.extend([
-            nn.Linear(self.latent_dim, self.in_channels * self.calculated_length),
-            nn.Unflatten(1, (self.in_channels, self.calculated_length))
-        ])
+        decoder_layers.extend(
+            [
+                nn.Linear(self.latent_dim, self.in_channels * self.calculated_length),
+                nn.Unflatten(1, (self.in_channels, self.calculated_length)),
+            ]
+        )
         for i in reversed(range(self.num_layers)):
-            out_channels = 32 * (2 ** i)
-            decoder_layers.extend([
-                nn.Upsample(scale_factor=2),
-                nn.ConvTranspose1d(self.in_channels, out_channels, kernel_size=self.kernel_size, stride=2, padding=self.padding),
-                nn.LeakyReLU(self.slope),
-                nn.Dropout(self.dropout),
-            ])
+            out_channels = 32 * (2**i)
+            decoder_layers.extend(
+                [
+                    nn.Upsample(scale_factor=2),
+                    nn.ConvTranspose1d(
+                        self.in_channels,
+                        out_channels,
+                        kernel_size=self.kernel_size,
+                        stride=2,
+                        padding=self.padding,
+                    ),
+                    nn.LeakyReLU(self.slope),
+                    nn.Dropout(self.dropout),
+                ]
+            )
             self.in_channels = out_channels
         # Last layer of decoder to reconstruct the input
-        decoder_layers.extend([
-            nn.ConvTranspose1d(self.in_channels, 1, kernel_size=self.kernel_size, stride=2, padding=self.padding),
-            nn.Flatten(),
-            nn.LazyLinear(self.input_shape),
-            nn.Sigmoid()
-        ])
+        decoder_layers.extend(
+            [
+                nn.ConvTranspose1d(
+                    self.in_channels,
+                    1,
+                    kernel_size=self.kernel_size,
+                    stride=2,
+                    padding=self.padding,
+                ),
+                nn.Flatten(),
+                nn.LazyLinear(self.input_shape),
+                nn.Sigmoid(),
+            ]
+        )
         self.decoder = nn.Sequential(*decoder_layers)
-        
-    def _find_calculated_length(self):
+
+    def _find_calculated_length(self) -> torch.Tensor:
+        """Compute the length of the tensor at the pre latent space vector
+
+        Returns
+        -------
+        torch.Tensor
+            Size of the calculated layer size
+        """
         mock_input = torch.rand(1, self.input_shape)
         with torch.no_grad():
             self.eval()
             for layer in self.encoder:
                 if isinstance(layer, nn.Flatten):
-                    break 
+                    break
                 mock_input = layer(mock_input)
         calculated_length = mock_input.size()
         return calculated_length[2]
-    
-class DebugModule(nn.Module):
-    def forward(self, x):
-        print(x.shape)
-        breakpoint()
-        return x
