@@ -174,7 +174,7 @@ def post_training_animation(monitor, metadata):
     # Save as HTML (can be opened in a web browser)
     savepath = STATIC_OUTPUT_PATH
     savepath.mkdir(parents=True, exist_ok=True)
-    fig.write_html(savepath / "pca_animation.html")
+    fig.write_html(savepath / "pca_animation.html", auto_play=False)
     
 def dataset_plot(data):
     """
