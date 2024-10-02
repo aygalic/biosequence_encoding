@@ -26,7 +26,7 @@ from .feature_selection.mad_selector import MADSelector
 from .feature_selection.expression_selector import ExpressionSelector
 from .feature_selection.laplacian_selector import LaplacianSelector
 
-from .interface.BRCA_interface import BRCAInterface
+from .interface.brca_interface import BRCAInterface
 
 
 logging.basicConfig(
