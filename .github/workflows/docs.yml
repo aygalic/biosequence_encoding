@@ -49,20 +49,15 @@ jobs:
           poetry run sphinx-apidoc -o docs/source ./rna_code
           poetry run sphinx-build docs/source docs/build
 
-      - name: Download current pages artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: github-pages
-          path: current-pages
-
-      - name: Merge new docs with current pages
+      - name: Prepare merged content
         run: |
           mkdir -p merged-pages
-          cp -R current-pages/* merged-pages/
+          if [ -d "static" ]; then
+            cp -R static/* merged-pages/
+          fi
           cp -R docs/build/* merged-pages/
 
       - name: Upload merged artifact
-        if: env.ACT != 'true'
         uses: actions/upload-pages-artifact@v2
         with:
           path: merged-pages
@@ -78,5 +73,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - id: deployment
+      - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v2
