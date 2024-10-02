@@ -88,6 +88,12 @@ class MonitorCallback(Callback):
         
         pca = PCA(n_components=2)
         pca_result = pca.fit_transform(encode_out)
+
+        # [0, 1] normalization step
+        pca_result[:,0] = (pca_result[:,0] / abs(pca_result[:,0]).max())
+        pca_result[:,1] = (pca_result[:,1] / abs(pca_result[:,1]).max())
+
+
         self.frames.append(np.column_stack((np.full(pca_result.shape[0], len(self.frames)), pca_result)))
 
         if self.verbose >= 1:

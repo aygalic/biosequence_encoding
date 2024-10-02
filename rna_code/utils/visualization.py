@@ -90,8 +90,12 @@ def post_training_animation(monitor, metadata):
     for pca_result in monitor.frames:
         all_x.extend(pca_result[:, 1])
         all_y.extend(pca_result[:, 2])
-    x_min, x_max = min(all_x), max(all_x)
-    y_min, y_max = min(all_y), max(all_y)
+    #x_min, x_max = min(all_x), max(all_x)
+    #y_min, y_max = min(all_y), max(all_y)
+
+
+    x_min, x_max = -1, 1
+    y_min, y_max = -1, 1
 
     # Create frames
     frames = []

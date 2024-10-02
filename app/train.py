@@ -23,11 +23,11 @@ config = {
 }
 
 config = {
-    "dropout" : 0.1,
-    "latent_dim" : 32,
+    "dropout" : 0.3,
+    "latent_dim" : 16,
     "model_type" : "MLP",
     "num_layers" :  8,
-    "n_epoch" : 5,
+    "n_epoch" : 20,
     #"variational" : "VQ-VAE",
 }
 
