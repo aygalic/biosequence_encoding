@@ -90,12 +90,9 @@ def post_training_animation(monitor, metadata):
     for pca_result in monitor.frames:
         all_x.extend(pca_result[:, 1])
         all_y.extend(pca_result[:, 2])
-    #x_min, x_max = min(all_x), max(all_x)
-    #y_min, y_max = min(all_y), max(all_y)
 
-
-    x_min, x_max = -1, 1
-    y_min, y_max = -1, 1
+    x_min, x_max = min(all_x), max(all_x)
+    y_min, y_max = min(all_y), max(all_y)
 
     # Create frames
     frames = []
@@ -107,10 +104,7 @@ def post_training_animation(monitor, metadata):
             y = pca_result[mask, 2]
             text = [f"Epoch: {i}, Subtype: {subtype}" for _ in x]
             frame_data.append(go.Scatter(x=x, y=y, mode='markers', name=subtype, text=text, hoverinfo='text'))
-        frames.append(go.Frame(data=frame_data, name=str(i), layout=go.Layout(
-            xaxis=dict(range=[x_min, x_max]),
-            yaxis=dict(range=[y_min, y_max])
-        )))
+        frames.append(go.Frame(data=frame_data, name=str(i)))
 
     # Add traces to figure
     for trace in traces.values():
@@ -121,7 +115,7 @@ def post_training_animation(monitor, metadata):
         updatemenus=[{
             'buttons': [
                 {
-                    'args': [None, {'frame': {'duration': 300, 'redraw': True, 'easing': 'linear'}, 'fromcurrent': True}],
+                    'args': [None, {'frame': {'duration': 1000, 'redraw': True, 'easing': 'linear'}, 'fromcurrent': True, 'transition': {'duration': 1000, 'easing': 'linear'}}],
                     'label': 'Play',
                     'method': 'animate',
                 },
@@ -150,14 +144,14 @@ def post_training_animation(monitor, metadata):
                 'visible': True,
                 'xanchor': 'right'
             },
-            'transition': {'duration': 300, 'easing': 'linear'},
+            'transition': {'duration': 1000, 'easing': 'linear'},
             'pad': {'b': 10, 't': 50},
             'len': 0.9,
             'x': 0.1,
             'y': 0,
             'steps': [
                 {
-                    'args': [[f.name], {'frame': {'duration': 300, 'redraw': True}, 'mode': 'immediate', 'transition': {'duration': 300}}],
+                    'args': [[f.name], {'frame': {'duration': 1000, 'redraw': True}, 'mode': 'immediate', 'transition': {'duration': 1000, 'easing': 'linear'}}],
                     'label': f.name,
                     'method': 'animate'
                 } for f in frames
@@ -181,7 +175,7 @@ def post_training_animation(monitor, metadata):
     savepath = STATIC_OUTPUT_PATH
     savepath.mkdir(parents=True, exist_ok=True)
     fig.write_html(savepath / "pca_animation.html")
-
+    
 def dataset_plot(data):
     """
     Plots the entire dataset as a heatmap and provides a density plot of the total gene expression.
