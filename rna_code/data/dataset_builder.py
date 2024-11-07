@@ -27,6 +27,7 @@ from .feature_selection.expression_selector import ExpressionSelector
 from .feature_selection.laplacian_selector import LaplacianSelector
 
 from .interface.brca_interface import BRCAInterface
+from .interface.cptac_3_interface import CPTAC3Interface
 
 
 logging.basicConfig(
@@ -50,7 +51,7 @@ class DatasetBuilder:
 
     Parameters
     ----------
-    dataset_type : Literal["BRCA"]
+    dataset_type : Literal["BRCA", "CPTAC-3"]
         Name of the dataset to build.
     selection_thresholds : dict[str, float], optional
         Dictionary containing all threshold used during feature selection,
@@ -65,7 +66,7 @@ class DatasetBuilder:
     """
     def __init__(
         self,
-        dataset_type: Literal["BRCA"],
+        dataset_type: Literal["BRCA", "CPTAC-3"],
         selection_thresholds: dict[str, float] = None,
         additional_processing_steps: dict[str, bool] = None,
     ) -> None:
@@ -73,6 +74,8 @@ class DatasetBuilder:
         match dataset_type:
             case "BRCA":
                 self.data_interface = BRCAInterface()
+            case "CPTAC-3":
+                self.data_interface = CPTAC3Interface()
             case _:
                 raise NotImplementedError
 
