@@ -22,11 +22,11 @@ df, meta_data = builder.generate_dataset()
 
 logger.info("Saving data..")
 
-data_path = CACHE_PATH / "data"/ 'BRCA_data.csv'
+data_path = CACHE_PATH / "data"/ 'CPTAC_3_data.csv'
 data_path.parent.mkdir(parents=True, exist_ok=True)
 df.to_csv(data_path)
 
-metadata_path = CACHE_PATH / "data"/ 'meta_data.csv'
+metadata_path = CACHE_PATH / "data"/ 'CPTAC_3_meta_data.csv'
 metadata_path.parent.mkdir(parents=True, exist_ok=True)
 meta_data.to_csv(metadata_path)
 
