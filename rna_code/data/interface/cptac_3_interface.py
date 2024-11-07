@@ -58,13 +58,7 @@ class CPTAC3Interface(BaseInterface):
         for file_name in self.entries:
             if file_name.stem in file_to_id.keys():
                 patient_id.append(file_to_id[file_name.stem])
-        subtypes_table = pd.read_csv(self.subtypes_table, index_col=0)
-        subtypes_dict = {
-            str(index)[:12]: subtype for index, subtype in subtypes_table.itertuples()
-        }
-        self.subtypes = [
-            subtypes_dict.get(identifier[:12], "Unknown") for identifier in patient_id
-        ]
+
 
     def load_patients(self):
         """Load patients based on pre computed entries"""
@@ -92,7 +86,7 @@ class CPTAC3Interface(BaseInterface):
                 self.entries[0], header=1, skiprows=[2, 3, 4, 5]
             )
         )
-        self.find_subtypes()
+        #self.find_subtypes() # not defined for cptac-3
         self._retrieve_gene_position()
 
     @property
