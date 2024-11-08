@@ -200,7 +200,7 @@ class DatasetBuilder:
 
         meta_dict = {
             "meta_data": self.meta_data,
-            "subtypes": self.subtypes,
+            "subtypes": self.subtypes or [None] * len(self.meta_data),
         }
         meta_df = pd.DataFrame(meta_dict, index=self.entry_names)
 

@@ -87,7 +87,7 @@ class CPTAC3Interface(BaseInterface):
             )
         )
         #self.find_subtypes() # not defined for cptac-3
-        self._retrieve_gene_position()
+        #self._retrieve_gene_position()
 
     @property
     def entry_names(self) -> list[str]:
