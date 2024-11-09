@@ -28,16 +28,22 @@ class TransfertLearningExperiment(Experiment):
     """
     def __init__(
             self,
+            pre_train_data_param : dict,
             data_param : dict,
             model_param : dict
             ) -> None:
 
+        self.pre_train_data_param = pre_train_data_param
         self.data_param = data_param
         self.model_param = model_param
 
         self.n_epoch = self.model_param.pop("n_epoch", 10)
+        self.pretrain_data_module = DataModule(pre_train_data_param)
         self.data_module = DataModule(data_param)
+        self.pretrain_data_module.setup(stage=None)
         self.data_module.setup(stage=None)
+
+        # FIXME: input shap vary between datasets.
         self.input_shape = self.data_module.feature_num
 
         self.model_builder = ModelBuilder(self.input_shape, self.model_param)
