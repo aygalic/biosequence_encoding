@@ -14,11 +14,14 @@ class BaseFeatureSelector(ABC):
     ----------
     threshold : float | None, optional
         Selection threshold for given task, by default None
+    threshold : int | None, optional
+        Number of features to select for given task, by default None
     """
-    def __init__(self, threshold: float | None = None):
+    def __init__(self, threshold: float | None = None, n_features: int | None = None):
         self.scaler = StandardScaler()
         self.scores: list[float] = []
         self.threshold: float | None = threshold
+        self.n_features: int | None = n_features
         self._plot_title: str = ""
         self._plot_x_label: str = "Scores Value"
         self._plot_range_values: list[float] = [0, 0.01]
