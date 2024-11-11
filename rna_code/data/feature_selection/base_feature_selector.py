@@ -14,9 +14,10 @@ class BaseFeatureSelector(ABC):
     ----------
     threshold : float | None, optional
         Selection threshold for given task, by default None
-    threshold : int | None, optional
+    n_features : int | None, optional
         Number of features to select for given task, by default None
     """
+
     def __init__(self, threshold: float | None = None, n_features: int | None = None):
         self.scaler = StandardScaler()
         self.scores: list[float] = []
@@ -27,7 +28,7 @@ class BaseFeatureSelector(ABC):
         self._plot_range_values: list[float] = [0, 0.01]
 
     @abstractmethod
-    def select_features(self, data_array : np.ndarray, **kwargs) -> np.ndarray:
+    def select_features(self, data_array: np.ndarray, **kwargs) -> np.ndarray:
         """Select features from data array according to self.threshold.
 
         Parameters

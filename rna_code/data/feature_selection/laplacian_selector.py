@@ -15,12 +15,16 @@ class LaplacianSelector(BaseFeatureSelector):
     ----------
     threshold : float | None, optional
         Laplacian score threshold, by default None
+    n_features : int | None, optional
+        Number of features to select for given task, by default None
     k : int, optional
         Number of neighbors for the kNN algorithm, by default 5
     """
 
-    def __init__(self, threshold: float | None = None, k: int = 5):
-        super().__init__(threshold)
+    def __init__(
+        self, threshold: float | None = None, n_features: int | None = None, k: int = 5
+    ):
+        super().__init__(threshold, n_features)
         self.k = k
         self._plot_title = "Distribution of Laplacian Score (LS)"
 

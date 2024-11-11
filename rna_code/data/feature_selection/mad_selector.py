@@ -15,12 +15,16 @@ class MADSelector(BaseFeatureSelector):
     ----------
     threshold : float
         Minimum threshold for variables, by default None
+    n_features : int | None, optional
+        Number of features to select for given task, by default None
     ceiling : int, optional
         Maximum value to prevent outliers, by default 150
     """
 
-    def __init__(self, threshold: float, ceiling: int = 150):
-        super().__init__(threshold)
+    def __init__(
+        self, threshold: float, ceiling: int = 150, n_features: int | None = None
+    ):
+        super().__init__(threshold, n_features)
         self.ceiling = ceiling
         self._plot_title = "Distribution of Median Absolute Deviation (MAD)"
         self._plot_range_values: list[float] = [0, ceiling + 20]

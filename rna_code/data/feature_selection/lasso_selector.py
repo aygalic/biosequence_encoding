@@ -23,6 +23,8 @@ class LassoSelector(BaseFeatureSelector):
         List of labels for regression
     threshold : float
         Lasso coefficient threshold for selection, by default 0
+    n_features : int | None, optional
+        Number of features to select for given task, by default None
     sgdc_params : dict | None, optional
         Parameters for stochastic gradient descent, by default None
     class_balancing : Literal["match_smaller_sample", "balanced", None], optional
