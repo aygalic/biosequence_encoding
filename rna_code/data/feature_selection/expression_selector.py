@@ -14,9 +14,11 @@ class ExpressionSelector(BaseFeatureSelector):
     ----------
     threshold : float | None, optional
         Expression threshold, by default None
+    n_features : int | None, optional
+        Number of features to select for given task, by default None
     """
-    def __init__(self, threshold: float | None = None):
-        super().__init__(threshold)
+    def __init__(self, threshold: float | None = None, n_features : int | None = None):
+        super().__init__(threshold, n_features)
         self._plot_title = "Distribution of Non Zero values per genes"
         self._plot_range_values: list[float] = [0, 1]
 
