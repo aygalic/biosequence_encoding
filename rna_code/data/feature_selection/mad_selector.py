@@ -40,7 +40,13 @@ class MADSelector(BaseFeatureSelector):
             list: A list of boolean values indicating selected features.
         """
         self.scores = scipy.stats.median_abs_deviation(data_array)
-        selection = [self.threshold < val < self.ceiling for val in self.scores]
+        if self.threshold:
+            selection = [self.threshold < val < self.ceiling for val in self.scores]
+        elif self.n_features:
+            idx = np.argsort(self.scores)
+            selection = np.zeros(len(self.scores), dtype=bool)
+            valid_features = idx[self.scores[idx] < self.ceiling]
+            selection[valid_features[:min(self.n_features, len(valid_features))]] = True        
         logging.info(
             "removing %i genes outside the MAD window from the dataset",
             len(selection) - sum(selection),
