@@ -26,7 +26,12 @@ class BaseFeatureSelector(ABC):
         self._plot_title: str = ""
         self._plot_x_label: str = "Scores Value"
         self._plot_range_values: list[float] = [0, 0.01]
-        assert self.threshold or self.n_features is not None, "Must specify either feature threshold or count"
+        assert (
+            self.threshold or self.n_features is not None
+        ), "Must specify either feature threshold or count"
+        assert (
+            not (self.threshold is not None and self.n_features is not None)
+        ), "Can't have both threshold and n_feature specified"
 
     @abstractmethod
     def select_features(self, data_array: np.ndarray, **kwargs) -> np.ndarray:
