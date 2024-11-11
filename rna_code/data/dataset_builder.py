@@ -131,13 +131,13 @@ class DatasetBuilder:
             self.data_array = self.data_array[:, gene_selected]
             self.names = self.names[gene_selected]
 
-        if self.mad_threshold is not None:
-            gene_selected = mad_selector.select_features(self.data_array)
+        if self.ls_threshold is not None:
+            gene_selected = laplacian_selector.select_features(self.data_array)
             self.data_array = self.data_array[:, gene_selected]
             self.names = self.names[gene_selected]
 
-        if self.ls_threshold is not None:
-            gene_selected = laplacian_selector.select_features(self.data_array)
+        if self.mad_threshold is not None:
+            gene_selected = mad_selector.select_features(self.data_array)
             self.data_array = self.data_array[:, gene_selected]
             self.names = self.names[gene_selected]
 
