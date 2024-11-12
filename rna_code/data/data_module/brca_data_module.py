@@ -36,7 +36,7 @@ class BRCADataModule(DataModuleABC):
         batch_size: int = 32,
         val_split: float = 0.2,
     ):
-        super().__init__()
+        super().__init__(data_param=data_param, batch_size=batch_size, val_split=val_split)
 
         self.dataset_type : str = "BRCA"
 
