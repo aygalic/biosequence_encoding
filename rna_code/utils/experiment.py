@@ -7,7 +7,7 @@ import pandas as pd
 import pytorch_lightning as pl
 import numpy as np
 
-from rna_code.data.data_module.data_module import DataModule
+from rna_code.data.data_module.brca_data_module import BRCADataModule
 from rna_code.utils.monitor_callback import MonitorCallback
 
 from .. import DEVICE, LOGFILE
@@ -36,7 +36,7 @@ class Experiment():
         self.model_param = model_param
 
         self.n_epoch = self.model_param.pop("n_epoch", 10)
-        self.data_module = DataModule(data_param)
+        self.data_module = BRCADataModule(data_param)
         self.data_module.setup(stage=None)
         self.input_shape = self.data_module.feature_num
 

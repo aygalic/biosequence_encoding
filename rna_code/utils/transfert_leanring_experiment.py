@@ -7,7 +7,7 @@ import pandas as pd
 import pytorch_lightning as pl
 import numpy as np
 
-from rna_code.data.data_module import DataModule
+from rna_code.data.data_module.brca_data_module import BRCADataModule
 from rna_code.utils.monitor_callback import MonitorCallback
 
 from .. import DEVICE, LOGFILE
@@ -38,8 +38,8 @@ class TransfertLearningExperiment(Experiment):
         self.model_param = model_param
 
         self.n_epoch = self.model_param.pop("n_epoch", 10)
-        self.pretrain_data_module = DataModule(pre_train_data_param)
-        self.data_module = DataModule(data_param)
+        self.pretrain_data_module = BRCADataModule(pre_train_data_param)
+        self.data_module = BRCADataModule(data_param)
         self.pretrain_data_module.setup(stage=None)
         self.data_module.setup(stage=None)
 

@@ -13,6 +13,8 @@ NotImplementedError
     Test set is not implemented yet.
 """
 
+from pathlib import Path
+from abc import ABC
 import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
@@ -24,7 +26,7 @@ from rna_code import CACHE_PATH
 from ..dataset_builder import DatasetBuilder
 
 
-class DataModule(pl.LightningDataModule):
+class DataModuleABC(pl.LightningDataModule, ABC):
     """Utility class to manage train/test data for the BRCA dataset
 
     Parameters
@@ -62,6 +64,10 @@ class DataModule(pl.LightningDataModule):
         self.train_meta_data: pd.DataFrame
         self.val_meta_data: pd.DataFrame
 
+        self.default_data_path: Path | None
+        self.default_metadata_path: Path | None
+        self.dataset_type : str
+
     def setup(self, stage: str):
         """Set up the data module and pre-load everything.
 
@@ -73,13 +79,11 @@ class DataModule(pl.LightningDataModule):
         data_dir = self.data_param.get("Path", None)
 
         if data_dir is not None:
-            data_path = data_dir / "BRCA_data.csv"
-            metadata_path = data_dir / "meta_data.csv"
-            self.data_array = pd.read_csv(data_path, index_col=0).values
-            self.meta_data = pd.read_csv(metadata_path, index_col=0)
+            self.data_array = pd.read_csv(self.default_data_path, index_col=0).values
+            self.meta_data = pd.read_csv(self.default_metadata_path, index_col=0)
 
         else:
-            builder = DatasetBuilder(dataset_type="BRCA")
+            builder = DatasetBuilder(dataset_type=self.dataset_type)
             self.data_array, self.meta_data = builder.generate_dataset(
                 **self.data_param
             )
