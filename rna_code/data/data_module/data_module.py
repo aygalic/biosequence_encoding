@@ -21,7 +21,7 @@ from torch.utils.data import DataLoader, TensorDataset, random_split
 
 from rna_code import CACHE_PATH
 
-from .dataset_builder import DatasetBuilder
+from ..dataset_builder import DatasetBuilder
 
 
 class DataModule(pl.LightningDataModule):

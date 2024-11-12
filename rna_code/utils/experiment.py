@@ -7,7 +7,7 @@ import pandas as pd
 import pytorch_lightning as pl
 import numpy as np
 
-from rna_code.data.data_module import DataModule
+from rna_code.data.data_module.data_module import DataModule
 from rna_code.utils.monitor_callback import MonitorCallback
 
 from .. import DEVICE, LOGFILE
