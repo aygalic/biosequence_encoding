@@ -13,8 +13,9 @@ NotImplementedError
     Test set is not implemented yet.
 """
 
-from pathlib import Path
 from abc import ABC, abstractmethod
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
@@ -66,8 +67,8 @@ class DataModuleABC(pl.LightningDataModule, ABC):
 
         self.default_data_path: Path | None = None
         self.default_metadata_path: Path | None = None
-        self.dataset_type : str
-        self.build_from_scratch_flag : bool = True
+        self.dataset_type: str
+        self.build_from_scratch_flag: bool = True
 
     @abstractmethod
     def _pre_setup(self):
@@ -82,7 +83,7 @@ class DataModuleABC(pl.LightningDataModule, ABC):
         stage : str
             See pytorch lightning documentation.
         """
-        self._pre_setup()            
+        self._pre_setup()
         if self.build_from_scratch_flag:
             builder = DatasetBuilder(dataset_type=self.dataset_type)
             self.data_array, self.meta_data = builder.generate_dataset(

@@ -1,36 +1,15 @@
-"""Module for handling BRCA datasets (train/test/val/whole)
-
-Returns
--------
-DataLoader
-    DataLoader containing each subset
-pd.DataFrame
-    DataFrame containing metadata subsets
-
-Raises
-------
-NotImplementedError
-    Test set is not implemented yet.
-"""
+"""Module for handling BRCA datasets (train/test/val/whole)"""
 
 from pathlib import Path
+
 from .data_module import DataModuleABC
 
-class BRCADataModule(DataModuleABC):
-    """Utility class to manage train/test data for the BRCA dataset
 
-    Parameters
-    ----------
-    data_param : dict | None, optional
-        Data parameters, can be either a dictionary containing a Path, or the
-        parameters to build the dataset from scratch, by default None
-    batch_size : int, optional
-        Batch size, by default 32
-    val_split : float, optional
-        Portion of the dataset allocated to validation data, by default 0.2
-    """
+class BRCADataModule(DataModuleABC):
+    """Utility class to manage train/test data for the BRCA dataset"""
+
     def _pre_setup(self):
-        self.dataset_type : str = "BRCA"
+        self.dataset_type: str = "BRCA"
         data_dir = self.data_param.get("Path", None)
 
         if data_dir is not None:
