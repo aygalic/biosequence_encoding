@@ -29,17 +29,8 @@ class CPTAC3DataModule(DataModuleABC):
     val_split : float, optional
         Portion of the dataset allocated to validation data, by default 0.2
     """
-
-    def __init__(
-        self,
-        data_param: dict | None = None,
-        batch_size: int = 32,
-        val_split: float = 0.2,
-    ):
-        super().__init__(data_param=data_param, batch_size=batch_size, val_split=val_split)
-
+    def _pre_setup(self):
         self.dataset_type : str = "CPTAC-3"
-
         data_dir = self.data_param.get("Path", None)
 
         if data_dir is not None:

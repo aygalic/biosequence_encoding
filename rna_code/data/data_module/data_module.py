@@ -14,7 +14,7 @@ NotImplementedError
 """
 
 from pathlib import Path
-from abc import ABC
+from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 import pytorch_lightning as pl
@@ -64,9 +64,14 @@ class DataModuleABC(pl.LightningDataModule, ABC):
         self.train_meta_data: pd.DataFrame
         self.val_meta_data: pd.DataFrame
 
-        self.default_data_path: Path | None
-        self.default_metadata_path: Path | None
+        self.default_data_path: Path | None = None
+        self.default_metadata_path: Path | None = None
         self.dataset_type : str
+
+    @abstractmethod
+    def _pre_setup(self):
+        """This is where we define dataset specific variables"""
+        raise NotImplementedError
 
     def setup(self, stage: str):
         """Set up the data module and pre-load everything.
@@ -76,9 +81,9 @@ class DataModuleABC(pl.LightningDataModule, ABC):
         stage : str
             See pytorch lightning documentation.
         """
-        data_dir = self.data_param.get("Path", None)
+        self._pre_setup()
 
-        if data_dir is not None:
+        if self.data_param.get("Path", None) is not None:
             self.data_array = pd.read_csv(self.default_data_path, index_col=0).values
             self.meta_data = pd.read_csv(self.default_metadata_path, index_col=0)
 
