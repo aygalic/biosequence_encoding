@@ -67,6 +67,7 @@ class DataModuleABC(pl.LightningDataModule, ABC):
         self.default_data_path: Path | None = None
         self.default_metadata_path: Path | None = None
         self.dataset_type : str
+        self.build_from_scratch_flag : bool = True
 
     @abstractmethod
     def _pre_setup(self):
@@ -81,17 +82,15 @@ class DataModuleABC(pl.LightningDataModule, ABC):
         stage : str
             See pytorch lightning documentation.
         """
-        self._pre_setup()
-
-        if self.data_param.get("Path", None) is not None:
-            self.data_array = pd.read_csv(self.default_data_path, index_col=0).values
-            self.meta_data = pd.read_csv(self.default_metadata_path, index_col=0)
-
-        else:
+        self._pre_setup()            
+        if self.build_from_scratch_flag:
             builder = DatasetBuilder(dataset_type=self.dataset_type)
             self.data_array, self.meta_data = builder.generate_dataset(
                 **self.data_param
             )
+        else:
+            self.data_array = pd.read_csv(self.default_data_path, index_col=0).values
+            self.meta_data = pd.read_csv(self.default_metadata_path, index_col=0)
 
         data_tensor = torch.from_numpy(self.data_array).float()
 

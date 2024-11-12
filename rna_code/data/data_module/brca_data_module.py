@@ -34,5 +34,6 @@ class BRCADataModule(DataModuleABC):
         data_dir = self.data_param.get("Path", None)
 
         if data_dir is not None:
+            self.build_from_scratch_flag = False
             self.default_data_path: Path = data_dir / "BRCA_data.csv"
             self.default_metadata_path: Path = data_dir / "meta_data.csv"
