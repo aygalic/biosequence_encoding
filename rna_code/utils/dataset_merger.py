@@ -47,7 +47,5 @@ class DatasetMerger():
             Merged dataset
         """
         feature_union = set(dataset1.columns)
-        feature_union.update(set(dataset2.columns))
-        
-        new_df = pd.DataFrame(columns=sorted(list(feature_union)))
-        return pd.concat([new_df, dataset1, dataset2], axis=0).fillna(0).astype(dataset1.dtypes[0])
+        feature_union.update(set(dataset2.columns))        
+        return pd.concat([dataset1, dataset2], axis = 0).fillna(0).astype(dataset1.dtypes.iloc[0])
