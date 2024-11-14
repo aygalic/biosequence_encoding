@@ -14,7 +14,7 @@ class TestDatasetMerger(unittest.TestCase):
             "c" : [3,4]
         })
         merged_df = DatasetMerger.intersect(dataset_1, dataset_2)
-        assert merged_df == pd.DataFrame(data = {"a" : [1,2,1,2]})
+        pd.testing.assert_frame_equal(merged_df, pd.DataFrame(data={"a": [1,2,1,2]}, index = [0,1,0,1]))
 
 
 
