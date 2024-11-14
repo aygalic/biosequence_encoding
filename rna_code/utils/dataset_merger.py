@@ -27,8 +27,8 @@ class DatasetMerger():
         pd.DataFrame
             Merged dataset
         """
-        feature_intersection = set(dataset1.columns) & set(dataset2.columns)
-        return pd.concat([dataset1[feature_intersection], dataset2[feature_intersection]], axis = 1)
+        feature_intersection = list(set(dataset1.columns) & set(dataset2.columns))
+        return pd.concat([dataset1[feature_intersection], dataset2[feature_intersection]], axis = 0)
 
     @staticmethod
     def union(dataset1 : pd.DataFrame, dataset2: pd.DataFrame) -> pd.DataFrame:
