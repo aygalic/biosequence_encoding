@@ -60,7 +60,7 @@ class TransfertLearningExperiment(Experiment):
             verbose=0,
         )
         trainer = pl.Trainer(max_epochs=self.n_epoch, callbacks=[monitor_callback])
-        trainer.fit(self.pretrain_data_module, self.data_module)
+        trainer.fit(self.model, self.pretrain_data_module)
         trainer.fit(self.model, self.data_module)
         visualization.post_training_viz(
             data=self.data_module.data_array,
