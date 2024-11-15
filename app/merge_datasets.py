@@ -24,9 +24,9 @@ def main():
     data_CPTAC_3 = merged_data.loc[data_CPTAC_3.index]
 
     merged_data_path = CACHE_PATH / "data_transfert_learning"
+    merged_data_path.parent.mkdir(parents=True, exist_ok=True)
     data_BRCA.to_csv(merged_data_path / 'BRCA_data.csv')
     data_CPTAC_3.to_csv(merged_data_path / 'CPTAC_3_data.csv')
-    merged_data_path.parent.mkdir(parents=True, exist_ok=True)
 
 if __name__ == "__main__":
     main()
