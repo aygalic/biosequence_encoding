@@ -22,8 +22,9 @@ def main():
     merged_data = DatasetMerger.intersect(data_BRCA, data_CPTAC_3)
     data_BRCA = merged_data.loc[data_BRCA.index]
     data_CPTAC_3 = merged_data.loc[data_CPTAC_3.index]
-    data_BRCA.to_csv(CACHE_PATH / "data"/ 'BRCA_data_intersect.csv')
-    data_CPTAC_3.to_csv(CACHE_PATH / "data"/ 'CPTAC_3_data_intersect.csv')
+
+    data_BRCA.to_csv(CACHE_PATH / "data_transfert_learning"/ 'BRCA_data.csv')
+    data_CPTAC_3.to_csv(CACHE_PATH / "data_transfert_learning"/ 'CPTAC_3_data.csv')
 
 if __name__ == "__main__":
     main()
