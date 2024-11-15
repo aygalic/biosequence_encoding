@@ -1,7 +1,7 @@
 """Merge datasets."""
 import logging
 import pandas as pd 
-
+import shutil
 
 from rna_code import CACHE_PATH
 from rna_code.utils.dataset_merger import DatasetMerger
@@ -27,6 +27,12 @@ def main():
     merged_data_path.mkdir(parents=True, exist_ok=True)
     data_BRCA.to_csv(merged_data_path / 'BRCA_data.csv')
     data_CPTAC_3.to_csv(merged_data_path / 'CPTAC_3_data.csv')
+
+    logger.info("Copying metadata...")
+    files_to_copy = [CACHE_PATH / "data"/ 'meta_data.csv', CACHE_PATH / "data"/ 'CPTAC_3_meta_data.csv']
+    destination_directory = merged_data_path
+    _ = [shutil.copy(file_to_copy, destination_directory) for file_to_copy in files_to_copy ]
+
     logger.info("Done.")
 
 if __name__ == "__main__":
