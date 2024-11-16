@@ -121,22 +121,21 @@ class DatasetBuilder:
         self.entry_names = self.data_interface.entry_names
 
     def _feature_selection(self) -> None:
-        """Perform feature selection according to selection_thresholds"""
-        expression_selector = ExpressionSelector(threshold=self.expression_threshold)
-        mad_selector = MADSelector(threshold=self.mad_threshold)
-        laplacian_selector = LaplacianSelector(threshold=self.ls_threshold)
-
+        """Perform feature selection according to selection_thresholds"""            
         if self.expression_threshold is not None:
+            expression_selector = ExpressionSelector(threshold=self.expression_threshold)
             gene_selected = expression_selector.select_features(self.data_array)
             self.data_array = self.data_array[:, gene_selected]
             self.names = self.names[gene_selected]
 
         if self.ls_threshold is not None:
+            laplacian_selector = LaplacianSelector(threshold=self.ls_threshold)
             gene_selected = laplacian_selector.select_features(self.data_array)
             self.data_array = self.data_array[:, gene_selected]
             self.names = self.names[gene_selected]
 
         if self.mad_threshold is not None:
+            mad_selector = MADSelector(threshold=self.mad_threshold)
             gene_selected = mad_selector.select_features(self.data_array)
             self.data_array = self.data_array[:, gene_selected]
             self.names = self.names[gene_selected]
