@@ -1,43 +1,37 @@
 """Whole training pipeline."""
+
 import logging
 
 from rna_code import CACHE_PATH
 from rna_code.utils.experiment import Experiment
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 
-logging.getLogger('fsspec.local').setLevel(logging.WARNING)
-
+logging.getLogger("fsspec.local").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
-
 config = {
-    "dropout" : 0.5,
-    "latent_dim" : 16,
-    "model_type" : "CNN",
-    "num_layers" :  3,
-    "kernel_size" : 7,
-    "padding" : 3,
-    "n_epoch" : 1
+    "dropout": 0.3,
+    "latent_dim": 16,
+    "model_type": "MLP",
+    "num_layers": 8,
+    "n_epoch": 20,
+    # "variational" : "VQ-VAE",
 }
 
-config = {
-    "dropout" : 0.3,
-    "latent_dim" : 16,
-    "model_type" : "MLP",
-    "num_layers" :  8,
-    "n_epoch" : 20,
-    #"variational" : "VQ-VAE",
-}
+data_path = CACHE_PATH / "data"
 
-data_path  = CACHE_PATH / "data"
+data_param = {"Path": data_path}
 
-data_param = {"Path":data_path}
 
-e = Experiment(data_param=data_param,  model_param=config)
-e.run()
+def main():
+    logger.info("Training model.")
+    e = Experiment(data_param=data_param, model_param=config)
+    e.run()
+    logger.info("Done.")
 
-logger.info("Done.")
+
+if __name__ == "__main__":
+    main()
