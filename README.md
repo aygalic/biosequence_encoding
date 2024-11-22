@@ -1,6 +1,6 @@
 # Genetic Algorithm optimisation of Auto-Encoders
 
-This project provides a comprehensive pipeline for the analysis of genomic and transcriptomic data through custom PyTorch based tools. These tools are packaged as libraries for data processing, benchmarking, visualization, as well as Python notebooks for in-depth analyses.
+This project provides a comprehensive pipeline for the analysis of genomic and transcriptomic data through custom PyTorch based tools. These tools are packaged as libraries for data processing, monitoring, visualization, as well as Python notebooks for in-depth analyses.
 
 
 
