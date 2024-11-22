@@ -20,12 +20,11 @@ Dataset can be matched for transfer learning using `app/merge_datasets.py`
 
 ## Auto Encoder
 
-This project is built around a modular Auto-Encoder architechture that can be tune around many parameters. Some structural changes such as the general architechture (Multi layer perceptron, Transformer, Convolutional Neural Net.) or some more straightforward variations (number of layers, dropout rate...) can be done through the constructor method of the `Autoencoder` Class in the `rna_code.models` module. Other structural changes are also handled, such as Variational Layer, as well as Vector Quantized Variational Auto Encoders.
-
+This project is built around a modular Auto-Encoder architecture that can be tuned across many parameters. Some structural changes such as the general architecture (Multi layer perceptron, Transformer, CNN.) or some more straightforward variations (number of layers, dropout rate...) can be done through the constructor method of the `Autoencoder` Class in the `rna_code.models` module. Other structural changes are also handled, such as Variational Layer, as well as Vector Quantized Variational Auto Encoders.
 
 ## Experiment
 
-The `experiment.py` module is a wrapper for dataset and model to be handled in a compact manner.
+The `experiment.py` submodule is a wrapper for dataset and model to be handled in a compact manner.
 
 ## Genetic Algorithm (deprecated)
 
