@@ -63,8 +63,9 @@ This work was conducted around a scientific question regarding the discovery of 
 
 The legacy code taking care of handling experiments in that context has been removed and replaces by some use-cases.
 
-You can check out individual use-cases in the `app` folder for more info.
+Use cases include : generating data for supported datasets and  training strategies.
 
+You can check out individual use-cases in the `app` folder for more info.
 
 [View PCA Animation](https://aygalic.github.io/biosequence_encoding/pca_animation.html)
 
