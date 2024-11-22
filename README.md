@@ -57,21 +57,16 @@ The genetic algorithm is handled in the `search.py` file. It relies on an array 
 
 The `monotoring.py` file is our approach to callbacks. It computes metrics, provide with visualisation call and monitoring throughout the training. It is also a key element for the search algorithm because the fitness function relies on the monitored metrics.
 
-## The Notebooks - Purpose of the work
+##  Purpose of the work
 
 This work was conducted around a scientific question regarding the discovery of cluster in PD data. While the data is not widely available, a validation pipeline is designed around the BRCA-TCGA dataset which is open access.
 
-The folder `thesis_related` encapsulate all the work done around this scientific question.
+The legacy code taking care of handling experiments in that context has been removed and replaces by some use-cases.
 
-You can Find example for training in the `model_training` folder, where both Genetic algorithm and standalone approach are used.
-
-
-Here you can see the result of a Genetic search over the BRCA dataset. This specific animation is used to show the overfitting issue and the need for the number of epoch to be a criteria of selection.
-
+You can check out individual use-cases in the `app` folder for more info.
 
 
 [View PCA Animation](https://aygalic.github.io/biosequence_encoding/pca_animation.html)
 
-![View PCA Animation](https://aygalic.github.io/biosequence_encoding/pca_animation.html)
 
 
