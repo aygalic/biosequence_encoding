@@ -9,39 +9,18 @@ You can find the documentation [here](https://aygalic.github.io/biosequence_enco
  
 ## Data Generation
 
-The `utils` folder contains the `data_handler.py` script, which serves as the primary interface with our dataset. Additionally, you'll find features in the `feature_selection.py` file. These tools provide the essential machinery to construct a PyTorch dataset and allow users to fine-tune feature selection and data engineering.
+The scripts `app/generate_data_brca.py` and `app/generate_data_cptac_3.py` enable dataset generation from the previously downloaded data (NIH website). 
 
-On the numerical side of thing, the following filtering techniques are implemented:
+The `rna_code` module contains the `data` submodule that take care of every aspect of the data pipeline.
+- The `interface` submodule take care of interfacing the app and `pandas` data format with the file system.
+- The `feature_selection` submodule take care of the data processing.
+- The `data_module` submodule take care of interfacing the final dataset with `pytorch_lightning`.
 
-- Mean absolute deviation threshold/ceiling
-- LASSO selection
-- log1p transform
-- Normalisation
-- Min Max Scaling to [0,1]
-- Subsampling (for efficient testing on smaller dataset)
-
-
-Some features are enabled using logics based on the names of the featuer or their position on the genome:
-
-- Study Phase selection
-- Time point selection
-- Cohort selection
-- Aberration removal (handling NA's and incorrect gene counts)
-- Genes symbols and possition can be retrieves an filtered on wether or not they are present in a given database
-- Symbols can be sorted by their genomic positions.
-- Certain gene families, such as mitochondrial genes, can be excluded
-
-
-
-
-The dataset can then be output with the following architecture:
-
-- Cell wise analysis, where each reading is a single sample at a single timepoint, without taking for account the fact that a given reading is a single observation from different time points linked to a patient.
-
+Dataset can be matched for transfer learning using `app/merge_datasets.py`
 
 ## Auto Encoder
 
-This project is built around a modular Auto-Encoder architechture that can be tune around many parameters. Some structural changes such as the general architechture (Multi layer perceptron, Transformer, Convolutional Neural Net.) or some more straightforward variations (number of layers, dropout rate...) can be done through the constructor method of the `Autoencoder` Class in the `src/model.py` module. Other structural changes are also handled, such as Variational Layer, as well as Vector Quantized Variational Auto Encoders.
+This project is built around a modular Auto-Encoder architechture that can be tune around many parameters. Some structural changes such as the general architechture (Multi layer perceptron, Transformer, Convolutional Neural Net.) or some more straightforward variations (number of layers, dropout rate...) can be done through the constructor method of the `Autoencoder` Class in the `rna_code.models` module. Other structural changes are also handled, such as Variational Layer, as well as Vector Quantized Variational Auto Encoders.
 
 
 ## Experiment
