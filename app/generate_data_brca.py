@@ -17,6 +17,8 @@ thresholds = {
 
 
 def main():
+    """Handle all steps necessary to generate and save the BRCA dataset based on file
+    system."""
     logger.info("Generating BRCA Dataset...")
     builder = DatasetBuilder(dataset_type="BRCA", selection_thresholds=thresholds)
     df, meta_data = builder.generate_dataset()

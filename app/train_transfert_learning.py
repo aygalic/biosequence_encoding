@@ -28,6 +28,7 @@ data_param = {"Path": data_path}
 
 
 def main():
+    """Handle the training of the model using a transfer learning approach."""
     logger.info("Training model using transfer learning.")
     e = TransfertLearningExperiment(data_param=data_param, model_param=config)
     e.run()

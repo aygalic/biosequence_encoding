@@ -18,7 +18,6 @@ config = {
     "model_type": "MLP",
     "num_layers": 8,
     "n_epoch": 20,
-    # "variational" : "VQ-VAE",
 }
 
 data_path = CACHE_PATH / "data"
@@ -27,6 +26,7 @@ data_param = {"Path": data_path}
 
 
 def main():
+    """Handle the training of the model using a simple straightforward approach."""
     logger.info("Training model.")
     e = Experiment(data_param=data_param, model_param=config)
     e.run()

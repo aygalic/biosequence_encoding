@@ -18,6 +18,8 @@ thresholds = {
 
 
 def main():
+    """Handle all steps necessary to generate and save the CPTAC-3 dataset based on file
+    system."""
     logger.info("Generating CPTAC-3 dataset...")
     builder = DatasetBuilder(dataset_type="CPTAC-3", selection_thresholds=thresholds)
     df, meta_data = builder.generate_dataset()

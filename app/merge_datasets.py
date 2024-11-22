@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 def main():
+    """Take 2 existing dataset (BRCA and CPTAC-3) and create 2 new datasets in order to
+    match feature number/order for consistency during transfer learning."""
     logger.info("Merging data...")
     data_path_BRCA = CACHE_PATH / "data" / "BRCA_data.csv"
     data_path_CPTAC_3 = CACHE_PATH / "data" / "CPTAC_3_data.csv"
