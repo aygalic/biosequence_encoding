@@ -1,12 +1,11 @@
 # Genetic Algorithm optimisation of Auto-Encoders
 
-This project provides a comprehensive pipeline for the analysis of genomic and transcriptomic data through custom PyTorch based tools. These tools are packaged as libraries for data processing, monitoring, visualization, as well as Python notebooks for in-depth analyses.
-
-
+This project provides a comprehensive pipeline for the analysis of genomic and transcriptomic data through custom PyTorch based tools. These tools are packaged as libraries for data processing, monitoring, visualization.
 
 ## Intro 
 
 This project enables the analysis of genetic/transcriptomic dataset. 
+You can find the documentation [here](https://aygalic.github.io/biosequence_encoding/).
  
 ## Data Generation
 
@@ -49,7 +48,7 @@ This project is built around a modular Auto-Encoder architechture that can be tu
 
 The `experiment.py` module is a wrapper for dataset and model to be handled in a compact manner.
 
-## Genetic Algorithm
+## Genetic Algorithm (deprecated)
 
 The genetic algorithm is handled in the `search.py` file. It relies on an array of parametter as well as a list of configurations. Some logic has been implemented in order to avoid non-sensical configuration through generation steps. It
 
